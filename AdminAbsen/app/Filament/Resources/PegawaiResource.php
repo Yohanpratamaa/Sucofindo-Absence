@@ -90,9 +90,9 @@ class PegawaiResource extends Resource
                                         Forms\Components\Select::make('status')
                                             ->options([
                                                 'active' => 'Active',
-                                                'resign' => 'Resign',
+                                                'non-active' => 'Non-Active',
                                             ])
-                                            ->default('active')
+                                            ->default('status')
                                             ->required(),
 
                                         Forms\Components\Select::make('role_user')
@@ -381,7 +381,7 @@ class PegawaiResource extends Resource
                 Tables\Columns\BadgeColumn::make('status')
                     ->colors([
                         'success' => 'active',
-                        'danger' => 'resign',
+                        'danger' => 'non-active',
                     ]),
 
                 Tables\Columns\TextColumn::make('role_user')
@@ -434,7 +434,7 @@ class PegawaiResource extends Resource
                 Tables\Filters\SelectFilter::make('status')
                     ->options([
                         'active' => 'Active',
-                        'resign' => 'Resign',
+                        'non-active' => 'Non-Active',
                     ]),
 
                 Tables\Filters\SelectFilter::make('role_user')

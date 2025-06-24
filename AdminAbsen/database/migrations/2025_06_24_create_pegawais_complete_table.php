@@ -22,7 +22,7 @@ return new class extends Migration
             $table->string('nik')->unique();
             $table->enum('status_pegawai', ['PTT', 'LS']);
             $table->string('nomor_handphone', 15);
-            $table->enum('status', ['active', 'resign'])->default('active');
+            $table->enum('status', ['active', 'non-active'])->default('active');
             $table->enum('role_user', ['super admin', 'employee', 'Kepala Bidang']);
             $table->text('alamat')->nullable();
 
