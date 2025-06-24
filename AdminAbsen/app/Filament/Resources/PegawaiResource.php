@@ -5,6 +5,8 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\PegawaiResource\Pages;
 use App\Filament\Resources\PegawaiResource\RelationManagers;
 use App\Models\Pegawai;
+use App\Models\Jabatan;
+use App\Models\Posisi;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -19,7 +21,7 @@ class PegawaiResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-users';
 
-    protected static ?string $navigationLabel = 'Data Pegawai';
+    protected static ?string $navigationLabel = 'Manajemen Pegawai';
 
     protected static ?string $modelLabel = 'Pegawai';
 
@@ -111,52 +113,76 @@ class PegawaiResource extends Resource
                                     ]),
                             ]),
 
-                        // Tab Jabatan - Form Manual
+                        // Tab Jabatan - Dropdown dari Master Data
                         Forms\Components\Tabs\Tab::make('Jabatan')
                             ->id('jabatan-tab')
                             ->icon('heroicon-o-briefcase')
                             ->schema([
                                 Forms\Components\Section::make('Data Jabatan')
-                                    ->description('Isi data jabatan pegawai')
+                                    ->description('Pilih jabatan dari data master')
                                     ->schema([
                                         Forms\Components\Grid::make(2)
                                             ->schema([
-                                                Forms\Components\TextInput::make('jabatan_nama')
+                                                Forms\Components\Select::make('jabatan_nama')
                                                     ->label('Nama Jabatan')
-                                                    ->placeholder('Masukkan nama jabatan')
-                                                    ->required(),
+                                                    ->required()
+                                                    ->searchable()
+                                                    ->preload()
+                                                    ->options(fn () => Jabatan::where('status', 'active')->pluck('nama', 'nama'))
+                                                    ->live()
+                                                    ->afterStateUpdated(function (Forms\Set $set, $state) {
+                                                        if ($state) {
+                                                            $jabatan = Jabatan::where('nama', $state)->first();
+                                                            $set('jabatan_tunjangan', $jabatan?->tunjangan ?? 0);
+                                                        } else {
+                                                            $set('jabatan_tunjangan', 0);
+                                                        }
+                                                    }),
 
                                                 Forms\Components\TextInput::make('jabatan_tunjangan')
                                                     ->label('Tunjangan Jabatan')
                                                     ->numeric()
                                                     ->prefix('Rp')
                                                     ->placeholder('0')
-                                                    ->default(0),
+                                                    ->readOnly()
+                                                    ->helperText('Otomatis terisi berdasarkan jabatan yang dipilih'),
                                             ]),
                                     ]),
                             ]),
 
-                        // Tab Posisi - Form Manual
+                        // Tab Posisi - Dropdown dari Master Data
                         Forms\Components\Tabs\Tab::make('Posisi')
                             ->id('posisi-tab')
                             ->icon('heroicon-o-users')
                             ->schema([
                                 Forms\Components\Section::make('Data Posisi')
-                                    ->description('Isi data posisi pegawai')
+                                    ->description('Pilih posisi dari data master')
                                     ->schema([
                                         Forms\Components\Grid::make(2)
                                             ->schema([
-                                                Forms\Components\TextInput::make('posisi_nama')
+                                                Forms\Components\Select::make('posisi_nama')
                                                     ->label('Nama Posisi')
-                                                    ->placeholder('Masukkan nama posisi')
-                                                    ->required(),
+                                                    ->required()
+                                                    ->searchable()
+                                                    ->preload()
+                                                    ->options(fn () => Posisi::where('status', 'active')->pluck('nama', 'nama'))
+                                                    ->live()
+                                                    ->afterStateUpdated(function (Forms\Set $set, $state) {
+                                                        if ($state) {
+                                                            $posisi = Posisi::where('nama', $state)->first();
+                                                            $set('posisi_tunjangan', $posisi?->tunjangan ?? 0);
+                                                        } else {
+                                                            $set('posisi_tunjangan', 0);
+                                                        }
+                                                    }),
 
                                                 Forms\Components\TextInput::make('posisi_tunjangan')
                                                     ->label('Tunjangan Posisi')
                                                     ->numeric()
                                                     ->prefix('Rp')
                                                     ->placeholder('0')
-                                                    ->default(0),
+                                                    ->readOnly()
+                                                    ->helperText('Otomatis terisi berdasarkan posisi yang dipilih'),
                                             ]),
                                     ]),
                             ]),

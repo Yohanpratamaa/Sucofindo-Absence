@@ -105,6 +105,18 @@ class Pegawai extends Model
         return collect($this->emergency_contacts)->first();
     }
 
+    // Relasi dengan Jabatan
+    public function jabatan()
+    {
+        return $this->belongsTo(Jabatan::class, 'jabatan_nama', 'nama');
+    }
+
+    // Relasi dengan Posisi  
+    public function posisi()
+    {
+        return $this->belongsTo(Posisi::class, 'posisi_nama', 'nama');
+    }
+
     // Method untuk mendapatkan total tunjangan
     public function getTotalTunjanganAttribute()
     {
