@@ -37,25 +37,8 @@ class PegawaiResource extends Resource
                         Forms\Components\Tabs\Tab::make('Akses')
                             ->icon('heroicon-o-key')
                             ->schema([
-                                Forms\Components\Grid::make(2)
+                                Forms\Components\Grid::make(1)
                                     ->schema([
-                                        Forms\Components\TextInput::make('username')
-                                            ->required()
-                                            ->unique(ignoreRecord: true)
-                                            ->maxLength(50)
-                                            ->placeholder('Masukkan username'),
-
-                                        Forms\Components\TextInput::make('password')
-                                            ->password()
-                                            ->required(fn (string $context): bool => $context === 'create')
-                                            ->minLength(8)
-                                            ->placeholder('Masukkan password'),
-
-                                        Forms\Components\TextInput::make('password_confirmation')
-                                            ->password()
-                                            ->same('password')
-                                            ->required(fn (string $context): bool => $context === 'create')
-                                            ->placeholder('Konfirmasi password'),
 
                                         Forms\Components\Select::make('role')
                                             ->options([
@@ -68,9 +51,17 @@ class PegawaiResource extends Resource
                                             ->required()
                                             ->default('Select Role'),
 
-                                        Forms\Components\Toggle::make('is_active')
-                                            ->label('Status Aktif')
-                                            ->default(true),
+                                        Forms\Components\TextInput::make('email')
+                                            ->required()
+                                            ->unique(ignoreRecord: true)
+                                            ->maxLength(50)
+                                            ->placeholder('Masukkan email'),
+
+                                        Forms\Components\TextInput::make('password')
+                                            ->password()
+                                            ->required(fn (string $context): bool => $context === 'create')
+                                            ->minLength(8)
+                                            ->placeholder('Masukkan password'),
 
                                         Forms\Components\DateTimePicker::make('last_login')
                                             ->label('Login Terakhir')

@@ -12,10 +12,9 @@ return new class extends Migration
             $table->id();
 
             // Akses
-            $table->string('username', 50)->unique();
+            $table->string('email', 50)->unique();
             $table->string('password');
             $table->enum('role', ['admin', 'hr', 'manager', 'supervisor', 'staff'])->default('staff');
-            $table->boolean('is_active')->default(true);
             $table->timestamp('last_login')->nullable();
 
             // Informasi Umum
