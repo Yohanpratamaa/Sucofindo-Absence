@@ -34,57 +34,22 @@ class PegawaiResource extends Resource
             ->schema([
                 Forms\Components\Tabs::make('Tabs')
                     ->tabs([
-                        Forms\Components\Tabs\Tab::make('Akses')
-                            ->icon('heroicon-o-key')
-                            ->schema([
-                                Forms\Components\Grid::make(1)
-                                    ->schema([
-
-                                        Forms\Components\Select::make('role')
-                                            ->options([
-                                                'admin' => 'Admin',
-                                                'hr' => 'HR',
-                                                'manager' => 'Manager',
-                                                'supervisor' => 'Supervisor',
-                                                'staff' => 'Staff',
-                                            ])
-                                            ->required()
-                                            ->default('Select Role'),
-
-                                        Forms\Components\TextInput::make('email')
-                                            ->required()
-                                            ->unique(ignoreRecord: true)
-                                            ->maxLength(50)
-                                            ->placeholder('Masukkan email'),
-
-                                        Forms\Components\TextInput::make('password')
-                                            ->password()
-                                            ->required(fn (string $context): bool => $context === 'create')
-                                            ->minLength(8)
-                                            ->placeholder('Masukkan password'),
-
-                                        Forms\Components\DateTimePicker::make('last_login')
-                                            ->label('Login Terakhir')
-                                            ->disabled(),
-                                    ]),
-                            ]),
-
-                        Forms\Components\Tabs\Tab::make('Informasi Umum')
-                            ->icon('heroicon-o-user')
+                        Forms\Components\Tabs\Tab::make('Users')
+                            ->icon('heroicon-o-user-group')
                             ->schema([
                                 Forms\Components\Grid::make(2)
                                     ->schema([
-                                        Forms\Components\TextInput::make('nip')
-                                            ->label('NIP')
-                                            ->required()
-                                            ->unique(ignoreRecord: true)
-                                            ->maxLength(20)
-                                            ->placeholder('Masukkan NIP'),
-
                                         Forms\Components\TextInput::make('nama')
                                             ->required()
                                             ->maxLength(255)
                                             ->placeholder('Masukkan nama lengkap'),
+
+                                        Forms\Components\TextInput::make('npp')
+                                            ->label('NPP')
+                                            ->required()
+                                            ->unique(ignoreRecord: true)
+                                            ->maxLength(255)
+                                            ->placeholder('Masukkan NPP'),
 
                                         Forms\Components\TextInput::make('email')
                                             ->email()
@@ -93,308 +58,164 @@ class PegawaiResource extends Resource
                                             ->maxLength(255)
                                             ->placeholder('email@example.com'),
 
-                                        Forms\Components\TextInput::make('phone')
-                                            ->label('No. Telepon')
-                                            ->tel()
-                                            ->maxLength(15)
-                                            ->placeholder('08123456789'),
+                                        Forms\Components\TextInput::make('password')
+                                            ->password()
+                                            ->required(fn (string $context): bool => $context === 'create')
+                                            ->minLength(8)
+                                            ->placeholder('Masukkan password'),
 
-                                        Forms\Components\Select::make('gender')
-                                            ->label('Jenis Kelamin')
-                                            ->options([
-                                                'L' => 'Laki-laki',
-                                                'P' => 'Perempuan',
-                                            ])
-                                            ->required(),
-
-                                        Forms\Components\DatePicker::make('tanggal_lahir')
-                                            ->label('Tanggal Lahir')
-                                            ->required(),
-
-                                        Forms\Components\TextInput::make('tempat_lahir')
-                                            ->label('Tempat Lahir')
-                                            ->maxLength(100)
-                                            ->placeholder('Kota kelahiran'),
-
-                                        Forms\Components\Select::make('agama')
-                                            ->options([
-                                                'islam' => 'Islam',
-                                                'kristen' => 'Kristen',
-                                                'katolik' => 'Katolik',
-                                                'hindu' => 'Hindu',
-                                                'buddha' => 'Buddha',
-                                                'konghucu' => 'Konghucu',
-                                            ])
-                                            ->required(),
-
-                                        Forms\Components\Select::make('status_perkawinan')
-                                            ->label('Status Perkawinan')
-                                            ->options([
-                                                'belum_kawin' => 'Belum Kawin',
-                                                'kawin' => 'Kawin',
-                                                'cerai_hidup' => 'Cerai Hidup',
-                                                'cerai_mati' => 'Cerai Mati',
-                                            ])
-                                            ->required(),
-
-                                        Forms\Components\TextInput::make('kewarganegaraan')
-                                            ->default('Indonesia')
+                                        Forms\Components\TextInput::make('nik')
+                                            ->label('NIK')
                                             ->required()
-                                            ->maxLength(50),
-                                    ]),
+                                            ->unique(ignoreRecord: true)
+                                            ->maxLength(255)
+                                            ->placeholder('Masukkan NIK'),
 
-                                Forms\Components\Textarea::make('alamat')
-                                    ->rows(3)
-                                    ->columnSpanFull()
-                                    ->placeholder('Alamat lengkap'),
+                                        Forms\Components\Textarea::make('alamat')
+                                            ->rows(3)
+                                            ->placeholder('Alamat lengkap'),
 
-                                Forms\Components\Grid::make(2)
-                                    ->schema([
-                                        Forms\Components\Select::make('jabatan')
+                                        Forms\Components\Select::make('status_pegawai')
+                                            ->label('Status Pegawai')
                                             ->options([
-                                                'manager' => 'Manager',
-                                                'supervisor' => 'Supervisor',
-                                                'staff' => 'Staff',
-                                                'intern' => 'Intern',
+                                                'PTT' => 'PTT',
+                                                'LS' => 'LS',
                                             ])
                                             ->required(),
 
-                                        Forms\Components\Select::make('divisi')
+                                        Forms\Components\Select::make('status')
                                             ->options([
-                                                'it' => 'IT',
-                                                'hr' => 'Human Resources',
-                                                'finance' => 'Finance',
-                                                'operations' => 'Operations',
-                                                'marketing' => 'Marketing',
+                                                'active' => 'Active',
+                                                'resign' => 'Resign',
                                             ])
+                                            ->default('active')
                                             ->required(),
 
-                                        Forms\Components\DatePicker::make('tanggal_masuk')
-                                            ->label('Tanggal Masuk')
-                                            ->required(),
-
-                                        Forms\Components\Select::make('status_karyawan')
-                                            ->label('Status Karyawan')
+                                        Forms\Components\Select::make('role_user')
+                                            ->label('Role User')
                                             ->options([
-                                                'tetap' => 'Karyawan Tetap',
-                                                'kontrak' => 'Karyawan Kontrak',
-                                                'magang' => 'Magang',
-                                                'freelance' => 'Freelance',
+                                                'super admin' => 'Super Admin',
+                                                'employee' => 'Employee',
+                                                'Kepala Bidang' => 'Kepala Bidang',
                                             ])
                                             ->required(),
                                     ]),
+
                             ]),
 
-                        Forms\Components\Tabs\Tab::make('Pendidikan')
-                            ->icon('heroicon-o-academic-cap')
-                            ->schema([
-                                Forms\Components\Grid::make(2)
-                                    ->schema([
-                                        Forms\Components\Select::make('pendidikan_terakhir')
-                                            ->label('Pendidikan Terakhir')
-                                            ->options([
-                                                'SD' => 'SD/Sederajat',
-                                                'SMP' => 'SMP/Sederajat',
-                                                'SMA' => 'SMA/Sederajat',
-                                                'D1' => 'Diploma 1',
-                                                'D2' => 'Diploma 2',
-                                                'D3' => 'Diploma 3',
-                                                'S1' => 'Sarjana (S1)',
-                                                'S2' => 'Magister (S2)',
-                                                'S3' => 'Doktor (S3)',
-                                            ])
-                                            ->required(),
-
-                                        Forms\Components\TextInput::make('nama_sekolah')
-                                            ->label('Nama Sekolah/Universitas')
-                                            ->maxLength(255)
-                                            ->placeholder('Nama institusi pendidikan'),
-
-                                        Forms\Components\TextInput::make('jurusan')
-                                            ->maxLength(255)
-                                            ->placeholder('Jurusan/Program Studi'),
-
-                                        Forms\Components\TextInput::make('tahun_lulus')
-                                            ->label('Tahun Lulus')
-                                            ->numeric()
-                                            ->minValue(1980)
-                                            ->maxValue(date('Y'))
-                                            ->placeholder('YYYY'),
-
-                                        Forms\Components\TextInput::make('ipk_nilai')
-                                            ->label('IPK/Nilai')
-                                            ->numeric()
-                                            ->step(0.01)
-                                            ->minValue(0)
-                                            ->maxValue(4)
-                                            ->placeholder('3.50'),
-
-                                        Forms\Components\Select::make('akreditasi')
-                                            ->options([
-                                                'A' => 'A (Unggul)',
-                                                'B' => 'B (Baik Sekali)',
-                                                'C' => 'C (Baik)',
-                                                'tidak_terakreditasi' => 'Tidak Terakreditasi',
-                                            ])
-                                            ->placeholder('Pilih akreditasi'),
-                                    ]),
-
-                                Forms\Components\Textarea::make('sertifikat_keahlian')
-                                    ->label('Sertifikat/Keahlian Khusus')
-                                    ->rows(3)
-                                    ->columnSpanFull()
-                                    ->placeholder('Daftar sertifikat atau keahlian khusus yang dimiliki'),
-                            ]),
-
-                        Forms\Components\Tabs\Tab::make('Nomer Emergency')
-                            ->icon('heroicon-o-phone')
-                            ->schema([
-                                Forms\Components\Grid::make(2)
-                                    ->schema([
-                                        Forms\Components\TextInput::make('emergency_contact_name')
-                                            ->label('Nama Kontak Darurat')
-                                            ->required()
-                                            ->maxLength(255)
-                                            ->placeholder('Nama lengkap kontak darurat'),
-
-                                        Forms\Components\Select::make('emergency_contact_relation')
-                                            ->label('Hubungan')
-                                            ->options([
-                                                'orangtua' => 'Orang Tua',
-                                                'suami' => 'Suami',
-                                                'istri' => 'Istri',
-                                                'anak' => 'Anak',
-                                                'saudara' => 'Saudara',
-                                                'kerabat' => 'Kerabat',
-                                                'teman' => 'Teman',
-                                            ])
-                                            ->required(),
-
-                                        Forms\Components\TextInput::make('emergency_contact_phone')
-                                            ->label('No. Telepon Darurat')
-                                            ->tel()
-                                            ->required()
-                                            ->maxLength(15)
-                                            ->placeholder('08123456789'),
-
-                                        Forms\Components\TextInput::make('emergency_contact_phone_2')
-                                            ->label('No. Telepon Darurat 2')
-                                            ->tel()
-                                            ->maxLength(15)
-                                            ->placeholder('08123456789'),
-                                    ]),
-
-                                Forms\Components\Textarea::make('emergency_contact_address')
-                                    ->label('Alamat Kontak Darurat')
-                                    ->rows(3)
-                                    ->columnSpanFull()
-                                    ->placeholder('Alamat lengkap kontak darurat'),
-
-                                Forms\Components\Section::make('Kontak Darurat Kedua')
-                                    ->schema([
-                                        Forms\Components\Grid::make(2)
-                                            ->schema([
-                                                Forms\Components\TextInput::make('emergency_contact_name_2')
-                                                    ->label('Nama Kontak Darurat 2')
-                                                    ->maxLength(255)
-                                                    ->placeholder('Nama lengkap kontak darurat kedua'),
-
-                                                Forms\Components\Select::make('emergency_contact_relation_2')
-                                                    ->label('Hubungan')
-                                                    ->options([
-                                                        'orangtua' => 'Orang Tua',
-                                                        'suami' => 'Suami',
-                                                        'istri' => 'Istri',
-                                                        'anak' => 'Anak',
-                                                        'saudara' => 'Saudara',
-                                                        'kerabat' => 'Kerabat',
-                                                        'teman' => 'Teman',
-                                                    ]),
-
-                                                Forms\Components\TextInput::make('emergency_contact_phone_alt')
-                                                    ->label('No. Telepon Darurat 2')
-                                                    ->tel()
-                                                    ->maxLength(15)
-                                                    ->placeholder('08123456789'),
-                                            ]),
-                                    ])
-                                    ->collapsible(),
-                            ]),
-
+                        // Tab Jaminan
                         Forms\Components\Tabs\Tab::make('Jaminan')
                             ->icon('heroicon-o-shield-check')
                             ->schema([
-                                Forms\Components\Grid::make(2)
-                                    ->schema([
-                                        Forms\Components\TextInput::make('no_bpjs_kesehatan')
-                                            ->label('No. BPJS Kesehatan')
-                                            ->maxLength(20)
-                                            ->placeholder('0001XXXXXXXX'),
-
-                                        Forms\Components\TextInput::make('no_bpjs_ketenagakerjaan')
-                                            ->label('No. BPJS Ketenagakerjaan')
-                                            ->maxLength(20)
-                                            ->placeholder('XXXXXXXXXX'),
-
-                                        Forms\Components\TextInput::make('no_ktp')
-                                            ->label('No. KTP')
-                                            ->required()
-                                            ->unique(ignoreRecord: true)
-                                            ->maxLength(16)
-                                            ->placeholder('3201XXXXXXXXXXXX'),
-
-                                        Forms\Components\TextInput::make('no_npwp')
-                                            ->label('No. NPWP')
-                                            ->maxLength(20)
-                                            ->placeholder('XX.XXX.XXX.X-XXX.XXX'),
-
-                                        Forms\Components\TextInput::make('no_rekening')
-                                            ->label('No. Rekening Bank')
-                                            ->maxLength(20)
-                                            ->placeholder('Nomor rekening'),
-
-                                        Forms\Components\TextInput::make('nama_bank')
-                                            ->label('Nama Bank')
-                                            ->maxLength(100)
-                                            ->placeholder('Bank Mandiri, BCA, dll'),
-
-                                        Forms\Components\TextInput::make('nama_pemilik_rekening')
-                                            ->label('Nama Pemilik Rekening')
-                                            ->maxLength(255)
-                                            ->placeholder('Sesuai nama di buku tabungan'),
-
-                                        Forms\Components\Select::make('jenis_rekening')
-                                            ->label('Jenis Rekening')
+                                Forms\Components\Select::make('id_jaminan')
+                                    ->label('Pilih Jaminan')
+                                    ->relationship('jaminan', 'nama_jaminan')
+                                    ->searchable()
+                                    ->preload()
+                                    ->createOptionForm([
+                                        Forms\Components\TextInput::make('nama_jaminan')
+                                            ->required(),
+                                        Forms\Components\TextInput::make('nomor_jaminan'),
+                                        Forms\Components\Select::make('jenis_jaminan')
                                             ->options([
-                                                'tabungan' => 'Tabungan',
-                                                'giro' => 'Giro',
-                                                'deposito' => 'Deposito',
-                                            ])
-                                            ->default('tabungan'),
+                                                'BPJS Kesehatan' => 'BPJS Kesehatan',
+                                                'BPJS Ketenagakerjaan' => 'BPJS Ketenagakerjaan',
+                                                'Asuransi Swasta' => 'Asuransi Swasta',
+                                            ]),
                                     ]),
 
-                                Forms\Components\Section::make('Asuransi Tambahan')
-                                    ->schema([
-                                        Forms\Components\Grid::make(2)
-                                            ->schema([
-                                                Forms\Components\TextInput::make('asuransi_nama')
-                                                    ->label('Nama Asuransi')
-                                                    ->maxLength(255)
-                                                    ->placeholder('Nama perusahaan asuransi'),
+                            ]),
 
-                                                Forms\Components\TextInput::make('asuransi_no_polis')
-                                                    ->label('No. Polis')
-                                                    ->maxLength(50)
-                                                    ->placeholder('Nomor polis asuransi'),
+                        // Tab Jabatan
+                        Forms\Components\Tabs\Tab::make('Jabatan')
+                            ->icon('heroicon-o-briefcase')
+                            ->schema([
+                                Forms\Components\Select::make('id_jabatan')
+                                    ->label('Pilih Jabatan')
+                                    ->relationship('jabatan', 'nama_jabatan')
+                                    ->searchable()
+                                    ->preload()
+                                    ->createOptionForm([
+                                        Forms\Components\TextInput::make('nama_jabatan')
+                                            ->required(),
+                                        Forms\Components\Textarea::make('deskripsi_jabatan'),
+                                    ]),
 
-                                                Forms\Components\DatePicker::make('asuransi_mulai')
-                                                    ->label('Berlaku Mulai'),
+                            ]),
 
-                                                Forms\Components\DatePicker::make('asuransi_berakhir')
-                                                    ->label('Berlaku Hingga'),
-                                            ]),
-                                    ])
-                                    ->collapsible(),
+                        // Tab Posisi
+                        Forms\Components\Tabs\Tab::make('Posisi')
+                            ->icon('heroicon-o-map-pin')
+                            ->schema([
+                                Forms\Components\Select::make('id_posisi')
+                                    ->label('Pilih Posisi')
+                                    ->relationship('posisi', 'nama_posisi')
+                                    ->searchable()
+                                    ->preload()
+                                    ->createOptionForm([
+                                        Forms\Components\TextInput::make('nama_posisi')
+                                            ->required(),
+                                        Forms\Components\TextInput::make('divisi'),
+                                        Forms\Components\TextInput::make('departemen'),
+                                    ]),
+
+                            ]),
+
+                        // Tab Pendidikan
+                        Forms\Components\Tabs\Tab::make('Pendidikan')
+                            ->icon('heroicon-o-academic-cap')
+                            ->schema([
+                                Forms\Components\Select::make('id_pendidikan')
+                                    ->label('Pilih Pendidikan')
+                                    ->relationship('pendidikan', 'jenjang_pendidikan')
+                                    ->searchable()
+                                    ->preload()
+                                    ->createOptionForm([
+                                        Forms\Components\Select::make('jenjang_pendidikan')
+                                            ->options([
+                                                'SD' => 'SD',
+                                                'SMP' => 'SMP',
+                                                'SMA' => 'SMA',
+                                                'D3' => 'D3',
+                                                'S1' => 'S1',
+                                                'S2' => 'S2',
+                                                'S3' => 'S3',
+                                            ])
+                                            ->required(),
+                                        Forms\Components\TextInput::make('nama_institusi'),
+                                        Forms\Components\TextInput::make('jurusan'),
+                                        Forms\Components\TextInput::make('tahun_lulus')
+                                            ->numeric(),
+                                    ]),
+
+                            ]),
+
+                        // Tab Nomor Emergency
+                        Forms\Components\Tabs\Tab::make('Nomor Emergency')
+                            ->icon('heroicon-o-phone')
+                            ->schema([
+                                Forms\Components\Select::make('id_nomor_emergency')
+                                    ->label('Pilih Kontak Darurat')
+                                    ->relationship('nomorEmergency', 'nama_kontak')
+                                    ->searchable()
+                                    ->preload()
+                                    ->createOptionForm([
+                                        Forms\Components\TextInput::make('nama_kontak')
+                                            ->required(),
+                                        Forms\Components\TextInput::make('nomor_telepon')
+                                            ->tel()
+                                            ->required(),
+                                        Forms\Components\Select::make('hubungan')
+                                            ->options([
+                                                'Orang Tua' => 'Orang Tua',
+                                                'Suami/Istri' => 'Suami/Istri',
+                                                'Saudara' => 'Saudara',
+                                                'Teman' => 'Teman',
+                                            ])
+                                            ->required(),
+                                        Forms\Components\Textarea::make('alamat_kontak'),
+                                    ]),
+
                             ]),
                     ])
                     ->columnSpanFull()
@@ -406,8 +227,8 @@ class PegawaiResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('nip')
-                    ->label('NIP')
+                Tables\Columns\TextColumn::make('npp')
+                    ->label('NPP')
                     ->searchable()
                     ->sortable(),
 
@@ -419,21 +240,39 @@ class PegawaiResource extends Resource
                     ->searchable()
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('jabatan')
+                Tables\Columns\TextColumn::make('nik')
+                    ->label('NIK')
+                    ->searchable(),
+
+                Tables\Columns\BadgeColumn::make('status_pegawai')
+                    ->label('Status Pegawai')
+                    ->colors([
+                        'primary' => 'PTT',
+                        'success' => 'LS',
+                    ]),
+
+                Tables\Columns\BadgeColumn::make('status')
+                    ->colors([
+                        'success' => 'active',
+                        'danger' => 'resign',
+                    ]),
+
+                Tables\Columns\TextColumn::make('role_user')
+                    ->label('Role')
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
-                        'manager' => 'success',
-                        'supervisor' => 'warning',
-                        'staff' => 'primary',
-                        'intern' => 'gray',
+                        'super admin' => 'danger',
+                        'Kepala Bidang' => 'warning',
+                        'employee' => 'primary',
                     }),
 
-                Tables\Columns\TextColumn::make('divisi')
-                    ->sortable(),
+                Tables\Columns\TextColumn::make('jabatan.nama_jabatan')
+                    ->label('Jabatan')
+                    ->placeholder('Belum diset'),
 
-                Tables\Columns\IconColumn::make('is_active')
-                    ->label('Status')
-                    ->boolean(),
+                Tables\Columns\TextColumn::make('posisi.nama_posisi')
+                    ->label('Posisi')
+                    ->placeholder('Belum diset'),
 
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
@@ -441,25 +280,24 @@ class PegawaiResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                Tables\Filters\SelectFilter::make('jabatan')
+                Tables\Filters\SelectFilter::make('status_pegawai')
                     ->options([
-                        'manager' => 'Manager',
-                        'supervisor' => 'Supervisor',
-                        'staff' => 'Staff',
-                        'intern' => 'Intern',
+                        'PTT' => 'PTT',
+                        'LS' => 'LS',
                     ]),
 
-                Tables\Filters\SelectFilter::make('divisi')
+                Tables\Filters\SelectFilter::make('status')
                     ->options([
-                        'it' => 'IT',
-                        'hr' => 'Human Resources',
-                        'finance' => 'Finance',
-                        'operations' => 'Operations',
-                        'marketing' => 'Marketing',
+                        'active' => 'Active',
+                        'resign' => 'Resign',
                     ]),
 
-                Tables\Filters\TernaryFilter::make('is_active')
-                    ->label('Status Aktif'),
+                Tables\Filters\SelectFilter::make('role_user')
+                    ->options([
+                        'super admin' => 'Super Admin',
+                        'employee' => 'Employee',
+                        'Kepala Bidang' => 'Kepala Bidang',
+                    ]),
             ])
             ->actions([
                 Tables\Actions\ViewAction::make(),

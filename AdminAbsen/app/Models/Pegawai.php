@@ -12,72 +12,28 @@ class Pegawai extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
-        // Akses
-        'username',
-        'password',
-        'role',
-        'is_active',
-        'last_login',
-
-        // Informasi Umum
-        'nip',
+        // Users - sesuai ERD
         'nama',
+        'npp',
         'email',
-        'phone',
-        'gender',
-        'tanggal_lahir',
-        'tempat_lahir',
-        'agama',
-        'status_perkawinan',
-        'kewarganegaraan',
+        'password',
+        'nik',
         'alamat',
-        'jabatan',
-        'divisi',
-        'tanggal_masuk',
-        'status_karyawan',
+        'status_pegawai',
+        'status',
+        'role_user',
 
-        // Pendidikan
-        'pendidikan_terakhir',
-        'nama_sekolah',
-        'jurusan',
-        'tahun_lulus',
-        'ipk_nilai',
-        'akreditasi',
-        'sertifikat_keahlian',
-
-        // Emergency Contact
-        'emergency_contact_name',
-        'emergency_contact_relation',
-        'emergency_contact_phone',
-        'emergency_contact_phone_2',
-        'emergency_contact_address',
-        'emergency_contact_name_2',
-        'emergency_contact_relation_2',
-        'emergency_contact_phone_alt',
-
-        // Jaminan
-        'no_bpjs_kesehatan',
-        'no_bpjs_ketenagakerjaan',
-        'no_ktp',
-        'no_npwp',
-        'no_rekening',
-        'nama_bank',
-        'nama_pemilik_rekening',
-        'jenis_rekening',
-        'asuransi_nama',
-        'asuransi_no_polis',
-        'asuransi_mulai',
-        'asuransi_berakhir',
+        // Foreign Keys
+        'id_jaminan',
+        'id_jabatan',
+        'id_posisi',
+        'id_nomor_emergency',
+        'id_pendidikan',
     ];
 
     protected $casts = [
-        'tanggal_lahir' => 'date',
-        'tanggal_masuk' => 'date',
-        'last_login' => 'datetime',
-        'is_active' => 'boolean',
-        'ipk_nilai' => 'decimal:2',
-        'asuransi_mulai' => 'date',
-        'asuransi_berakhir' => 'date',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
     ];
 
     protected $hidden = [
@@ -90,5 +46,31 @@ class Pegawai extends Model
         if ($value) {
             $this->attributes['password'] = Hash::make($value);
         }
+    }
+
+    // Relationships berdasarkan Foreign Keys di ERD
+    // public function jaminan()
+    // {
+    //     return $this->belongsTo(Jaminan::class, 'id_jaminan');
+    // }
+
+    // public function jabatan()
+    // {
+    //     return $this->belongsTo(Jabatan::class, 'id_jabatan');
+    // }
+
+    // public function posisi()
+    // {
+    //     return $this->belongsTo(Posisi::class, 'id_posisi');
+    // }
+
+    // public function nomorEmergency()
+    // {
+    //     return $this->belongsTo(NomorEmergency::class, 'id_nomor_emergency');
+    // }
+
+    public function pendidikan()
+    {
+        return $this->belongsTo(Pendidikan::class, 'id_pendidikan');
     }
 }
