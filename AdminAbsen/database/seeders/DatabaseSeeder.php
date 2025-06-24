@@ -17,6 +17,7 @@ class DatabaseSeeder extends Seeder
             JabatanSeeder::class,
             PosisiSeeder::class,
             PegawaiSeeder::class,
+            IzinSeeder::class,
         ]);
 
         // User::factory(10)->create();
