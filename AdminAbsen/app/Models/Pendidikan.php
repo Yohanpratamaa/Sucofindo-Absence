@@ -16,27 +16,21 @@ class Pendidikan extends Model
         'jenjang',
         'nama_univ',
         'jurusan',
+        'fakultas_program_studi',
         'thn_masuk',
         'thn_lulus',
         'ipk',
         'gelar',
+        'ijazah_path',
     ];
 
     protected $casts = [
         'thn_masuk' => 'date',
         'thn_lulus' => 'date',
-        'ipk' => 'integer',
-        'created_at' => 'datetime',
-        'updated_at' => 'datetime',
     ];
 
-    // public function pegawai()
-    // {
-    //     return $this->belongsTo(Pegawai::class, 'user_id');
-    // }
-
-    public function pegawais()
+    public function pegawai()
     {
-        return $this->hasMany(Pegawai::class, 'id_pendidikan');
+        return $this->belongsTo(Pegawai::class, 'user_id');
     }
 }

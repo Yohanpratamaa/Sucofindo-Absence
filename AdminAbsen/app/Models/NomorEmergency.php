@@ -12,9 +12,11 @@ class NomorEmergency extends Model
     protected $table = 'nomor_emergencies';
 
     protected $fillable = [
+        'user_id',
         'relationship',
         'nama',
         'no_emergency',
+        'alamat',
     ];
 
     protected $casts = [
@@ -22,8 +24,8 @@ class NomorEmergency extends Model
         'updated_at' => 'datetime',
     ];
 
-    public function pegawais()
+    public function pegawai()
     {
-        return $this->hasMany(Pegawai::class, 'id_nomor_emergency');
+        return $this->belongsTo(Pegawai::class, 'user_id');
     }
 }

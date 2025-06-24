@@ -12,14 +12,26 @@ class Fasilitas extends Model
     protected $table = 'fasilitas';
 
     protected $fillable = [
+        'user_id',
         'nama_jaminan',
         'no_jaminan',
+        'jenis_fasilitas',
+        'provider',
+        'nilai_fasilitas',
+        'tanggal_mulai',
+        'tanggal_berakhir',
+        'status_fasilitas',
+        'keterangan',
+        'dokumen_path',
         'transport',
         'overtime_id',
         'payroll',
     ];
 
     protected $casts = [
+        'tanggal_mulai' => 'date',
+        'tanggal_berakhir' => 'date',
+        'nilai_fasilitas' => 'integer',
         'transport' => 'integer',
         'overtime_id' => 'integer',
         'payroll' => 'integer',
@@ -28,8 +40,8 @@ class Fasilitas extends Model
     ];
 
     // Relationship dengan Pegawai
-    public function pegawais()
+    public function pegawai()
     {
-        return $this->hasMany(Pegawai::class, 'id_fasilitas');
+        return $this->belongsTo(Pegawai::class, 'user_id');
     }
 }

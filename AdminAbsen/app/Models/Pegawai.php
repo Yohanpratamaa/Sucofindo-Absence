@@ -12,7 +12,7 @@ class Pegawai extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
-        // Users - sesuai ERD
+        // Tab Users - Data Dasar
         'nama',
         'npp',
         'email',
@@ -22,26 +22,24 @@ class Pegawai extends Model
         'status_pegawai',
         'status',
         'role_user',
+        'nomor_handphone',
 
-        // Foreign Keys
-        'id_fasilitas',
-        'id_jabatan',
-        'id_posisi',
-        'id_nomor_emergency',
-        'id_pendidikan',
+        // Tab Jabatan - Data langsung tanpa foreign key
+        'jabatan_nama',
+        'jabatan_tunjangan',
 
-        // Data JSON untuk repeater
+        // Tab Posisi - Data langsung tanpa foreign key
+        'posisi_nama',
+        'posisi_tunjangan',
+
+        // Tab Pendidikan - Data JSON array
         'pendidikan_list',
-        'emergency_contacts',
-        'fasilitas_list', // Tambahan untuk fasilitas list
 
-        // Data fasilitas langsung (untuk backward compatibility)
-        'nama_jaminan',
-        'no_jaminan',
-        'transport',
-        'overtime_rate',
-        'payroll',
-        'keterangan_fasilitas',
+        // Tab Emergency - Data JSON array
+        'emergency_contacts',
+
+        // Tab Fasilitas - Data JSON array
+        'fasilitas_list',
     ];
 
     protected $casts = [
@@ -49,10 +47,9 @@ class Pegawai extends Model
         'updated_at' => 'datetime',
         'pendidikan_list' => 'array',
         'emergency_contacts' => 'array',
-        'fasilitas_list' => 'array', // Cast ke array
-        'transport' => 'integer',
-        'overtime_rate' => 'integer',
-        'payroll' => 'integer',
+        'fasilitas_list' => 'array',
+        'jabatan_tunjangan' => 'decimal:2',
+        'posisi_tunjangan' => 'decimal:2',
     ];
 
     protected $hidden = [
@@ -67,49 +64,83 @@ class Pegawai extends Model
         }
     }
 
-    // Relationships berdasarkan Foreign Keys di ERD
-    public function fasilitas()
-    {
-        return $this->belongsTo(Fasilitas::class, 'id_fasilitas');
-    }
-
-    public function jabatan()
-    {
-        return $this->belongsTo(Jabatan::class, 'id_jabatan');
-    }
-
-    public function posisi()
-    {
-        return $this->belongsTo(Posisi::class, 'id_posisi');
-    }
-
-    public function nomorEmergency()
-    {
-        return $this->belongsTo(NomorEmergency::class, 'id_nomor_emergency');
-    }
-
-    public function pendidikan()
-    {
-        return $this->belongsTo(Pendidikan::class, 'id_pendidikan');
-    }
-
-    // Accessor untuk menghitung total nilai fasilitas
+    // Accessor untuk total nilai fasilitas dari JSON
     public function getTotalNilaiFasilitasAttribute()
     {
         if (!$this->fasilitas_list) {
             return 0;
         }
 
-        return collect($this->fasilitas_list)->sum('nilai_fasilitas');
+        return collect($this->fasilitas_list)->sum('nilai_fasilitas') ?? 0;
     }
 
-    // Accessor untuk mendapatkan fasilitas aktif
-    public function getFasilitasAktifAttribute()
+    // Accessor untuk jumlah fasilitas
+    public function getJumlahFasilitasAttribute()
     {
         if (!$this->fasilitas_list) {
-            return collect([]);
+            return 0;
         }
 
-        return collect($this->fasilitas_list)->where('status_fasilitas', 'aktif');
+        return count($this->fasilitas_list);
+    }
+
+    // Accessor untuk pendidikan terakhir
+    public function getPendidikanTerakhirAttribute()
+    {
+        if (!$this->pendidikan_list) {
+            return null;
+        }
+
+        $pendidikan = collect($this->pendidikan_list)->sortByDesc('thn_lulus')->first();
+        return $pendidikan;
+    }
+
+    // Accessor untuk kontak darurat utama
+    public function getKontakDaruratUtamaAttribute()
+    {
+        if (!$this->emergency_contacts) {
+            return null;
+        }
+
+        return collect($this->emergency_contacts)->first();
+    }
+
+    // Method untuk mendapatkan total tunjangan
+    public function getTotalTunjanganAttribute()
+    {
+        return ($this->jabatan_tunjangan ?? 0) + ($this->posisi_tunjangan ?? 0);
+    }
+
+    // Method untuk format nama lengkap
+    public function getNamaLengkapAttribute()
+    {
+        return $this->nama . ' (' . $this->npp . ')';
+    }
+
+    // Scope untuk filter berdasarkan status
+    public function scopeActive($query)
+    {
+        return $query->where('status', 'active');
+    }
+
+    public function scopeResign($query)
+    {
+        return $query->where('status', 'resign');
+    }
+
+    // Scope untuk filter berdasarkan role
+    public function scopeEmployee($query)
+    {
+        return $query->where('role_user', 'employee');
+    }
+
+    public function scopeSuperAdmin($query)
+    {
+        return $query->where('role_user', 'super admin');
+    }
+
+    public function scopeKepalaBidang($query)
+    {
+        return $query->where('role_user', 'Kepala Bidang');
     }
 }

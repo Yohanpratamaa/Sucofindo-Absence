@@ -5,11 +5,6 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\PegawaiResource\Pages;
 use App\Filament\Resources\PegawaiResource\RelationManagers;
 use App\Models\Pegawai;
-use App\Models\Jabatan;
-use App\Models\Posisi;
-use App\Models\Pendidikan;
-use App\Models\NomorEmergency;
-use App\Models\Fasilitas;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -126,47 +121,17 @@ class PegawaiResource extends Resource
                                     ->schema([
                                         Forms\Components\Grid::make(2)
                                             ->schema([
-                                                Forms\Components\Select::make('id_jabatan')
-                                                    ->label('Pilih Jabatan yang Sudah Ada')
-                                                    ->options(fn () => Jabatan::pluck('nama', 'id'))
-                                                    ->searchable()
-                                                    ->nullable()
-                                                    ->placeholder('Pilih jabatan yang sudah ada')
-                                                    ->reactive()
-                                                    ->afterStateUpdated(function ($state, callable $set) {
-                                                        if ($state) {
-                                                            $jabatan = Jabatan::find($state);
-                                                            if ($jabatan) {
-                                                                $set('jabatan_nama', $jabatan->nama);
-                                                                $set('jabatan_tunjangan', $jabatan->tunjangan);
-                                                            }
-                                                        }
-                                                    }),
-
-                                                Forms\Components\Toggle::make('create_new_jabatan')
-                                                    ->label('Buat Jabatan Baru')
-                                                    ->reactive()
-                                                    ->afterStateUpdated(function ($state, callable $set) {
-                                                        if ($state) {
-                                                            $set('id_jabatan', null);
-                                                            $set('jabatan_nama', null);
-                                                            $set('jabatan_tunjangan', null);
-                                                        }
-                                                    }),
-
                                                 Forms\Components\TextInput::make('jabatan_nama')
                                                     ->label('Nama Jabatan')
-                                                    ->placeholder('Masukkan nama jabatan baru')
-                                                    ->visible(fn (callable $get) => $get('create_new_jabatan'))
-                                                    ->required(fn (callable $get) => $get('create_new_jabatan')),
+                                                    ->placeholder('Masukkan nama jabatan')
+                                                    ->required(),
 
                                                 Forms\Components\TextInput::make('jabatan_tunjangan')
                                                     ->label('Tunjangan Jabatan')
                                                     ->numeric()
                                                     ->prefix('Rp')
                                                     ->placeholder('0')
-                                                    ->visible(fn (callable $get) => $get('create_new_jabatan'))
-                                                    ->required(fn (callable $get) => $get('create_new_jabatan')),
+                                                    ->default(0),
                                             ]),
                                     ]),
                             ]),
@@ -181,47 +146,17 @@ class PegawaiResource extends Resource
                                     ->schema([
                                         Forms\Components\Grid::make(2)
                                             ->schema([
-                                                Forms\Components\Select::make('id_posisi')
-                                                    ->label('Pilih Posisi yang Sudah Ada')
-                                                    ->options(fn () => Posisi::pluck('nama', 'id'))
-                                                    ->searchable()
-                                                    ->nullable()
-                                                    ->placeholder('Pilih posisi yang sudah ada')
-                                                    ->reactive()
-                                                    ->afterStateUpdated(function ($state, callable $set) {
-                                                        if ($state) {
-                                                            $posisi = Posisi::find($state);
-                                                            if ($posisi) {
-                                                                $set('posisi_nama', $posisi->nama);
-                                                                $set('posisi_tunjangan', $posisi->tunjangan);
-                                                            }
-                                                        }
-                                                    }),
-
-                                                Forms\Components\Toggle::make('create_new_posisi')
-                                                    ->label('Buat Posisi Baru')
-                                                    ->reactive()
-                                                    ->afterStateUpdated(function ($state, callable $set) {
-                                                        if ($state) {
-                                                            $set('id_posisi', null);
-                                                            $set('posisi_nama', null);
-                                                            $set('posisi_tunjangan', null);
-                                                        }
-                                                    }),
-
                                                 Forms\Components\TextInput::make('posisi_nama')
                                                     ->label('Nama Posisi')
-                                                    ->placeholder('Masukkan nama posisi baru')
-                                                    ->visible(fn (callable $get) => $get('create_new_posisi'))
-                                                    ->required(fn (callable $get) => $get('create_new_posisi')),
+                                                    ->placeholder('Masukkan nama posisi')
+                                                    ->required(),
 
                                                 Forms\Components\TextInput::make('posisi_tunjangan')
                                                     ->label('Tunjangan Posisi')
                                                     ->numeric()
                                                     ->prefix('Rp')
                                                     ->placeholder('0')
-                                                    ->visible(fn (callable $get) => $get('create_new_posisi'))
-                                                    ->required(fn (callable $get) => $get('create_new_posisi')),
+                                                    ->default(0),
                                             ]),
                                     ]),
                             ]),
@@ -358,12 +293,10 @@ class PegawaiResource extends Resource
                                             ->schema([
                                                 Forms\Components\TextInput::make('nama_jaminan')
                                                     ->label('Nama Jaminan')
-                                                    ->required()
                                                     ->placeholder('Contoh: BPJS Kesehatan, BPJS Ketenagakerjaan, Asuransi Jiwa'),
 
                                                 Forms\Components\TextInput::make('no_jaminan')
                                                     ->label('No Jaminan')
-                                                    ->required()
                                                     ->placeholder('Nomor kartu jaminan')
                                                     ->maxLength(50),
 
@@ -433,6 +366,11 @@ class PegawaiResource extends Resource
                     ->label('NIK')
                     ->searchable(),
 
+                Tables\Columns\TextColumn::make('nomor_handphone')
+                    ->label('No HP')
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+
                 Tables\Columns\BadgeColumn::make('status_pegawai')
                     ->label('Status Pegawai')
                     ->colors([
@@ -455,15 +393,15 @@ class PegawaiResource extends Resource
                         'employee' => 'primary',
                     }),
 
-                Tables\Columns\TextColumn::make('jabatan.nama')
+                Tables\Columns\TextColumn::make('jabatan_nama')
                     ->label('Jabatan')
                     ->placeholder('Belum diset'),
 
-                Tables\Columns\TextColumn::make('posisi.nama')
+                Tables\Columns\TextColumn::make('posisi_nama')
                     ->label('Posisi')
                     ->placeholder('Belum diset'),
 
-                // Tambahan kolom untuk fasilitas
+                // Kolom untuk fasilitas dari JSON
                 Tables\Columns\TextColumn::make('total_nilai_fasilitas')
                     ->label('Total Fasilitas')
                     ->money('IDR')
@@ -475,7 +413,7 @@ class PegawaiResource extends Resource
                 Tables\Columns\TextColumn::make('jumlah_fasilitas')
                     ->label('Jml Fasilitas')
                     ->getStateUsing(function ($record) {
-                        return $record->fasilitas_list ? count($record->fasilitas_list) : 0;
+                        return $record->jumlah_fasilitas;
                     })
                     ->badge()
                     ->color('success')
