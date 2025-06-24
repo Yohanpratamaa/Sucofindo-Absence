@@ -50,7 +50,7 @@ class PosisiResource extends Resource
                         'active' => 'Active',
                         'inactive' => 'Inactive',
                     ])
-                    ->default('active')
+                    ->default('status')
                     ->required()
                     ->native(false),
             ]);

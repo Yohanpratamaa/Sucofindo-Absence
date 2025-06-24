@@ -58,7 +58,7 @@ class JabatanResource extends Resource
                                         'active' => 'Active',
                                         'inactive' => 'Inactive',
                                     ])
-                                    ->default('active')
+                                    ->default('status')
                                     ->required(),
 
                                 Forms\Components\Textarea::make('deskripsi')
