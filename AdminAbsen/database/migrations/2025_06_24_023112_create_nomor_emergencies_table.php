@@ -13,7 +13,11 @@ return new class extends Migration
     {
         Schema::create('nomor_emergencies', function (Blueprint $table) {
             $table->id();
-            $table->timestamps();
+            $table->string('relationship');
+            $table->string('nama');
+            $table->string('no_emergency');
+            $table->timestamp('created_at');
+            $table->timestamp('updated_at');
         });
     }
 

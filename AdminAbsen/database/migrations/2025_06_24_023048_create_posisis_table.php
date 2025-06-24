@@ -13,7 +13,10 @@ return new class extends Migration
     {
         Schema::create('posisis', function (Blueprint $table) {
             $table->id();
-            $table->timestamps();
+            $table->string('nama');
+            $table->integer('tunjangan');
+            $table->timestamp('created_at');
+            $table->timestamp('updated_at');
         });
     }
 

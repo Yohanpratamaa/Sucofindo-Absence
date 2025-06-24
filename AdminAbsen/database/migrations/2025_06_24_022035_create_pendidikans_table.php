@@ -13,7 +13,19 @@ return new class extends Migration
     {
         Schema::create('pendidikans', function (Blueprint $table) {
             $table->id();
-            $table->timestamps();
+            $table->unsignedBigInteger('user_id')->nullable();
+            $table->string('jenjang');
+            $table->string('nama_univ');
+            $table->string('jurusan');
+            $table->date('thn_masuk');
+            $table->date('thn_lulus');
+            $table->integer('ipk');
+            $table->string('gelar', 255);
+            $table->timestamp('created_at');
+            $table->timestamp('updated_at');
+
+            // Foreign key constraint
+            $table->foreign('user_id')->references('id')->on('pegawais')->onDelete('cascade');
         });
     }
 

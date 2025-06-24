@@ -24,28 +24,6 @@ class FilamentServiceProvider extends ServiceProvider
                     ->activeIcon('heroicon-s-home')
                     ->url(route('filament.admin.pages.dashboard'))
                     ->isActiveWhen(fn () => request()->routeIs('filament.admin.pages.dashboard')),
-
-                NavigationGroup::make('Master Data')
-                    ->items([
-                        NavigationItem::make('Pegawai')
-                            ->icon('heroicon-o-users')
-                            ->activeIcon('heroicon-s-users')
-                            ->url(route('filament.admin.resources.pegawais.index'))
-                            ->isActiveWhen(fn () => request()->routeIs('filament.admin.resources.pegawais.*')),
-                    ]),
-
-                NavigationGroup::make('Absensi')
-                    ->items([
-                        NavigationItem::make('Data Absensi')
-                            ->icon('heroicon-o-clock')
-                            ->activeIcon('heroicon-s-clock')
-                            ->url('#'),
-
-                        NavigationItem::make('Laporan Absensi')
-                            ->icon('heroicon-o-document-text')
-                            ->activeIcon('heroicon-s-document-text')
-                            ->url('#'),
-                    ]),
             ]);
         });
     }

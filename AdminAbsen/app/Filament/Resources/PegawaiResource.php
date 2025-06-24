@@ -5,6 +5,11 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\PegawaiResource\Pages;
 use App\Filament\Resources\PegawaiResource\RelationManagers;
 use App\Models\Pegawai;
+use App\Models\Jabatan;
+use App\Models\Posisi;
+use App\Models\Pendidikan;
+use App\Models\NomorEmergency;
+use App\Models\Fasilitas;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -21,9 +26,8 @@ class PegawaiResource extends Resource
 
     protected static ?string $navigationLabel = 'Data Pegawai';
 
-    // protected static ?string $navigationGroup = 'Master Data';
-
     protected static ?string $modelLabel = 'Pegawai';
+
     protected static ?string $pluralModelLabel = 'Data Pegawai';
 
     protected static ?int $navigationSort = 1;
@@ -33,9 +37,11 @@ class PegawaiResource extends Resource
         return $form
             ->schema([
                 Forms\Components\Tabs::make('Tabs')
+                    ->id('pegawai-tabs') // Add ID for JavaScript targeting
                     ->tabs([
                         Forms\Components\Tabs\Tab::make('Users')
-                            ->icon('heroicon-o-user-group')
+                            ->id('users-tab') // Add ID for each tab
+                            ->icon('heroicon-o-user')
                             ->schema([
                                 Forms\Components\Grid::make(2)
                                     ->schema([
@@ -71,10 +77,6 @@ class PegawaiResource extends Resource
                                             ->maxLength(255)
                                             ->placeholder('Masukkan NIK'),
 
-                                        Forms\Components\Textarea::make('alamat')
-                                            ->rows(3)
-                                            ->placeholder('Alamat lengkap'),
-
                                         Forms\Components\Select::make('status_pegawai')
                                             ->label('Status Pegawai')
                                             ->options([
@@ -82,6 +84,13 @@ class PegawaiResource extends Resource
                                                 'LS' => 'LS',
                                             ])
                                             ->required(),
+
+                                        Forms\Components\TextInput::make('nomor_handphone')
+                                            ->numeric()
+                                            ->label('Nomor Handphone')
+                                            ->required()
+                                            ->maxLength(15)
+                                            ->placeholder('Masukkan nomor handphone'),
 
                                         Forms\Components\Select::make('status')
                                             ->options([
@@ -99,123 +108,303 @@ class PegawaiResource extends Resource
                                                 'Kepala Bidang' => 'Kepala Bidang',
                                             ])
                                             ->required(),
-                                    ]),
 
+                                        Forms\Components\Textarea::make('alamat')
+                                            ->rows(3)
+                                            ->columnSpanFull()
+                                            ->placeholder('Alamat lengkap'),
+                                    ]),
                             ]),
 
-                        // Tab Jaminan
-                        Forms\Components\Tabs\Tab::make('Jaminan')
-                            ->icon('heroicon-o-shield-check')
-                            ->schema([
-                                Forms\Components\Select::make('id_jaminan')
-                                    ->label('Pilih Jaminan')
-                                    ->relationship('jaminan', 'nama_jaminan')
-                                    ->searchable()
-                                    ->preload()
-                                    ->createOptionForm([
-                                        Forms\Components\TextInput::make('nama_jaminan')
-                                            ->required(),
-                                        Forms\Components\TextInput::make('nomor_jaminan'),
-                                        Forms\Components\Select::make('jenis_jaminan')
-                                            ->options([
-                                                'BPJS Kesehatan' => 'BPJS Kesehatan',
-                                                'BPJS Ketenagakerjaan' => 'BPJS Ketenagakerjaan',
-                                                'Asuransi Swasta' => 'Asuransi Swasta',
-                                            ]),
-                                    ]),
-
-                            ]),
-
-                        // Tab Jabatan
+                        // Tab Jabatan - Form Manual
                         Forms\Components\Tabs\Tab::make('Jabatan')
+                            ->id('jabatan-tab')
                             ->icon('heroicon-o-briefcase')
                             ->schema([
-                                Forms\Components\Select::make('id_jabatan')
-                                    ->label('Pilih Jabatan')
-                                    ->relationship('jabatan', 'nama_jabatan')
-                                    ->searchable()
-                                    ->preload()
-                                    ->createOptionForm([
-                                        Forms\Components\TextInput::make('nama_jabatan')
-                                            ->required(),
-                                        Forms\Components\Textarea::make('deskripsi_jabatan'),
-                                    ]),
+                                Forms\Components\Section::make('Data Jabatan')
+                                    ->description('Isi data jabatan pegawai')
+                                    ->schema([
+                                        Forms\Components\Grid::make(2)
+                                            ->schema([
+                                                Forms\Components\Select::make('id_jabatan')
+                                                    ->label('Pilih Jabatan yang Sudah Ada')
+                                                    ->options(fn () => Jabatan::pluck('nama', 'id'))
+                                                    ->searchable()
+                                                    ->nullable()
+                                                    ->placeholder('Pilih jabatan yang sudah ada')
+                                                    ->reactive()
+                                                    ->afterStateUpdated(function ($state, callable $set) {
+                                                        if ($state) {
+                                                            $jabatan = Jabatan::find($state);
+                                                            if ($jabatan) {
+                                                                $set('jabatan_nama', $jabatan->nama);
+                                                                $set('jabatan_tunjangan', $jabatan->tunjangan);
+                                                            }
+                                                        }
+                                                    }),
 
+                                                Forms\Components\Toggle::make('create_new_jabatan')
+                                                    ->label('Buat Jabatan Baru')
+                                                    ->reactive()
+                                                    ->afterStateUpdated(function ($state, callable $set) {
+                                                        if ($state) {
+                                                            $set('id_jabatan', null);
+                                                            $set('jabatan_nama', null);
+                                                            $set('jabatan_tunjangan', null);
+                                                        }
+                                                    }),
+
+                                                Forms\Components\TextInput::make('jabatan_nama')
+                                                    ->label('Nama Jabatan')
+                                                    ->placeholder('Masukkan nama jabatan baru')
+                                                    ->visible(fn (callable $get) => $get('create_new_jabatan'))
+                                                    ->required(fn (callable $get) => $get('create_new_jabatan')),
+
+                                                Forms\Components\TextInput::make('jabatan_tunjangan')
+                                                    ->label('Tunjangan Jabatan')
+                                                    ->numeric()
+                                                    ->prefix('Rp')
+                                                    ->placeholder('0')
+                                                    ->visible(fn (callable $get) => $get('create_new_jabatan'))
+                                                    ->required(fn (callable $get) => $get('create_new_jabatan')),
+                                            ]),
+                                    ]),
                             ]),
 
-                        // Tab Posisi
+                        // Tab Posisi - Form Manual
                         Forms\Components\Tabs\Tab::make('Posisi')
-                            ->icon('heroicon-o-map-pin')
+                            ->id('posisi-tab')
+                            ->icon('heroicon-o-users')
                             ->schema([
-                                Forms\Components\Select::make('id_posisi')
-                                    ->label('Pilih Posisi')
-                                    ->relationship('posisi', 'nama_posisi')
-                                    ->searchable()
-                                    ->preload()
-                                    ->createOptionForm([
-                                        Forms\Components\TextInput::make('nama_posisi')
-                                            ->required(),
-                                        Forms\Components\TextInput::make('divisi'),
-                                        Forms\Components\TextInput::make('departemen'),
-                                    ]),
+                                Forms\Components\Section::make('Data Posisi')
+                                    ->description('Isi data posisi pegawai')
+                                    ->schema([
+                                        Forms\Components\Grid::make(2)
+                                            ->schema([
+                                                Forms\Components\Select::make('id_posisi')
+                                                    ->label('Pilih Posisi yang Sudah Ada')
+                                                    ->options(fn () => Posisi::pluck('nama', 'id'))
+                                                    ->searchable()
+                                                    ->nullable()
+                                                    ->placeholder('Pilih posisi yang sudah ada')
+                                                    ->reactive()
+                                                    ->afterStateUpdated(function ($state, callable $set) {
+                                                        if ($state) {
+                                                            $posisi = Posisi::find($state);
+                                                            if ($posisi) {
+                                                                $set('posisi_nama', $posisi->nama);
+                                                                $set('posisi_tunjangan', $posisi->tunjangan);
+                                                            }
+                                                        }
+                                                    }),
 
+                                                Forms\Components\Toggle::make('create_new_posisi')
+                                                    ->label('Buat Posisi Baru')
+                                                    ->reactive()
+                                                    ->afterStateUpdated(function ($state, callable $set) {
+                                                        if ($state) {
+                                                            $set('id_posisi', null);
+                                                            $set('posisi_nama', null);
+                                                            $set('posisi_tunjangan', null);
+                                                        }
+                                                    }),
+
+                                                Forms\Components\TextInput::make('posisi_nama')
+                                                    ->label('Nama Posisi')
+                                                    ->placeholder('Masukkan nama posisi baru')
+                                                    ->visible(fn (callable $get) => $get('create_new_posisi'))
+                                                    ->required(fn (callable $get) => $get('create_new_posisi')),
+
+                                                Forms\Components\TextInput::make('posisi_tunjangan')
+                                                    ->label('Tunjangan Posisi')
+                                                    ->numeric()
+                                                    ->prefix('Rp')
+                                                    ->placeholder('0')
+                                                    ->visible(fn (callable $get) => $get('create_new_posisi'))
+                                                    ->required(fn (callable $get) => $get('create_new_posisi')),
+                                            ]),
+                                    ]),
                             ]),
 
-                        // Tab Pendidikan
+                        // Tab Pendidikan - Sesuai dengan gambar
                         Forms\Components\Tabs\Tab::make('Pendidikan')
+                            ->id('pendidikan-tab')
                             ->icon('heroicon-o-academic-cap')
                             ->schema([
-                                Forms\Components\Select::make('id_pendidikan')
-                                    ->label('Pilih Pendidikan')
-                                    ->relationship('pendidikan', 'jenjang_pendidikan')
-                                    ->searchable()
-                                    ->preload()
-                                    ->createOptionForm([
-                                        Forms\Components\Select::make('jenjang_pendidikan')
-                                            ->options([
-                                                'SD' => 'SD',
-                                                'SMP' => 'SMP',
-                                                'SMA' => 'SMA',
-                                                'D3' => 'D3',
-                                                'S1' => 'S1',
-                                                'S2' => 'S2',
-                                                'S3' => 'S3',
-                                            ])
-                                            ->required(),
-                                        Forms\Components\TextInput::make('nama_institusi'),
-                                        Forms\Components\TextInput::make('jurusan'),
-                                        Forms\Components\TextInput::make('tahun_lulus')
-                                            ->numeric(),
-                                    ]),
+                                Forms\Components\Repeater::make('pendidikan_list')
+                                    ->label('Data Pendidikan')
+                                    ->schema([
+                                        Forms\Components\Grid::make(2)
+                                            ->schema([
+                                                Forms\Components\Select::make('jenjang')
+                                                    ->label('Jenjang')
+                                                    ->options([
+                                                        'SD' => 'SD',
+                                                        'SMP' => 'SMP',
+                                                        'SMA' => 'SMA',
+                                                        'SMK' => 'SMK',
+                                                        'D3' => 'D3',
+                                                        'S1' => 'S1',
+                                                        'S2' => 'S2',
+                                                        'S3' => 'S3',
+                                                    ])
+                                                    ->required()
+                                                    ->placeholder('Pilih jenjang'),
 
+                                                Forms\Components\TextInput::make('sekolah_univ')
+                                                    ->label('Sekolah / Univ')
+                                                    ->required()
+                                                    ->placeholder('Nama sekolah/universitas'),
+
+                                                Forms\Components\TextInput::make('fakultas_program_studi')
+                                                    ->label('Fakultas')
+                                                    ->placeholder('Nama fakultas '),
+
+                                                Forms\Components\TextInput::make('jurusan')
+                                                    ->label('Jurusan')
+                                                    ->placeholder('Nama jurusan'),
+
+                                                Forms\Components\DatePicker::make('thn_masuk')
+                                                    ->label('Thn Masuk')
+                                                    ->displayFormat('Y')
+                                                    ->format('Y-m-d'),
+
+                                                Forms\Components\DatePicker::make('thn_lulus')
+                                                    ->label('Thn Lulus')
+                                                    ->displayFormat('Y')
+                                                    ->format('Y-m-d'),
+
+                                                Forms\Components\TextInput::make('ipk_nilai')
+                                                    ->label('IPK / Nilai')
+                                                    ->placeholder('Contoh: 3.50 atau 85'),
+
+                                                Forms\Components\FileUpload::make('ijazah')
+                                                    ->label('Ijazah')
+                                                    ->acceptedFileTypes(['application/pdf'])
+                                                    ->maxSize(5120) // 5MB
+                                                    ->helperText('File dengan format PDF')
+                                                    ->directory('ijazah')
+                                                    ->visibility('private'),
+                                            ]),
+                                    ])
+                                    ->addActionLabel('Tambah Pendidikan')
+                                    ->defaultItems(1)
+                                    ->collapsible()
+                                    ->itemLabel(fn (array $state): ?string =>
+                                        isset($state['jenjang']) && isset($state['sekolah_univ'])
+                                            ? "{$state['jenjang']} - {$state['sekolah_univ']}"
+                                            : 'Pendidikan Baru'
+                                    ),
                             ]),
 
-                        // Tab Nomor Emergency
+                        // Tab Nomor Emergency - Sesuai dengan gambar
                         Forms\Components\Tabs\Tab::make('Nomor Emergency')
+                            ->id('emergency-tab')
                             ->icon('heroicon-o-phone')
                             ->schema([
-                                Forms\Components\Select::make('id_nomor_emergency')
-                                    ->label('Pilih Kontak Darurat')
-                                    ->relationship('nomorEmergency', 'nama_kontak')
-                                    ->searchable()
-                                    ->preload()
-                                    ->createOptionForm([
-                                        Forms\Components\TextInput::make('nama_kontak')
-                                            ->required(),
-                                        Forms\Components\TextInput::make('nomor_telepon')
-                                            ->tel()
-                                            ->required(),
-                                        Forms\Components\Select::make('hubungan')
-                                            ->options([
-                                                'Orang Tua' => 'Orang Tua',
-                                                'Suami/Istri' => 'Suami/Istri',
-                                                'Saudara' => 'Saudara',
-                                                'Teman' => 'Teman',
-                                            ])
-                                            ->required(),
-                                        Forms\Components\Textarea::make('alamat_kontak'),
-                                    ]),
+                                Forms\Components\Repeater::make('emergency_contacts')
+                                    ->label('Kontak Darurat')
+                                    ->schema([
+                                        Forms\Components\Grid::make(1)
+                                            ->schema([
+                                                Forms\Components\Select::make('relationship')
+                                                    ->label('Hubungan')
+                                                    ->options([
+                                                        'Ayah' => 'Ayah',
+                                                        'Ibu' => 'Ibu',
+                                                        'Suami' => 'Suami',
+                                                        'Istri' => 'Istri',
+                                                        'Anak' => 'Anak',
+                                                        'Saudara Kandung' => 'Saudara Kandung',
+                                                        'Saudara' => 'Saudara',
+                                                        'Teman' => 'Teman',
+                                                        'Lainnya' => 'Lainnya',
+                                                    ])
+                                                    ->required()
+                                                    ->placeholder('Pilih hubungan'),
 
+                                                Forms\Components\TextInput::make('nama_kontak')
+                                                    ->label('Nama')
+                                                    ->required()
+                                                    ->placeholder('Nama lengkap kontak darurat'),
+
+                                                Forms\Components\TextInput::make('no_emergency')
+                                                    ->label('No Emergency')
+                                                    ->tel()
+                                                    ->required()
+                                                    ->placeholder('Contoh: 081234567890')
+                                                    ->maxLength(15),
+                                            ]),
+                                    ])
+                                    ->addActionLabel('Tambah Kontak Darurat')
+                                    ->defaultItems(1)
+                                    ->collapsible()
+                                    ->itemLabel(fn (array $state): ?string =>
+                                        isset($state['nama_kontak']) && isset($state['relationship'])
+                                            ? "{$state['nama_kontak']} ({$state['relationship']})"
+                                            : 'Kontak Darurat Baru'
+                                    ),
+                            ]),
+
+                        // Tab Fasilitas - Dengan Repeater seperti Pendidikan
+                        Forms\Components\Tabs\Tab::make('Fasilitas')
+                            ->id('fasilitas-tab')
+                            ->icon('heroicon-o-gift')
+                            ->schema([
+                                Forms\Components\Repeater::make('fasilitas_list')
+                                    ->label('Data Fasilitas')
+                                    ->schema([
+                                        Forms\Components\Grid::make(2)
+                                            ->schema([
+                                                Forms\Components\TextInput::make('nama_jaminan')
+                                                    ->label('Nama Jaminan')
+                                                    ->required()
+                                                    ->placeholder('Contoh: BPJS Kesehatan, BPJS Ketenagakerjaan, Asuransi Jiwa'),
+
+                                                Forms\Components\TextInput::make('no_jaminan')
+                                                    ->label('No Jaminan')
+                                                    ->required()
+                                                    ->placeholder('Nomor kartu jaminan')
+                                                    ->maxLength(50),
+
+                                                Forms\Components\Select::make('jenis_fasilitas')
+                                                    ->label('Jenis Fasilitas')
+                                                    ->options([
+                                                        'BPJS Kesehatan' => 'BPJS Kesehatan',
+                                                        'BPJS Ketenagakerjaan' => 'BPJS Ketenagakerjaan',
+                                                        'Asuransi Jiwa' => 'Asuransi Jiwa',
+                                                        'Asuransi Kesehatan' => 'Asuransi Kesehatan',
+                                                        'Tunjangan Transport' => 'Tunjangan Transport',
+                                                        'Tunjangan Makan' => 'Tunjangan Makan',
+                                                        'Tunjangan Komunikasi' => 'Tunjangan Komunikasi',
+                                                        'Lainnya' => 'Lainnya',
+                                                    ])
+                                                    ->searchable()
+                                                    ->placeholder('Pilih jenis fasilitas'),
+
+                                                Forms\Components\TextInput::make('provider')
+                                                    ->label('Provider/Penyedia')
+                                                    ->placeholder('Contoh: BPJS, Prudential, Allianz, dll'),
+
+                                                Forms\Components\TextInput::make('nilai_fasilitas')
+                                                    ->label('Nominal')
+                                                    ->numeric()
+                                                    ->prefix('Rp')
+                                                    ->placeholder('0')
+                                                    ->helperText('Nilai dalam rupiah per bulan'),
+
+                                            ]),
+                                    ])
+                                    ->addActionLabel('Tambah Fasilitas')
+                                    ->defaultItems(1)
+                                    ->collapsible()
+                                    ->itemLabel(fn (array $state): ?string =>
+                                        isset($state['nama_jaminan']) && isset($state['jenis_fasilitas'])
+                                            ? "{$state['jenis_fasilitas']} - {$state['nama_jaminan']}"
+                                            : 'Fasilitas Baru'
+                                    )
+                                    ->reorderable()
+                                    ->cloneable(),
                             ]),
                     ])
                     ->columnSpanFull()
@@ -266,13 +455,31 @@ class PegawaiResource extends Resource
                         'employee' => 'primary',
                     }),
 
-                Tables\Columns\TextColumn::make('jabatan.nama_jabatan')
+                Tables\Columns\TextColumn::make('jabatan.nama')
                     ->label('Jabatan')
                     ->placeholder('Belum diset'),
 
-                Tables\Columns\TextColumn::make('posisi.nama_posisi')
+                Tables\Columns\TextColumn::make('posisi.nama')
                     ->label('Posisi')
                     ->placeholder('Belum diset'),
+
+                // Tambahan kolom untuk fasilitas
+                Tables\Columns\TextColumn::make('total_nilai_fasilitas')
+                    ->label('Total Fasilitas')
+                    ->money('IDR')
+                    ->getStateUsing(function ($record) {
+                        return $record->total_nilai_fasilitas ?? 0;
+                    })
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                Tables\Columns\TextColumn::make('jumlah_fasilitas')
+                    ->label('Jml Fasilitas')
+                    ->getStateUsing(function ($record) {
+                        return $record->fasilitas_list ? count($record->fasilitas_list) : 0;
+                    })
+                    ->badge()
+                    ->color('success')
+                    ->toggleable(isToggledHiddenByDefault: true),
 
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
@@ -323,6 +530,7 @@ class PegawaiResource extends Resource
         return [
             'index' => Pages\ListPegawais::route('/'),
             'create' => Pages\CreatePegawai::route('/create'),
+            'view' => Pages\ViewPegawai::route('/{record}'),
             'edit' => Pages\EditPegawai::route('/{record}/edit'),
         ];
     }
