@@ -92,7 +92,7 @@ class PegawaiResource extends Resource
                                                 'active' => 'Active',
                                                 'non-active' => 'Non-Active',
                                             ])
-                                            ->default('status')
+                                            ->default('active')
                                             ->required(),
 
                                         Forms\Components\Select::make('role_user')

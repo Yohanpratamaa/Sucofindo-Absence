@@ -45,4 +45,22 @@ class CreatePegawai extends CreateRecord
 
         return $data;
     }
+
+    // Override form actions untuk hanya menampilkan Create dan Cancel
+    protected function getFormActions(): array
+    {
+        return [
+            $this->getCreateFormAction()
+                ->label('Create'), // Label tombol sesuai gambar
+            $this->getCancelFormAction()
+                ->label('Cancel'), // Label tombol cancel
+        ];
+    }
+
+    // Override untuk menghilangkan tombol "Create & create another"
+    protected function getCreateAnotherFormAction(): Actions\Action
+    {
+        return Actions\Action::make('createAnother')
+            ->visible(false); // Sembunyikan tombol create another
+    }
 }

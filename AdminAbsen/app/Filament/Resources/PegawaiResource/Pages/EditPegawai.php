@@ -54,4 +54,15 @@ class EditPegawai extends EditRecord
 
         return $data;
     }
+
+    // Override form actions untuk Edit page juga
+    protected function getFormActions(): array
+    {
+        return [
+            $this->getSaveFormAction()
+                ->label('Save'), // Label tombol save untuk edit
+            $this->getCancelFormAction()
+                ->label('Cancel'), // Label tombol cancel
+        ];
+    }
 }
