@@ -30,6 +30,16 @@ class AdminPanelProvider extends PanelProvider
             ->brandName('Smart Absens')
             ->brandLogoHeight('2rem')
             ->favicon(asset('images/favicon.ico'))
+            ->renderHook(
+                'panels::head.end',
+                fn (): string => '<style>
+                    .fi-widget[data-widget="filament-widgets-filament-info-widget"],
+                    .filament-widgets-filament-info-widget,
+                    .fi-wi-info { display: none !important; }
+                    a[href*="filamentphp.com"], a[href*="github.com/filamentphp"] { display: none !important; }
+                    .fi-footer, .fi-simple-footer { display: none !important; }
+                </style>'
+            )
             ->colors([
                 'primary' => Color::Blue,
                 'secondary' => Color::Gray,
@@ -40,12 +50,19 @@ class AdminPanelProvider extends PanelProvider
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
             ->pages([
-                Pages\Dashboard::class,
+                \App\Filament\Pages\Dashboard::class,
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
                 Widgets\AccountWidget::class,
-                Widgets\FilamentInfoWidget::class,
+                \App\Filament\Widgets\AttendanceStatsOverview::class,
+                \App\Filament\Widgets\AttendanceChart::class,
+                \App\Filament\Widgets\AttendanceStatusChart::class,
+                \App\Filament\Widgets\AttendanceTypeChart::class,
+                \App\Filament\Widgets\MonthlyAttendanceChart::class,
+                \App\Filament\Widgets\RecentAttendanceTable::class,
+                \App\Filament\Widgets\TopAttendanceTable::class,
+                // Remove FilamentInfoWidget to hide default branding
             ])
             ->middleware([
                 EncryptCookies::class,

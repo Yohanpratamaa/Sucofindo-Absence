@@ -1,0 +1,115 @@
+/* Custom CSS untuk menyembunyikan branding Filament */
+
+/* Hide Filament default widgets and branding */
+.fi-widget.filament-widgets-filament-info-widget,
+.fi-wi-filament-info,
+[data-widget="filament-widgets-filament-info-widget"],
+.filament-info-widget {
+    display: none !important;
+}
+
+/* Hide Filament footer links */
+.fi-simple-footer,
+.fi-footer {
+    display: none !important;
+}
+
+/* Hide Filament logo in login page */
+.fi-simple-layout .fi-logo {
+    display: none !important;
+}
+
+/* Hide any Filament branding text */
+.fi-tenant-menu-brand-text:contains("Filament"),
+.fi-topbar-brand-text:contains("Filament") {
+    display: none !important;
+}
+
+/* Custom dashboard styling */
+.fi-dashboard {
+    padding: 0;
+}
+
+.fi-dashboard .fi-section-content {
+    padding: 0;
+}
+
+/* Custom card styling */
+.dashboard-card {
+    background-color: white;
+    border-radius: 0.5rem;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+    border: 1px solid #e5e7eb;
+}
+
+.dashboard-stat-card {
+    background-color: white;
+    border-radius: 0.5rem;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+    padding: 1.5rem;
+    border: 1px solid #e5e7eb;
+}
+
+.dashboard-stat-icon {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Hide any version info that might show Filament */
+.fi-main-ctn .fi-main:contains("v3"),
+.fi-main-ctn .fi-main *:contains("Filament") {
+    display: none !important;
+}
+
+/* Make sure our custom dashboard takes full width */
+.fi-main {
+    max-width: none;
+}
+
+/* Custom button styling for dashboard actions */
+.dashboard-action-button {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #374151;
+    background-color: #f9fafb;
+    border-radius: 0.5rem;
+    transition: background-color 0.15s ease-in-out;
+}
+
+.dashboard-action-button:hover {
+    background-color: #f3f4f6;
+}
+
+/* Remove any powered by text */
+.fi-powered-by,
+[class*="powered-by"],
+*:contains("Powered by") {
+    display: none !important;
+}
+
+/* Hide specific Filament branding in dashboard */
+.fi-main-content-ctn
+    .fi-main-content
+    .fi-page
+    .fi-page-content
+    .fi-section
+    .fi-section-content
+    .fi-widget {
+    margin: 0;
+}
+
+/* Hide Filament info widget specifically */
+.fi-wi-stats-overview {
+    display: block !important;
+}
+
+.fi-wi-info {
+    display: none !important;
+}

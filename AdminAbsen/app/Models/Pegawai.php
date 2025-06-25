@@ -111,10 +111,34 @@ class Pegawai extends Model
         return $this->belongsTo(Jabatan::class, 'jabatan_nama', 'nama');
     }
 
-    // Relasi dengan Posisi  
+    // Relasi dengan Posisi
     public function posisi()
     {
         return $this->belongsTo(Posisi::class, 'posisi_nama', 'nama');
+    }
+
+    // Relasi dengan Overtime Assignments (sebagai user yang ditugaskan)
+    public function overtimeAssignments()
+    {
+        return $this->hasMany(OvertimeAssignment::class, 'user_id');
+    }
+
+    // Relasi dengan Overtime Assignments (sebagai yang menugaskan)
+    public function assignedOvertimes()
+    {
+        return $this->hasMany(OvertimeAssignment::class, 'assigned_by');
+    }
+
+    // Relasi dengan Overtime Assignments (sebagai yang approve)
+    public function approvedOvertimes()
+    {
+        return $this->hasMany(OvertimeAssignment::class, 'approved_by');
+    }
+
+    // Relasi dengan Attendance (absensi karyawan)
+    public function attendances()
+    {
+        return $this->hasMany(Attendance::class, 'user_id');
     }
 
     // Method untuk mendapatkan total tunjangan
