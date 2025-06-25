@@ -25,7 +25,7 @@ class PosisiResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Data Posisi';
 
-    protected static ?int $navigationSort = 3;
+    protected static ?int $navigationSort = 2;
 
     // protected static ?string $navigationGroup = 'Master Data';
 
