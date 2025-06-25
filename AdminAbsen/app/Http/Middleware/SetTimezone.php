@@ -18,10 +18,10 @@ class SetTimezone
     {
         // Set default timezone untuk aplikasi
         date_default_timezone_set('Asia/Jakarta');
-        
+
         // Set timezone untuk Carbon
         config(['app.timezone' => 'Asia/Jakarta']);
-        
+
         return $next($request);
     }
 }

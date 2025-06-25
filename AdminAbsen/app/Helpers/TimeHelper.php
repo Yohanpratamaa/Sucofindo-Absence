@@ -59,7 +59,7 @@ if (!function_exists('getWorkingHoursStatus')) {
     {
         $now = jakartaNow();
         $hour = $now->hour;
-        
+
         if ($hour >= 8 && $hour < 12) {
             return 'morning';
         } elseif ($hour >= 13 && $hour < 17) {
@@ -79,10 +79,10 @@ if (!function_exists('getAttendanceStatus')) {
         if (!$checkInTime) {
             return 'Tidak Hadir';
         }
-        
+
         $checkIn = parseJakartaTime($checkInTime);
         $standardTime = parseJakartaTime('08:00:00');
-        
+
         return $checkIn->greaterThan($standardTime) ? 'Terlambat' : 'Tepat Waktu';
     }
 }

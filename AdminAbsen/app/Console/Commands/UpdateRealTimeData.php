@@ -24,7 +24,7 @@ class UpdateRealTimeData extends Command
     public function handle()
     {
         $now = Carbon::now('Asia/Jakarta');
-        
+
         // Update real-time statistics
         $stats = [
             'current_time' => $now->format('H:i:s'),
@@ -34,19 +34,19 @@ class UpdateRealTimeData extends Command
             'working_hours_status' => $this->getWorkingHoursStatus($now),
             'updated_at' => $now->toISOString(),
         ];
-        
+
         // Cache for 60 seconds
         Cache::put('realtime_stats', $stats, 60);
-        
+
         $this->info('Real-time data updated at: ' . $now->format('Y-m-d H:i:s'));
-        
+
         return Command::SUCCESS;
     }
-    
+
     private function getWorkingHoursStatus(Carbon $now): string
     {
         $hour = $now->hour;
-        
+
         if ($hour >= 8 && $hour < 12) {
             return 'morning';
         } elseif ($hour >= 13 && $hour < 17) {

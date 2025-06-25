@@ -87,7 +87,7 @@ class AttendanceStatsOverview extends BaseWidget
     {
         $start = Carbon::now('Asia/Jakarta')->startOfMonth();
         $end = Carbon::now('Asia/Jakarta');
-        
+
         $workDays = 0;
         while ($start->lte($end)) {
             if ($start->isWeekday()) {
@@ -95,7 +95,7 @@ class AttendanceStatsOverview extends BaseWidget
             }
             $start->addDay();
         }
-        
+
         return $workDays;
     }
 
@@ -103,13 +103,13 @@ class AttendanceStatsOverview extends BaseWidget
     {
         $data = [];
         $now = Carbon::now('Asia/Jakarta');
-        
+
         for ($i = $days - 1; $i >= 0; $i--) {
             $date = $now->copy()->subDays($i);
             $count = Attendance::whereDate('created_at', $date)->count();
             $data[] = $count;
         }
-        
+
         return $data;
     }
 
@@ -117,15 +117,15 @@ class AttendanceStatsOverview extends BaseWidget
     {
         $data = [];
         $now = Carbon::now('Asia/Jakarta');
-        
+
         for ($i = $weeks - 1; $i >= 0; $i--) {
             $startOfWeek = $now->copy()->subWeeks($i)->startOfWeek();
             $endOfWeek = $now->copy()->subWeeks($i)->endOfWeek();
-            
+
             $count = Attendance::whereBetween('created_at', [$startOfWeek, $endOfWeek])->count();
             $data[] = $count;
         }
-        
+
         return $data;
     }
 
@@ -133,15 +133,15 @@ class AttendanceStatsOverview extends BaseWidget
     {
         $data = [];
         $now = Carbon::now('Asia/Jakarta');
-        
+
         for ($i = $months - 1; $i >= 0; $i--) {
             $startOfMonth = $now->copy()->subMonths($i)->startOfMonth();
             $endOfMonth = $now->copy()->subMonths($i)->endOfMonth();
-            
+
             $count = Attendance::whereBetween('created_at', [$startOfMonth, $endOfMonth])->count();
             $data[] = $count;
         }
-        
+
         return $data;
     }
 
@@ -149,7 +149,7 @@ class AttendanceStatsOverview extends BaseWidget
     {
         $data = [];
         $now = Carbon::now('Asia/Jakarta');
-        
+
         for ($i = $days - 1; $i >= 0; $i--) {
             $date = $now->copy()->subDays($i);
             $count = Attendance::whereDate('created_at', $date)
@@ -157,7 +157,7 @@ class AttendanceStatsOverview extends BaseWidget
                 ->count();
             $data[] = $count;
         }
-        
+
         return $data;
     }
 }

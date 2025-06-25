@@ -25,7 +25,7 @@ setInterval(refreshStatisticsCards, 30000);
 ```
 
 ### 2. Widgets dengan Polling Real-Time
-**Files**: 
+**Files**:
 - `app/Filament/Widgets/AttendanceStatsOverview.php`
 - `app/Filament/Widgets/RecentAttendanceTable.php`
 - `app/Filament/Widgets/AttendanceChart.php`
@@ -129,7 +129,7 @@ public function scopeToday($query)
 ### 📊 Statistics Real-Time
 - [x] Total karyawan (real-time count)
 - [x] Absensi hari ini (real-time count)
-- [x] Absensi bulan ini (real-time count)  
+- [x] Absensi bulan ini (real-time count)
 - [x] Persentase kehadiran (real-time calculation)
 - [x] Keterlambatan hari ini (real-time count)
 
@@ -191,7 +191,7 @@ $stats = getRealTimeStats(); // Array of stats
 
 ### 📈 Real-Time Metrics
 - **Clock Update**: Every 1 second
-- **Widget Refresh**: Every 10-30 seconds  
+- **Widget Refresh**: Every 10-30 seconds
 - **API Calls**: Every 30 seconds
 - **Table Polling**: Every 30 seconds
 - **Statistics**: Real-time calculation
@@ -230,7 +230,7 @@ curl http://localhost/api/realtime/stats
 Dashboard AdminAbsen sekarang memiliki kemampuan real-time yang komprehensif:
 
 - ⏰ **Waktu Real-Time**: Semua waktu ditampilkan secara real-time dengan timezone Jakarta
-- 🔄 **Auto-Refresh**: Data diperbarui otomatis tanpa perlu reload halaman  
+- 🔄 **Auto-Refresh**: Data diperbarui otomatis tanpa perlu reload halaman
 - 📊 **Live Statistics**: Statistik absensi terupdate secara real-time
 - 📡 **API Integration**: RESTful API untuk data real-time
 - 🌏 **Timezone Consistency**: Semua komponen menggunakan timezone Asia/Jakarta

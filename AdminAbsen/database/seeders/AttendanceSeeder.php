@@ -7,7 +7,7 @@ use Illuminate\Database\Seeder;
 use App\Models\Attendance;
 use App\Models\Pegawai;
 use Carbon\Carbon;
-use Faker\Factory as Faker;
+use Faker\Generator;
 
 class AttendanceSeeder extends Seeder
 {
@@ -16,7 +16,7 @@ class AttendanceSeeder extends Seeder
      */
     public function run(): void
     {
-        $faker = Faker::create('id_ID');
+        $faker = fake('id_ID');
 
         // Ambil data pegawai yang sudah ada
         $pegawai = Pegawai::all();
