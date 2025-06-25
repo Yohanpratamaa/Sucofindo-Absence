@@ -31,6 +31,22 @@
         }
     </style>
 
+    <!-- Real-time Clock -->
+    <div class="mb-6">
+        <div class="bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg shadow p-6 text-white">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="text-2xl font-bold mb-2">Dashboard Smart Absens</h2>
+                    <p class="text-blue-100">Sistem Manajemen Absensi Sucofindo</p>
+                </div>
+                <div class="text-right">
+                    <div id="real-time-clock" class="text-2xl font-bold mb-1"></div>
+                    <div id="real-time-date" class="text-blue-100"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-6 mb-6">
         <!-- Welcome Card -->
         <div class="bg-white rounded-lg shadow p-6 border border-gray-200">
@@ -211,17 +227,123 @@
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                 <div>
                     <p class="font-medium text-gray-900">Sistem Absensi Sucofindo</p>
-                    <p class="text-gray-500">Versi 1.0.0</p>
+                    <p class="text-gray-500">Versi 2.0.0</p>
                 </div>
                 <div>
-                    <p class="font-medium text-gray-900">Laravel</p>
-                    <p class="text-gray-500">{{ app()->version() }}</p>
+                    <p class="font-medium text-gray-900">Server Time</p>
+                    <p class="text-gray-500" id="server-time">{{ now()->format('d M Y, H:i:s') }}</p>
                 </div>
                 <div>
-                    <p class="font-medium text-gray-900">PHP</p>
-                    <p class="text-gray-500">{{ PHP_VERSION }}</p>
+                    <p class="font-medium text-gray-900">Last Update</p>
+                    <p class="text-gray-500" id="last-update">{{ now()->format('H:i:s') }}</p>
                 </div>
             </div>
         </div>
     </div>
+
+    {{-- Real-time JavaScript --}}
+    <script>
+        // Real-time clock update
+        function updateRealTimeClock() {
+            const now = new Date();
+            
+            // Format time
+            const timeOptions = {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false,
+                timeZone: 'Asia/Jakarta'
+            };
+            
+            // Format date
+            const dateOptions = {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                timeZone: 'Asia/Jakarta'
+            };
+            
+            const timeString = now.toLocaleTimeString('id-ID', timeOptions);
+            const dateString = now.toLocaleDateString('id-ID', dateOptions);
+            
+            // Update elements
+            const clockElement = document.getElementById('real-time-clock');
+            const dateElement = document.getElementById('real-time-date');
+            const serverTimeElement = document.getElementById('server-time');
+            const lastUpdateElement = document.getElementById('last-update');
+            
+            if (clockElement) clockElement.textContent = timeString;
+            if (dateElement) dateElement.textContent = dateString;
+            if (serverTimeElement) serverTimeElement.textContent = dateString + ', ' + timeString;
+            if (lastUpdateElement) lastUpdateElement.textContent = timeString;
+        }
+        
+        // Update clock every second
+        updateRealTimeClock();
+        setInterval(updateRealTimeClock, 1000);
+        
+        // Auto-refresh page data every 30 seconds
+        setInterval(function() {
+            // Refresh statistics cards
+            refreshStatisticsCards();
+        }, 30000);
+        
+        function refreshStatisticsCards() {
+            // Update attendance counts using our real-time API
+            fetch('/api/realtime/dashboard-data', {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Update statistics cards if elements exist
+                updateStatCard('Total Karyawan', data.stats.total_employees);
+                updateStatCard('Absensi Hari Ini', data.stats.today_attendance);
+                updateStatCard('Absensi Bulan Ini', data.stats.this_month_attendance);
+                
+                console.log('Dashboard data refreshed at:', data.current_time);
+            })
+            .catch(error => {
+                console.error('Error refreshing dashboard data:', error);
+            });
+        }
+        
+        function updateStatCard(label, value) {
+            // Find and update stat cards based on their label
+            const cards = document.querySelectorAll('.bg-white.rounded-lg.shadow');
+            cards.forEach(card => {
+                const titleElement = card.querySelector('h3');
+                if (titleElement && titleElement.textContent.includes(label)) {
+                    const valueElement = card.querySelector('p.text-2xl');
+                    if (valueElement) {
+                        valueElement.textContent = value;
+                    }
+                }
+            });
+        }
+        
+        // Add real-time status indicator
+        function addRealTimeIndicator() {
+            const indicator = document.createElement('div');
+            indicator.id = 'real-time-indicator';
+            indicator.className = 'fixed bottom-4 right-4 bg-green-500 text-white px-3 py-2 rounded-full text-xs font-medium shadow-lg';
+            indicator.innerHTML = '🔄 Live';
+            document.body.appendChild(indicator);
+            
+            // Blink effect
+            setInterval(() => {
+                indicator.style.opacity = indicator.style.opacity === '0.5' ? '1' : '0.5';
+            }, 1000);
+        }
+        
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            addRealTimeIndicator();
+        });
+    </script>
 </x-filament-panels::page>

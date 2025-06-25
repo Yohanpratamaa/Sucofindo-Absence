@@ -12,14 +12,17 @@ class AttendanceChart extends ChartWidget
 
     protected static ?int $sort = 2;
 
+    // Enable real-time polling every 30 seconds
+    protected static ?string $pollingInterval = '30s';
+
     protected function getData(): array
     {
         $data = [];
         $labels = [];
 
-        // Ambil data 7 hari terakhir
+        // Ambil data 7 hari terakhir dengan timezone Jakarta
         for ($i = 6; $i >= 0; $i--) {
-            $date = Carbon::now()->subDays($i);
+            $date = Carbon::now('Asia/Jakarta')->subDays($i);
             $count = Attendance::whereDate('created_at', $date)->count();
 
             $data[] = $count;

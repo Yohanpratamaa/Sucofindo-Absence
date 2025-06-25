@@ -17,6 +17,9 @@ class RecentAttendanceTable extends BaseWidget
 
     protected int | string | array $columnSpan = 'full';
 
+    // Enable real-time polling every 15 seconds
+    protected static ?string $pollingInterval = '15s';
+
     public function table(Table $table): Table
     {
         return $table

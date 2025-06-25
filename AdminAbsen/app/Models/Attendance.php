@@ -179,17 +179,18 @@ class Attendance extends Model
         return $query->where('attendance_type', $type);
     }
 
-    // Scope untuk absensi hari ini
+    // Scope untuk absensi hari ini (dengan timezone Jakarta)
     public function scopeToday($query)
     {
-        return $query->whereDate('created_at', today());
+        return $query->whereDate('created_at', Carbon::now('Asia/Jakarta')->toDateString());
     }
 
-    // Scope untuk absensi bulan ini
+    // Scope untuk absensi bulan ini (dengan timezone Jakarta)
     public function scopeThisMonth($query)
     {
-        return $query->whereMonth('created_at', now()->month)
-                    ->whereYear('created_at', now()->year);
+        $now = Carbon::now('Asia/Jakarta');
+        return $query->whereMonth('created_at', $now->month)
+                    ->whereYear('created_at', $now->year);
     }
 
     // Method untuk cek apakah sudah check in

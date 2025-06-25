@@ -285,7 +285,7 @@ class AttendanceResource extends Resource
                 // Tidak ada bulk actions untuk absensi
             ])
             ->defaultSort('created_at', 'desc')
-            ->poll('60s'); // Auto refresh every 60 seconds
+            ->poll('30s'); // Auto refresh every 30 seconds for real-time updates
     }
 
     public static function getRelations(): array

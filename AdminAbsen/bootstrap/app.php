@@ -11,7 +11,10 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        // Add timezone middleware to ensure consistent time across the application
+        $middleware->web(append: [
+            \App\Http\Middleware\SetTimezone::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
