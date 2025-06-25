@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
 
 class OvertimeAssignment extends Model
 {
@@ -114,26 +115,37 @@ class OvertimeAssignment extends Model
     // Method untuk accept overtime
     public function accept($approvedBy)
     {
+        $approver = Pegawai::find($approvedBy);
         $this->update([
             'status' => 'Accepted',
             'approved_by' => $approvedBy,
             'approved_at' => now(),
         ]);
+        
+        // Log acceptance action
+        Log::info("Lembur ID {$this->id} diterima oleh {$approver->nama} (ID: {$approvedBy}) pada " . now());
     }
 
     // Method untuk reject overtime
     public function reject($approvedBy)
     {
+        $approver = Pegawai::find($approvedBy);
         $this->update([
             'status' => 'Rejected',
             'approved_by' => $approvedBy,
             'approved_at' => now(),
         ]);
+        
+        // Log rejection action
+        Log::info("Lembur ID {$this->id} ditolak oleh {$approver->nama} (ID: {$approvedBy}) pada " . now());
     }
 
     // Method untuk reassign overtime
     public function reassign($newUserId, $assignBy)
     {
+        $reassigner = Pegawai::find($assignBy);
+        $newUser = Pegawai::find($newUserId);
+        
         $this->update([
             'user_id' => $newUserId,
             'assign_by' => $assignBy,
@@ -141,11 +153,63 @@ class OvertimeAssignment extends Model
             'approved_by' => null,
             'approved_at' => null,
         ]);
+        
+        // Log reassignment action
+        Log::info("Lembur ID {$this->id} di-assign ulang ke {$newUser->nama} oleh {$reassigner->nama} (ID: {$assignBy}) pada " . now());
     }
 
     // Method untuk check apakah bisa diubah statusnya
     public function canChangeStatus()
     {
         return $this->status === 'Assigned';
+    }
+
+    // Accessor untuk mendapatkan informasi lengkap persetujuan
+    public function getApprovalInfoAttribute()
+    {
+        if (!$this->approved_by) {
+            return 'Belum diproses';
+        }
+
+        $approver = $this->approvedBy;
+        $approverName = $approver ? $approver->nama : 'Unknown';
+        $approvalDate = $this->approved_at ? $this->approved_at->format('d M Y H:i') : '-';
+        
+        if ($this->status === 'Accepted') {
+            return "Diterima oleh {$approverName} pada {$approvalDate}";
+        } else {
+            return "Ditolak oleh {$approverName} pada {$approvalDate}";
+        }
+    }
+
+    // Accessor untuk badge status dengan info approver
+    public function getStatusBadgeAttribute()
+    {
+        return match($this->status) {
+            'Accepted' => [
+                'status' => 'accepted',
+                'label' => 'Diterima',
+                'color' => 'success',
+                'approver' => $this->approvedBy->nama ?? null
+            ],
+            'Rejected' => [
+                'status' => 'rejected',
+                'label' => 'Ditolak',
+                'color' => 'danger',
+                'approver' => $this->approvedBy->nama ?? null
+            ],
+            'Assigned' => [
+                'status' => 'assigned',
+                'label' => 'Ditugaskan',
+                'color' => 'warning',
+                'approver' => null
+            ],
+            default => [
+                'status' => 'unknown',
+                'label' => ucfirst($this->status),
+                'color' => 'gray',
+                'approver' => null
+            ]
+        };
     }
 }

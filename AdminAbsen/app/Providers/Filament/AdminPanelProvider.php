@@ -56,12 +56,14 @@ class AdminPanelProvider extends PanelProvider
             ->widgets([
                 Widgets\AccountWidget::class,
                 \App\Filament\Widgets\AttendanceStatsOverview::class,
+                \App\Filament\Widgets\ApprovalStatsWidget::class,
                 \App\Filament\Widgets\AttendanceChart::class,
                 \App\Filament\Widgets\AttendanceStatusChart::class,
                 \App\Filament\Widgets\AttendanceTypeChart::class,
                 \App\Filament\Widgets\MonthlyAttendanceChart::class,
                 \App\Filament\Widgets\RecentAttendanceTable::class,
                 \App\Filament\Widgets\TopAttendanceTable::class,
+                \App\Filament\Widgets\RecentApprovalActivityWidget::class,
                 // Remove FilamentInfoWidget to hide default branding
             ])
             ->middleware([

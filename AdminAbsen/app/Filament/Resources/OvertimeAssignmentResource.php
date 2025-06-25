@@ -130,18 +130,20 @@ class OvertimeAssignmentResource extends Resource
                 Tables\Columns\TextColumn::make('status')
                     ->label('Status')
                     ->badge()
-                    ->color(fn (string $state): string => match($state) {
-                        'Assigned' => 'warning',
-                        'Accepted' => 'success',
-                        'Rejected' => 'danger',
-                        default => 'gray'
+                    ->getStateUsing(function (OvertimeAssignment $record): string {
+                        return $record->status_badge['label'];
                     })
-                    ->formatStateUsing(fn (string $state): string => match($state) {
-                        'Assigned' => 'Ditugaskan',
-                        'Accepted' => 'Diterima',
-                        'Rejected' => 'Ditolak',
-                        default => ucfirst($state)
+                    ->color(function (OvertimeAssignment $record): string {
+                        return $record->status_badge['color'];
                     }),
+
+                Tables\Columns\TextColumn::make('approval_info')
+                    ->label('Info Persetujuan')
+                    ->getStateUsing(function (OvertimeAssignment $record): string {
+                        return $record->approval_info;
+                    })
+                    ->wrap()
+                    ->toggleable(),
 
                 Tables\Columns\TextColumn::make('durasi_assignment')
                     ->label('Durasi')
@@ -208,14 +210,18 @@ class OvertimeAssignmentResource extends Resource
                     ->color('success')
                     ->requiresConfirmation()
                     ->modalHeading('Terima Penugasan Lembur')
-                    ->modalDescription('Apakah Anda yakin ingin menerima penugasan lembur ini?')
+                    ->modalDescription(function (OvertimeAssignment $record): string {
+                        $currentUser = Filament::auth()->user();
+                        return "Apakah Anda yakin ingin menerima penugasan lembur ini?\n\nLembur akan tercatat diterima oleh: {$currentUser->nama}";
+                    })
                     ->action(function (OvertimeAssignment $record): void {
+                        $currentUser = Filament::auth()->user();
                         $record->accept(Filament::auth()->id());
 
                         Notification::make()
                             ->success()
                             ->title('Lembur Diterima')
-                            ->body('Penugasan lembur telah berhasil diterima.')
+                            ->body("Penugasan lembur telah berhasil diterima oleh {$currentUser->nama}")
                             ->send();
                     })
                     ->visible(fn (OvertimeAssignment $record): bool => $record->canChangeStatus()),
@@ -226,14 +232,18 @@ class OvertimeAssignmentResource extends Resource
                     ->color('danger')
                     ->requiresConfirmation()
                     ->modalHeading('Tolak Penugasan Lembur')
-                    ->modalDescription('Apakah Anda yakin ingin menolak penugasan lembur ini?')
+                    ->modalDescription(function (OvertimeAssignment $record): string {
+                        $currentUser = Filament::auth()->user();
+                        return "Apakah Anda yakin ingin menolak penugasan lembur ini?\n\nLembur akan tercatat ditolak oleh: {$currentUser->nama}";
+                    })
                     ->action(function (OvertimeAssignment $record): void {
+                        $currentUser = Filament::auth()->user();
                         $record->reject(Filament::auth()->id());
 
                         Notification::make()
                             ->success()
                             ->title('Lembur Ditolak')
-                            ->body('Penugasan lembur telah berhasil ditolak.')
+                            ->body("Penugasan lembur telah berhasil ditolak oleh {$currentUser->nama}")
                             ->send();
                     })
                     ->visible(fn (OvertimeAssignment $record): bool => $record->canChangeStatus()),

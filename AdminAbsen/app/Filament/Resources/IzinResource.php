@@ -22,13 +22,13 @@ class IzinResource extends Resource
     protected static ?string $model = Izin::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-calendar-days';
-    
+
     protected static ?string $navigationLabel = 'Manajemen Izin';
-    
+
     protected static ?string $modelLabel = 'Izin';
-    
+
     protected static ?string $pluralModelLabel = 'Manajemen Izin';
-    
+
     protected static ?int $navigationSort = 3;
 
     public static function form(Form $form): Form
@@ -45,7 +45,7 @@ class IzinResource extends Resource
                                     ->searchable()
                                     ->preload()
                                     ->disabled(),
-                                    
+
                                 Forms\Components\Select::make('jenis_izin')
                                     ->label('Jenis Izin')
                                     ->options([
@@ -54,21 +54,21 @@ class IzinResource extends Resource
                                         'izin' => 'Izin Khusus',
                                     ])
                                     ->disabled(),
-                                    
+
                                 Forms\Components\DatePicker::make('tanggal_mulai')
                                     ->label('Tanggal Mulai')
                                     ->disabled(),
-                                    
+
                                 Forms\Components\DatePicker::make('tanggal_akhir')
                                     ->label('Tanggal Akhir')
                                     ->disabled(),
-                                    
+
                                 Forms\Components\Textarea::make('keterangan')
                                     ->label('Keterangan')
                                     ->rows(3)
                                     ->columnSpanFull()
                                     ->disabled(),
-                                    
+
                                 Forms\Components\FileUpload::make('dokumen_pendukung')
                                     ->label('Dokumen Pendukung')
                                     ->directory('izin-documents')
@@ -78,7 +78,7 @@ class IzinResource extends Resource
                                     ->columnSpanFull(),
                             ]),
                     ]),
-                    
+
                 Forms\Components\Section::make('Status Persetujuan')
                     ->schema([
                         Forms\Components\Grid::make(2)
@@ -89,7 +89,7 @@ class IzinResource extends Resource
                                     ->searchable()
                                     ->preload()
                                     ->disabled(),
-                                    
+
                                 Forms\Components\DateTimePicker::make('approved_at')
                                     ->label('Tanggal Disetujui')
                                     ->disabled(),
@@ -107,12 +107,12 @@ class IzinResource extends Resource
                     ->label('Nama Pegawai')
                     ->searchable()
                     ->sortable(),
-                    
+
                 Tables\Columns\TextColumn::make('user.npp')
                     ->label('NPP')
                     ->searchable()
                     ->sortable(),
-                    
+
                 Tables\Columns\BadgeColumn::make('jenis_izin')
                     ->label('Jenis Izin')
                     ->colors([
@@ -121,43 +121,46 @@ class IzinResource extends Resource
                         'info' => 'izin',
                     ])
                     ->formatStateUsing(fn (string $state): string => ucfirst($state)),
-                    
+
                 Tables\Columns\TextColumn::make('periode_izin')
                     ->label('Periode Izin')
                     ->sortable('tanggal_mulai'),
-                    
+
                 Tables\Columns\TextColumn::make('durasi_hari')
                     ->label('Durasi')
                     ->formatStateUsing(fn (int $state): string => $state . ' hari')
                     ->sortable(),
-                    
+
                 Tables\Columns\BadgeColumn::make('status')
                     ->label('Status')
+                    ->getStateUsing(function (Izin $record): string {
+                        return $record->status_badge['label'];
+                    })
                     ->colors([
-                        'warning' => 'pending',
-                        'success' => 'approved',
-                        'danger' => 'rejected',
-                    ])
-                    ->formatStateUsing(function (string $state): string {
-                        return match($state) {
-                            'pending' => 'Menunggu',
-                            'approved' => 'Disetujui',
-                            'rejected' => 'Ditolak',
-                            default => ucfirst($state)
-                        };
-                    }),
-                    
+                        'warning' => fn ($state) => $state === 'Menunggu',
+                        'success' => fn ($state) => $state === 'Disetujui',
+                        'danger' => fn ($state) => $state === 'Ditolak',
+                    ]),
+
+                Tables\Columns\TextColumn::make('approval_info')
+                    ->label('Info Persetujuan')
+                    ->getStateUsing(function (Izin $record): string {
+                        return $record->approval_info;
+                    })
+                    ->wrap()
+                    ->toggleable(),
+
                 Tables\Columns\TextColumn::make('approvedBy.nama')
                     ->label('Disetujui Oleh')
                     ->placeholder('-')
                     ->toggleable(isToggledHiddenByDefault: true),
-                    
+
                 Tables\Columns\TextColumn::make('approved_at')
                     ->label('Tanggal Disetujui')
                     ->dateTime()
                     ->placeholder('-')
                     ->toggleable(isToggledHiddenByDefault: true),
-                    
+
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Diajukan Pada')
                     ->dateTime()
@@ -173,7 +176,7 @@ class IzinResource extends Resource
                         'izin' => 'Izin Khusus',
                     ])
                     ->native(false),
-                    
+
                 Tables\Filters\SelectFilter::make('status')
                     ->label('Status')
                     ->options([
@@ -195,7 +198,7 @@ class IzinResource extends Resource
                         );
                     })
                     ->native(false),
-                    
+
                 Tables\Filters\Filter::make('tanggal_mulai')
                     ->form([
                         Forms\Components\DatePicker::make('dari_tanggal')
@@ -217,39 +220,47 @@ class IzinResource extends Resource
             ])
             ->actions([
                 Tables\Actions\ViewAction::make(),
-                
+
                 Tables\Actions\Action::make('approve')
                     ->label('Setujui')
                     ->icon('heroicon-o-check-circle')
                     ->color('success')
                     ->requiresConfirmation()
                     ->modalHeading('Setujui Izin')
-                    ->modalDescription('Apakah Anda yakin ingin menyetujui izin ini?')
+                    ->modalDescription(function (Izin $record): string {
+                        $currentUser = Filament::auth()->user();
+                        return "Apakah Anda yakin ingin menyetujui izin ini?\n\nIzin akan tercatat disetujui oleh: {$currentUser->nama}";
+                    })
                     ->action(function (Izin $record): void {
+                        $currentUser = Filament::auth()->user();
                         $record->approve(Filament::auth()->id());
-                        
+
                         Notification::make()
                             ->success()
                             ->title('Izin Disetujui')
-                            ->body('Izin telah berhasil disetujui.')
+                            ->body("Izin telah berhasil disetujui oleh {$currentUser->nama}")
                             ->send();
                     })
                     ->visible(fn (Izin $record): bool => $record->status === 'pending'),
-                    
+
                 Tables\Actions\Action::make('reject')
                     ->label('Tolak')
                     ->icon('heroicon-o-x-circle')
                     ->color('danger')
                     ->requiresConfirmation()
                     ->modalHeading('Tolak Izin')
-                    ->modalDescription('Apakah Anda yakin ingin menolak izin ini?')
+                    ->modalDescription(function (Izin $record): string {
+                        $currentUser = Filament::auth()->user();
+                        return "Apakah Anda yakin ingin menolak izin ini?\n\nIzin akan tercatat ditolak oleh: {$currentUser->nama}";
+                    })
                     ->action(function (Izin $record): void {
+                        $currentUser = Filament::auth()->user();
                         $record->reject(Filament::auth()->id());
-                        
+
                         Notification::make()
                             ->success()
                             ->title('Izin Ditolak')
-                            ->body('Izin telah berhasil ditolak.')
+                            ->body("Izin telah berhasil ditolak oleh {$currentUser->nama}")
                             ->send();
                     })
                     ->visible(fn (Izin $record): bool => $record->status === 'pending'),
@@ -261,36 +272,50 @@ class IzinResource extends Resource
                         ->icon('heroicon-o-check-circle')
                         ->color('success')
                         ->requiresConfirmation()
+                        ->modalHeading('Setujui Izin Terpilih')
+                        ->modalDescription(function (Collection $records): string {
+                            $currentUser = Filament::auth()->user();
+                            $pendingCount = $records->filter(fn (Izin $record) => $record->status === 'pending')->count();
+                            return "Apakah Anda yakin ingin menyetujui {$pendingCount} izin?\n\nSemua izin akan tercatat disetujui oleh: {$currentUser->nama}";
+                        })
                         ->action(function (Collection $records): void {
+                            $currentUser = Filament::auth()->user();
                             $pending = $records->filter(fn (Izin $record) => $record->status === 'pending');
-                            
+
                             foreach ($pending as $record) {
                                 $record->approve(Filament::auth()->id());
                             }
-                            
+
                             Notification::make()
                                 ->success()
                                 ->title('Izin Disetujui')
-                                ->body($pending->count() . ' izin telah berhasil disetujui.')
+                                ->body($pending->count() . " izin telah berhasil disetujui oleh {$currentUser->nama}")
                                 ->send();
                         }),
-                        
+
                     Tables\Actions\BulkAction::make('bulk_reject')
                         ->label('Tolak Terpilih')
                         ->icon('heroicon-o-x-circle')
                         ->color('danger')
                         ->requiresConfirmation()
+                        ->modalHeading('Tolak Izin Terpilih')
+                        ->modalDescription(function (Collection $records): string {
+                            $currentUser = Filament::auth()->user();
+                            $pendingCount = $records->filter(fn (Izin $record) => $record->status === 'pending')->count();
+                            return "Apakah Anda yakin ingin menolak {$pendingCount} izin?\n\nSemua izin akan tercatat ditolak oleh: {$currentUser->nama}";
+                        })
                         ->action(function (Collection $records): void {
+                            $currentUser = Filament::auth()->user();
                             $pending = $records->filter(fn (Izin $record) => $record->status === 'pending');
-                            
+
                             foreach ($pending as $record) {
                                 $record->reject(Filament::auth()->id());
                             }
-                            
+
                             Notification::make()
                                 ->success()
                                 ->title('Izin Ditolak')
-                                ->body($pending->count() . ' izin telah berhasil ditolak.')
+                                ->body($pending->count() . " izin telah berhasil ditolak oleh {$currentUser->nama}")
                                 ->send();
                         }),
                 ]),

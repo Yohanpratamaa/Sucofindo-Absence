@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
 
 class Izin extends Model
 {
@@ -109,18 +110,71 @@ class Izin extends Model
     // Method untuk approve izin
     public function approve($approvedBy)
     {
+        $approver = Pegawai::find($approvedBy);
         $this->update([
             'approved_by' => $approvedBy,
             'approved_at' => now(),
         ]);
+        
+        // Log approval action
+        Log::info("Izin ID {$this->id} disetujui oleh {$approver->nama} (ID: {$approvedBy}) pada " . now());
     }
 
     // Method untuk reject izin
     public function reject($approvedBy)
     {
+        $approver = Pegawai::find($approvedBy);
         $this->update([
             'approved_by' => $approvedBy,
             'approved_at' => null,
         ]);
+        
+        // Log rejection action
+        Log::info("Izin ID {$this->id} ditolak oleh {$approver->nama} (ID: {$approvedBy}) pada " . now());
+    }
+
+    // Accessor untuk mendapatkan informasi lengkap persetujuan
+    public function getApprovalInfoAttribute()
+    {
+        if (!$this->approved_by) {
+            return 'Belum diproses';
+        }
+
+        $approver = $this->approvedBy;
+        $approverName = $approver ? $approver->nama : 'Unknown';
+        $approvalDate = $this->approved_at ? $this->approved_at->format('d M Y H:i') : 'Ditolak';
+        
+        if ($this->approved_at) {
+            return "Disetujui oleh {$approverName} pada {$approvalDate}";
+        } else {
+            return "Ditolak oleh {$approverName} pada " . $this->updated_at->format('d M Y H:i');
+        }
+    }
+
+    // Accessor untuk badge status dengan info approver
+    public function getStatusBadgeAttribute()
+    {
+        if ($this->approved_at && $this->approved_by) {
+            return [
+                'status' => 'approved',
+                'label' => 'Disetujui',
+                'color' => 'success',
+                'approver' => $this->approvedBy->nama ?? 'Unknown'
+            ];
+        } elseif ($this->approved_by && !$this->approved_at) {
+            return [
+                'status' => 'rejected',
+                'label' => 'Ditolak',
+                'color' => 'danger',
+                'approver' => $this->approvedBy->nama ?? 'Unknown'
+            ];
+        } else {
+            return [
+                'status' => 'pending',
+                'label' => 'Menunggu',
+                'color' => 'warning',
+                'approver' => null
+            ];
+        }
     }
 }
