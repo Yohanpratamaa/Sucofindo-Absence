@@ -142,6 +142,7 @@ class JabatanResource extends Resource
         return [
             'index' => Pages\ListJabatans::route('/'),
             'create' => Pages\CreateJabatan::route('/create'),
+            'view' => Pages\ViewJabatan::route('/{record}'),
             'edit' => Pages\EditJabatan::route('/{record}/edit'),
         ];
     }

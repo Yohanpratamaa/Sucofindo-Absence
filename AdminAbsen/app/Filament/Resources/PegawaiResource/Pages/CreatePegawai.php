@@ -51,9 +51,9 @@ class CreatePegawai extends CreateRecord
     {
         return [
             $this->getCreateFormAction()
-                ->label('Create'), // Label tombol sesuai gambar
+                ->label('Tambah Data'), // Label tombol sesuai gambar
             $this->getCancelFormAction()
-                ->label('Cancel'), // Label tombol cancel
+                ->label('Tidak Jadi'), // Label tombol cancel
         ];
     }
 
