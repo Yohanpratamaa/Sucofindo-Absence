@@ -10,100 +10,79 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Tapp\FilamentGoogleAutocomplete\Forms\Components\GoogleAutocomplete;
 
 class OfficeResource extends Resource
 {
     protected static ?string $model = Office::class;
     protected static ?string $navigationIcon = 'heroicon-o-building-office';
 
-public static function form(Form $form): Form
-{
-    return $form
-        ->schema([
-            Forms\Components\Section::make('Office Details')
-                ->schema([
-                    Forms\Components\TextInput::make('name')
-                        ->required()
-                        ->label('Nama Kantor'),
-                    GoogleAutocomplete::make('google_search')
-                        ->label('Cari Alamat Kantor')
-                        ->countries(['ID'])
-                        ->placeTypes(['address'])
-                        ->autocompleteFieldColumnSpan(2)
-                        ->autocompleteLabel('Pilih lokasi kantor')
-                        ->autocompletePlaceholder('Ketik alamat kantor...')
-                        ->withFields([
-                            Forms\Components\TextInput::make('latitude')
-                                ->hiddenLabel()
-                                ->hidden()
-                                ->extraInputAttributes(['data-google-field' => 'latitude'])
-                                ->numeric()
-                                ->default(-6.9431000),
-                            Forms\Components\TextInput::make('longitude')
-                                ->hiddenLabel()
-                                ->hidden()
-                                ->extraInputAttributes(['data-google-field' => 'longitude'])
-                                ->numeric()
-                                ->default(107.5851494),
-                        ]),
-                    Map::make('location')
-                        ->label('Peta Lokasi')
-                        ->columnSpanFull()
-                        ->defaultLocation(latitude: -6.200000, longitude: 106.816666)
-                        ->draggable(true)
-                        ->clickable(true)
-                        ->zoom(15)
-                        ->minZoom(5)
-                        ->maxZoom(20)
-                        ->tilesUrl('https://tile.openstreetmap.de/{z}/{x}/{y}.png')
-                        ->showMarker(true)
-                        ->markerColor('#3b82f6')
-                        ->rangeSelectField('radius')
-                        ->showFullscreenControl(true)
-                        ->showZoomControl(true),
-                    Forms\Components\TextInput::make('radius')
-                        ->required()
-                        ->numeric()
-                        ->label('Radius Absensi (meter)')
-                        ->minValue(10)
-                        ->maxValue(1000)
-                        ->default(100),
-                ])
-                ->columns(2),
-            Forms\Components\Section::make('Jadwal Operasional')
-                ->schema([
-                    Forms\Components\Repeater::make('schedules')
-                        ->relationship('schedules')
-                        ->schema([
-                            Forms\Components\Select::make('day_of_week')
-                                ->required()
-                                ->options([
-                                    'monday' => 'Senin',
-                                    'tuesday' => 'Selasa',
-                                    'wednesday' => 'Rabu',
-                                    'thursday' => 'Kamis',
-                                    'friday' => 'Jumat',
-                                    'saturday' => 'Sabtu',
-                                    'sunday' => 'Minggu',
-                                ])
-                                ->label('Hari'),
-                            Forms\Components\TimePicker::make('start_time')
-                                ->label('Jam Masuk')
-                                ->nullable(),
-                            Forms\Components\TimePicker::make('end_time')
-                                ->label('Jam Pulang')
-                                ->nullable(),
-                        ])
-                        ->columns(3)
-                        ->label('Jadwal per Hari')
-                        ->addActionLabel('Tambah Jadwal')
-                        ->deleteAction(
-                            fn (Forms\Components\Actions\Action $action) => $action->label('Hapus Jadwal')
-                        ),
-                ]),
-        ]);
-}
+    public static function form(Form $form): Form
+    {
+        return $form
+            ->schema([
+                Forms\Components\Section::make('Office Details')
+                    ->schema([
+                        Forms\Components\TextInput::make('name')
+                            ->required()
+                            ->label('Nama Kantor'),
+                        Map::make('location')
+                            ->label('Peta Lokasi')
+                            ->columnSpanFull()
+                            ->defaultLocation(latitude: -6.9431000, longitude: 107.5851494)
+                            ->draggable(false)
+                            ->clickable(false)
+                            ->zoom(15)
+                            ->minZoom(5)
+                            ->maxZoom(20)
+                            ->tilesUrl('https://tile.openstreetmap.org/{z}/{x}/{y}.png')
+                            ->showMarker(true)
+                            ->markerColor('#3b82f6')
+                            ->rangeSelectField('radius')
+                            ->disabled(true)
+                            ->showFullscreenControl(true)
+                            ->showZoomControl(true),
+                        Forms\Components\TextInput::make('radius')
+                            ->required()
+                            ->numeric()
+                            ->label('Radius Absensi (meter)')
+                            ->minValue(10)
+                            ->maxValue(1000)
+                            ->default(100),
+                    ])
+                    ->columns(2),
+                Forms\Components\Section::make('Jadwal Operasional')
+                    ->schema([
+                        Forms\Components\Repeater::make('schedules')
+                            ->relationship('schedules')
+                            ->schema([
+                                Forms\Components\Select::make('day_of_week')
+                                    ->required()
+                                    ->options([
+                                        'monday' => 'Senin',
+                                        'tuesday' => 'Selasa',
+                                        'wednesday' => 'Rabu',
+                                        'thursday' => 'Kamis',
+                                        'friday' => 'Jumat',
+                                        'saturday' => 'Sabtu',
+                                        'sunday' => 'Minggu',
+                                    ])
+                                    ->label('Hari'),
+                                Forms\Components\TimePicker::make('start_time')
+                                    ->label('Jam Masuk')
+                                    ->nullable(),
+                                Forms\Components\TimePicker::make('end_time')
+                                    ->label('Jam Pulang')
+                                    ->nullable(),
+                            ])
+                            ->columns(3)
+                            ->label('Jadwal per Hari')
+                            ->addActionLabel('Tambah Jadwal')
+                            ->deleteAction(
+                                fn (Forms\Components\Actions\Action $action) => $action->label('Hapus Jadwal')
+                            ),
+                    ]),
+            ]);
+    }
 
     public static function table(Table $table): Table
     {

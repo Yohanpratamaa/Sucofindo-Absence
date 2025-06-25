@@ -20,9 +20,10 @@ class EditOffice extends EditRecord
 
     protected function mutateFormDataBeforeSave(array $data): array
     {
-        $data['latitude'] = (float) ($data['location']['lat'] ?? $data['latitude']);
-        $data['longitude'] = (float) ($data['location']['lng'] ?? $data['longitude']);
-        $data['radius'] = (float) $data['radius'];
+        $data['latitude'] = -6.9431000;
+        $data['longitude'] = 107.5851494;
+        $data['radius'] = (float) ($data['radius'] ?? 100);
+        unset($data['location']);
         return $data;
     }
 }
