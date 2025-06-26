@@ -52,6 +52,21 @@ class EditPegawai extends EditRecord
         $data['jabatan_tunjangan'] = $data['jabatan_tunjangan'] ?? 0;
         $data['posisi_tunjangan'] = $data['posisi_tunjangan'] ?? 0;
 
+        // Proses fasilitas list - Set nilai BPJS ke 0
+        if (isset($data['fasilitas_list']) && is_array($data['fasilitas_list'])) {
+            foreach ($data['fasilitas_list'] as $key => $fasilitas) {
+                // Jika jenis fasilitas adalah BPJS, set nominal ke 0
+                if (isset($fasilitas['jenis_fasilitas']) &&
+                    in_array($fasilitas['jenis_fasilitas'], ['BPJS Kesehatan', 'BPJS Ketenagakerjaan'])) {
+                    $data['fasilitas_list'][$key]['nilai_fasilitas'] = 0;
+                }
+                // Pastikan nilai fasilitas lain memiliki default 0 jika kosong
+                else {
+                    $data['fasilitas_list'][$key]['nilai_fasilitas'] = $fasilitas['nilai_fasilitas'] ?? 0;
+                }
+            }
+        }
+
         return $data;
     }
 

@@ -176,14 +176,34 @@ class Pegawai extends Authenticatable implements FilamentUser
         }
     }
 
-    // Accessor untuk total nilai fasilitas dari JSON
+    // Accessor untuk total nilai fasilitas dari JSON (mengecualikan BPJS)
     public function getTotalNilaiFasilitasAttribute()
     {
         if (!$this->fasilitas_list) {
             return 0;
         }
 
-        return collect($this->fasilitas_list)->sum('nilai_fasilitas') ?? 0;
+        return collect($this->fasilitas_list)
+            ->filter(function ($fasilitas) {
+                // Exclude BPJS facilities from total calculation
+                return !in_array($fasilitas['jenis_fasilitas'] ?? '', ['BPJS Kesehatan', 'BPJS Ketenagakerjaan']);
+            })
+            ->sum('nilai_fasilitas') ?? 0;
+    }
+
+    // Accessor untuk total nilai BPJS saja
+    public function getTotalNilaiBpjsAttribute()
+    {
+        if (!$this->fasilitas_list) {
+            return 0;
+        }
+
+        return collect($this->fasilitas_list)
+            ->filter(function ($fasilitas) {
+                // Only BPJS facilities
+                return in_array($fasilitas['jenis_fasilitas'] ?? '', ['BPJS Kesehatan', 'BPJS Ketenagakerjaan']);
+            })
+            ->count(); // Count BPJS entries (since they don't have nominal value)
     }
 
     // Accessor untuk jumlah fasilitas

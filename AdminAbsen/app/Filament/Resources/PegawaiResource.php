@@ -341,7 +341,14 @@ class PegawaiResource extends Resource
                                                         'Lainnya' => 'Lainnya',
                                                     ])
                                                     ->searchable()
-                                                    ->placeholder('Pilih jenis fasilitas'),
+                                                    ->placeholder('Pilih jenis fasilitas')
+                                                    ->live() // Enable real-time updates
+                                                    ->afterStateUpdated(function ($state, callable $set) {
+                                                        // Reset nominal if BPJS is selected
+                                                        if (in_array($state, ['BPJS Kesehatan', 'BPJS Ketenagakerjaan'])) {
+                                                            $set('nilai_fasilitas', 0);
+                                                        }
+                                                    }),
 
                                                 Forms\Components\TextInput::make('provider')
                                                     ->label('Provider/Penyedia')
@@ -354,8 +361,13 @@ class PegawaiResource extends Resource
                                                     ->formatStateUsing(function ($state) {
                                                         return $state ? number_format($state, 0, ',', '.') : '';
                                                     })
-                                                    ->dehydrateStateUsing(function ($state) {
-                                                        // Remove dots and convert to integer
+                                                    ->dehydrateStateUsing(function ($state, callable $get) {
+                                                        // For BPJS, always return 0
+                                                        $jenisFasilitas = $get('jenis_fasilitas');
+                                                        if (in_array($jenisFasilitas, ['BPJS Kesehatan', 'BPJS Ketenagakerjaan'])) {
+                                                            return 0;
+                                                        }
+                                                        // Remove dots and convert to integer for other facilities
                                                         return $state ? (int) str_replace('.', '', $state) : 0;
                                                     })
                                                     ->live(debounce: 300)
@@ -363,7 +375,22 @@ class PegawaiResource extends Resource
                                                         'oninput' => 'this.value = this.value.replace(/\D/g, "").replace(/\B(?=(\d{3})+(?!\d))/g, ".")',
                                                         'onkeypress' => 'return event.charCode >= 48 && event.charCode <= 57'
                                                     ])
-                                                    ->helperText('Nilai dalam rupiah per bulan'),
+                                                    ->helperText(function (callable $get): string {
+                                                        $jenisFasilitas = $get('jenis_fasilitas');
+                                                        if (in_array($jenisFasilitas, ['BPJS Kesehatan', 'BPJS Ketenagakerjaan'])) {
+                                                            return '❌ BPJS tidak perlu nominal (otomatis Rp 0)';
+                                                        }
+                                                        return '✅ Nilai dalam rupiah per bulan (wajib diisi)';
+                                                    })
+                                                    ->disabled(function (callable $get): bool {
+                                                        $jenisFasilitas = $get('jenis_fasilitas');
+                                                        return in_array($jenisFasilitas, ['BPJS Kesehatan', 'BPJS Ketenagakerjaan']);
+                                                    })
+                                                    ->required(function (callable $get): bool {
+                                                        $jenisFasilitas = $get('jenis_fasilitas');
+                                                        // Required for non-BPJS facilities
+                                                        return !in_array($jenisFasilitas, ['BPJS Kesehatan', 'BPJS Ketenagakerjaan']);
+                                                    }),
 
                                             ]),
                                     ])
