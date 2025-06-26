@@ -16,14 +16,13 @@ class UserRoleService
         // Ensure user is active and has proper authentication details
         if ($pegawai->status === 'active') {
 
-            // Set default password if not provided
-            if (empty($pegawai->password)) {
-                $pegawai->password = Hash::make('password123');
-            }
+            // Don't modify password here - it should already be set properly in the creation process
+            // The password is handled in the CreatePegawai class before this method is called
 
             // Ensure email is present and unique
             if (empty($pegawai->email)) {
                 $pegawai->email = strtolower($pegawai->npp) . '@sucofindo.com';
+                $pegawai->save(); // Save email change if needed
             }
 
             // Log the user creation based on role

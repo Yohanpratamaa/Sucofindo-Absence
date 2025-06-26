@@ -13,6 +13,9 @@ use App\Services\UserRoleService;
 class CreatePegawai extends CreateRecord
 {
     protected static string $resource = PegawaiResource::class;
+    
+    // Store original password for notification
+    protected ?string $originalPassword = null;
 
     public function getTitle(): string
     {
@@ -31,9 +34,24 @@ class CreatePegawai extends CreateRecord
 
     protected function mutateFormDataBeforeCreate(array $data): array
     {
-        // Hash password jika ada
+        // Store original password for notification
         if (isset($data['password']) && !empty($data['password'])) {
+            $this->originalPassword = $data['password'];
             $data['password'] = Hash::make($data['password']);
+        } else {
+            // Set default password jika tidak diisi
+            $this->originalPassword = 'password123';
+            $data['password'] = Hash::make('password123');
+        }
+
+        // Pastikan email ada jika kosong
+        if (empty($data['email'])) {
+            $data['email'] = strtolower($data['npp']) . '@sucofindo.com';
+        }
+
+        // Pastikan status active untuk login
+        if (empty($data['status'])) {
+            $data['status'] = 'active';
         }
 
         // Pastikan data JSON kosong jika tidak ada
@@ -48,20 +66,56 @@ class CreatePegawai extends CreateRecord
         return $data;
     }
 
+    protected function afterCreate(): void
+    {
+        // Setup account after creation
+        $pegawai = $this->getRecord();
+        
+        // Ensure we have a Pegawai instance
+        if ($pegawai instanceof Pegawai) {
+            // Call UserRoleService to setup account based on role
+            UserRoleService::createUserBasedOnRole($pegawai);
+            
+            // Log account creation with password verification
+            \Illuminate\Support\Facades\Log::info("New account created: {$pegawai->nama} ({$pegawai->email}) with role: {$pegawai->role_user}");
+            
+            // Test password verification for debugging
+            if ($this->originalPassword) {
+                $passwordWorks = Hash::check($this->originalPassword, $pegawai->password);
+                \Illuminate\Support\Facades\Log::info("Password verification test: " . ($passwordWorks ? 'SUCCESS' : 'FAILED') . " for user: {$pegawai->email}");
+            }
+        }
+    }
+
     protected function getCreatedNotification(): ?Notification
     {
         $pegawai = $this->getRecord();
-        $roleMessage = match($pegawai->role_user) {
-            'employee' => 'Akun pegawai telah dibuat. Pegawai dapat login di /pegawai',
-            'Kepala Bidang' => 'Akun kepala bidang telah dibuat. Kepala bidang dapat login di /kepala-bidang',
-            'super admin' => 'Akun admin telah dibuat. Admin dapat login di /admin',
-            default => 'Akun telah berhasil dibuat.'
+        
+        // Get login URL based on role
+        $loginUrl = match($pegawai->role_user) {
+            'employee' => '/pegawai',
+            'Kepala Bidang' => '/kepala-bidang', 
+            'super admin' => '/admin',
+            default => '/login'
         };
+        
+        $roleMessage = match($pegawai->role_user) {
+            'employee' => "Akun pegawai telah dibuat dan SIAP LOGIN.\nURL: {$loginUrl}",
+            'Kepala Bidang' => "Akun kepala bidang telah dibuat dan SIAP LOGIN.\nURL: {$loginUrl}",
+            'super admin' => "Akun admin telah dibuat dan SIAP LOGIN.\nURL: {$loginUrl}",
+            default => 'Akun telah berhasil dibuat dan SIAP LOGIN.'
+        };
+
+        // Get password info - use stored original password
+        $passwordInfo = $this->originalPassword 
+            ? 'Password: ' . $this->originalPassword
+            : 'Password default: password123';
 
         return Notification::make()
             ->success()
-            ->title('Pegawai Berhasil Ditambahkan')
-            ->body($roleMessage . ' Email: ' . $pegawai->email . ' | Password default: password123');
+            ->title('✅ Pegawai Berhasil Ditambahkan')
+            ->body($roleMessage . "\n\n📧 Email: {$pegawai->email}\n🔐 {$passwordInfo}\n\n⚡ Akun langsung dapat digunakan untuk login!")
+            ->duration(8000); // Show longer to read all info
     }
 
     // Override form actions untuk hanya menampilkan Create dan Cancel
