@@ -17,16 +17,16 @@ use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 
-class AdminPanelProvider extends PanelProvider
+class KepalaBidangPanelProvider extends PanelProvider
 {
     public function panel(Panel $panel): Panel
     {
         return $panel
-            ->id('admin')
-            ->path('admin')
+            ->id('kepala-bidang')
+            ->path('kepala-bidang')
             // ->login() // Disable built-in login, use unified login
             ->loginRouteSlug('disabled-login')
-            ->brandName('Smart Absens')
+            ->brandName('Smart Absens - Kepala Bidang')
             ->brandLogoHeight('2rem')
             ->favicon(asset('images/favicon.ico'))
             ->renderHook(
@@ -40,30 +40,23 @@ class AdminPanelProvider extends PanelProvider
                 </style>'
             )
             ->colors([
-                'primary' => Color::Blue,
+                'primary' => Color::Orange,
                 'secondary' => Color::Gray,
                 'success' => Color::Green,
                 'warning' => Color::Amber,
                 'danger' => Color::Red,
             ])
-            ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
-            ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
+            ->discoverResources(in: app_path('Filament/KepalaBidang/Resources'), for: 'App\\Filament\\KepalaBidang\\Resources')
+            ->discoverPages(in: app_path('Filament/KepalaBidang/Pages'), for: 'App\\Filament\\KepalaBidang\\Pages')
             ->pages([
-                \App\Filament\Pages\Dashboard::class,
+                \App\Filament\KepalaBidang\Pages\Dashboard::class,
             ])
-            ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
+            ->discoverWidgets(in: app_path('Filament/KepalaBidang/Widgets'), for: 'App\\Filament\\KepalaBidang\\Widgets')
             ->widgets([
                 Widgets\AccountWidget::class,
-                \App\Filament\Widgets\AttendanceStatsOverview::class,
-                \App\Filament\Widgets\ApprovalStatsWidget::class,
-                \App\Filament\Widgets\AttendanceChart::class,
-                \App\Filament\Widgets\AttendanceStatusChart::class,
-                \App\Filament\Widgets\AttendanceTypeChart::class,
-                \App\Filament\Widgets\MonthlyAttendanceChart::class,
-                \App\Filament\Widgets\RecentAttendanceTable::class,
-                \App\Filament\Widgets\TopAttendanceTable::class,
-                \App\Filament\Widgets\RecentApprovalActivityWidget::class,
-                // Remove FilamentInfoWidget to hide default branding
+                \App\Filament\KepalaBidang\Widgets\TeamAttendanceWidget::class,
+                \App\Filament\KepalaBidang\Widgets\ApprovalStatsWidget::class,
+                \App\Filament\KepalaBidang\Widgets\TeamPerformanceWidget::class,
             ])
             ->middleware([
                 EncryptCookies::class,
@@ -80,7 +73,7 @@ class AdminPanelProvider extends PanelProvider
                 \App\Http\Middleware\FilamentUnifiedAuthenticate::class,
                 \App\Http\Middleware\ClearFilamentSessionData::class,
                 \App\Http\Middleware\EnsureFilamentUserIntegrity::class,
-                \App\Http\Middleware\EnsureAdminRole::class,
+                \App\Http\Middleware\EnsureKepalaBidangRole::class,
             ])
             ->sidebarCollapsibleOnDesktop()
             ->userMenuItems([
@@ -90,10 +83,10 @@ class AdminPanelProvider extends PanelProvider
                     ->icon('heroicon-m-arrow-left-on-rectangle'),
             ])
             ->navigationGroups([
-                'Master Data',
-                'Absensi',
+                'Manajemen Tim',
+                'Persetujuan',
                 'Laporan',
-                'Pengaturan',
+                'Profil',
             ])
             ->maxContentWidth('full');
     }

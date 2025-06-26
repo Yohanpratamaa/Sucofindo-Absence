@@ -3,13 +3,16 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Notifications\Notifiable;
+use Filament\Models\Contracts\FilamentUser;
+use Filament\Panel;
 
-class Pegawai extends Model
+class Pegawai extends Authenticatable implements FilamentUser
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, Notifiable;
 
     protected $fillable = [
         // Tab Users - Data Dasar
@@ -40,6 +43,9 @@ class Pegawai extends Model
 
         // Tab Fasilitas - Data JSON array
         'fasilitas_list',
+
+        // Remember token for authentication
+        'remember_token',
     ];
 
     protected $casts = [
@@ -54,7 +60,113 @@ class Pegawai extends Model
 
     protected $hidden = [
         'password',
+        'remember_token',
     ];
+
+    // Implement required methods for Authenticatable
+    public function getAuthIdentifierName()
+    {
+        return 'id';
+    }
+
+    public function getAuthIdentifier()
+    {
+        return $this->getKey();
+    }
+
+    public function getAuthPassword()
+    {
+        return $this->password;
+    }
+
+    public function getRememberToken()
+    {
+        return $this->remember_token;
+    }
+
+    public function setRememberToken($value)
+    {
+        $this->remember_token = $value;
+    }
+
+    public function getRememberTokenName()
+    {
+        return 'remember_token';
+    }
+
+    // Method required by Filament for user display
+    public function getUserName(): string
+    {
+        // Ensure we always return a non-null string
+        try {
+            // Method 1: Use accessor methods (recommended)
+            $nama = $this->getAttribute('nama');
+            $email = $this->getAttribute('email');
+            $npp = $this->getAttribute('npp');
+
+            // Return the first non-empty value
+            $result = $nama ?: ($email ?: ($npp ?: 'User'));
+
+            // Ensure result is string and not null
+            return is_string($result) && !empty($result) ? $result : 'User';
+        } catch (\Exception $e) {
+            // Log error for debugging
+            \Illuminate\Support\Facades\Log::error('getUserName error: ' . $e->getMessage());
+            // Fallback if any error occurs
+            return 'User';
+        }
+    }
+
+    // Alternative method for Filament name display
+    public function getFilamentName(): string
+    {
+        return $this->getUserName();
+    }
+
+    // Override getNameAttribute to ensure compatibility with Filament
+    public function getNameAttribute(): string
+    {
+        return $this->getUserName();
+    }
+
+    // Ensure email is always available as fallback
+    public function getEmailForPasswordReset(): string
+    {
+        return $this->getAttribute('email') ?: 'noreply@example.com';
+    }
+
+    // Method required by Filament for panel access control
+    public function canAccessPanel(Panel $panel): bool
+    {
+        // Ensure user has role_user attribute
+        if (!$this->role_user) {
+            return false;
+        }
+
+        // Allow access based on role and panel
+        switch ($panel->getId()) {
+            case 'admin':
+                return in_array($this->role_user, ['super admin', 'admin']);
+            case 'pegawai':
+                return $this->role_user === 'employee';
+            case 'kepala-bidang':
+                return $this->role_user === 'Kepala Bidang';
+            default:
+                return false;
+        }
+    }
+
+    // Additional Filament user methods for better compatibility
+    public function getFilamentAvatarUrl(): ?string
+    {
+        return null; // You can return avatar URL if you have one
+    }
+
+    // Override the name attribute for better Filament integration
+    protected function getNameColumn(): string
+    {
+        return 'nama';
+    }
 
     // Mutator untuk password
     public function setPasswordAttribute($value)
