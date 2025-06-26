@@ -274,7 +274,10 @@ class OvertimeAssignmentResource extends Resource
                             ->body('Penugasan lembur telah berhasil di-assign ulang.')
                             ->send();
                     })
-                    ->visible(fn (OvertimeAssignment $record): bool => $record->status === 'Rejected' || $record->status === 'Assigned'),
+                    ->visible(function (OvertimeAssignment $record): bool {
+                        $currentUser = Filament::auth()->user();
+                        return ($record->status === 'Rejected' || $record->status === 'Assigned') && !$currentUser->isSuperAdmin();
+                    }),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
