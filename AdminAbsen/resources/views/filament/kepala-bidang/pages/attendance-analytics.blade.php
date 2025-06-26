@@ -5,12 +5,39 @@
         padding: 2rem 0;
     }
     
+    @media (max-width: 768px) {
+        .analytics-container {
+            padding: 1.5rem 0;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .analytics-container {
+            padding: 1rem 0;
+        }
+    }
+    
     .analytics-section {
         margin-bottom: 3rem;
         background: white;
         border-radius: 12px;
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         padding: 2rem;
+    }
+    
+    @media (max-width: 768px) {
+        .analytics-section {
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            border-radius: 8px;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .analytics-section {
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+        }
     }
     
     .section-header {
@@ -22,10 +49,33 @@
         border-bottom: 2px solid #e5e7eb;
     }
     
+    @media (max-width: 768px) {
+        .section-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.75rem;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .section-header {
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+        }
+    }
+    
     .section-header-left {
         display: flex;
         align-items: center;
         gap: 1rem;
+    }
+    
+    @media (max-width: 480px) {
+        .section-header-left {
+            gap: 0.75rem;
+        }
     }
     
     .icon-container {
@@ -43,10 +93,28 @@
         margin: 0;
     }
     
+    @media (max-width: 768px) {
+        .section-title {
+            font-size: 1.5rem;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .section-title {
+            font-size: 1.25rem;
+        }
+    }
+    
     .section-subtitle {
         font-size: 0.875rem;
         color: #6b7280;
         margin: 0;
+    }
+    
+    @media (max-width: 480px) {
+        .section-subtitle {
+            font-size: 0.8rem;
+        }
     }
     
     .period-badge {
@@ -67,6 +135,20 @@
         margin-top: 1.5rem;
     }
     
+    @media (max-width: 768px) {
+        .metrics-grid {
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .metrics-grid {
+            grid-template-columns: 1fr;
+            gap: 0.75rem;
+        }
+    }
+    
     .metric-card {
         border-radius: 16px;
         padding: 1.5rem;
@@ -75,6 +157,20 @@
         transition: all 0.3s ease;
         position: relative;
         overflow: hidden;
+    }
+    
+    @media (max-width: 768px) {
+        .metric-card {
+            padding: 1.25rem;
+            border-radius: 12px;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .metric-card {
+            padding: 1rem;
+            border-radius: 8px;
+        }
     }
     
     .metric-card:hover {
@@ -127,6 +223,18 @@
         margin-bottom: 0.5rem;
     }
     
+    @media (max-width: 768px) {
+        .metric-value {
+            font-size: 2rem;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .metric-value {
+            font-size: 1.75rem;
+        }
+    }
+    
     .metric-label {
         font-weight: 500;
         opacity: 0.9;
@@ -151,6 +259,15 @@
     @media (max-width: 1280px) {
         .charts-grid {
             grid-template-columns: 1fr;
+            gap: 1.5rem;
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .charts-grid {
+            grid-template-columns: 1fr;
+            gap: 1rem;
+            margin-bottom: 2rem;
         }
     }
     
@@ -163,11 +280,39 @@
         box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.06);
     }
     
+    @media (max-width: 768px) {
+        .chart-container {
+            padding: 1.5rem;
+            border-radius: 12px;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .chart-container {
+            padding: 1rem;
+            border-radius: 8px;
+        }
+    }
+    
     .weekly-grid {
         display: grid;
         grid-template-columns: repeat(4, 1fr);
         gap: 1.5rem;
         margin-bottom: 2rem;
+    }
+    
+    @media (max-width: 768px) {
+        .weekly-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .weekly-grid {
+            grid-template-columns: 1fr;
+            gap: 0.75rem;
+        }
     }
     
     .week-column {
@@ -237,6 +382,22 @@
         font-weight: 500;
     }
     
+    @media (max-width: 768px) {
+        .chart-legend {
+            gap: 1.5rem;
+            font-size: 0.8rem;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .chart-legend {
+            gap: 1rem;
+            font-size: 0.75rem;
+            flex-direction: column;
+            align-items: center;
+        }
+    }
+    
     .legend-item {
         display: flex;
         align-items: center;
@@ -267,6 +428,21 @@
         grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
         gap: 1rem;
         margin-top: 1.5rem;
+    }
+    
+    @media (max-width: 768px) {
+        .summary-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .summary-grid {
+            grid-template-columns: 1fr;
+            gap: 0.5rem;
+        }
     }
     
     .summary-card {
@@ -316,6 +492,20 @@
         padding: 2rem;
     }
     
+    @media (max-width: 768px) {
+        .performance-container {
+            padding: 1.5rem;
+            border-radius: 12px;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .performance-container {
+            padding: 1rem;
+            border-radius: 8px;
+        }
+    }
+    
     .performance-overview {
         margin-bottom: 2rem;
     }
@@ -328,6 +518,21 @@
         box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08);
         margin-bottom: 1.5rem;
         text-align: center;
+    }
+    
+    @media (max-width: 768px) {
+        .top-performer {
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 1rem;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .top-performer {
+            padding: 1rem;
+            border-radius: 8px;
+        }
     }
     
     .performer-header {
@@ -384,6 +589,19 @@
         grid-template-columns: repeat(2, 1fr);
         gap: 1.5rem;
         margin-top: 1rem;
+    }
+    
+    @media (max-width: 768px) {
+        .performance-stats-grid {
+            gap: 1rem;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .performance-stats-grid {
+            grid-template-columns: 1fr;
+            gap: 0.75rem;
+        }
     }
     
     .performance-stat-card {
@@ -492,11 +710,35 @@
         overflow-y: auto;
     }
     
+    @media (max-width: 768px) {
+        .performance-list-content {
+            max-height: 24rem;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .performance-list-content {
+            max-height: 20rem;
+        }
+    }
+    
     .performance-item {
         padding: 1.75rem 2rem;
         border-bottom: 1px solid #f1f5f9;
         transition: all 0.3s ease;
         position: relative;
+    }
+    
+    @media (max-width: 768px) {
+        .performance-item {
+            padding: 1.25rem 1.5rem;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .performance-item {
+            padding: 1rem;
+        }
     }
     
     .performance-item:hover {
@@ -514,11 +756,32 @@
         justify-content: space-between;
     }
     
+    @media (max-width: 768px) {
+        .performance-item-content {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+    }
+    
     .employee-info {
         display: flex;
         align-items: center;
         gap: 1.5rem;
         flex: 1;
+    }
+    
+    @media (max-width: 768px) {
+        .employee-info {
+            width: 100%;
+            gap: 1rem;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .employee-info {
+            gap: 0.75rem;
+        }
     }
     
     .rank-badge {
@@ -539,6 +802,22 @@
         box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
         position: relative;
         overflow: hidden;
+    }
+    
+    @media (max-width: 768px) {
+        .rank-badge-gold, .rank-badge-silver, .rank-badge-bronze, .rank-badge-regular {
+            width: 2.5rem;
+            height: 2.5rem;
+            font-size: 0.875rem;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .rank-badge-gold, .rank-badge-silver, .rank-badge-bronze, .rank-badge-regular {
+            width: 2rem;
+            height: 2rem;
+            font-size: 0.75rem;
+        }
     }
     
     .rank-badge-gold, .rank-badge-silver, .rank-badge-bronze, .rank-badge-regular::before {
@@ -588,10 +867,31 @@
         text-overflow: ellipsis;
     }
     
+    @media (max-width: 768px) {
+        .employee-name {
+            font-size: 0.925rem;
+            white-space: normal;
+            overflow: visible;
+            text-overflow: unset;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .employee-name {
+            font-size: 0.875rem;
+        }
+    }
+    
     .employee-attendance {
         font-size: 0.875rem;
         color: #6b7280;
         font-weight: 500;
+    }
+    
+    @media (max-width: 480px) {
+        .employee-attendance {
+            font-size: 0.8rem;
+        }
     }
     
     .performance-badge-container {
@@ -600,6 +900,17 @@
         align-items: center;
         gap: 0.5rem;
         min-width: 80px;
+    }
+    
+    @media (max-width: 768px) {
+        .performance-badge-container {
+            flex-direction: row;
+            align-items: center;
+            justify-content: flex-start;
+            min-width: auto;
+            width: 100%;
+            gap: 0.75rem;
+        }
     }
     
     .attendance-rate {
@@ -829,11 +1140,39 @@
         margin-top: 1.5rem;
     }
     
+    @media (max-width: 768px) {
+        .insights-grid {
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+            margin-top: 1rem;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .insights-grid {
+            gap: 1rem;
+        }
+    }
+    
     .insight-card {
         border-radius: 16px;
         padding: 2rem;
         box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
         border: 2px solid;
+    }
+    
+    @media (max-width: 768px) {
+        .insight-card {
+            padding: 1.5rem;
+            border-radius: 12px;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .insight-card {
+            padding: 1rem;
+            border-radius: 8px;
+        }
     }
     
     .insight-card-blue {
@@ -887,6 +1226,92 @@
     .insight-text-orange { color: #b45309; }
     .insight-text-green { color: #166534; }
     .insight-text-green { color: #166534; }
+    
+    /* Additional responsive fixes */
+    @media (max-width: 1024px) {
+        .analytics-container {
+            padding: 1.5rem 0;
+        }
+        
+        .performance-list-header {
+            padding: 1.25rem 1.5rem;
+        }
+        
+        .performance-list-title {
+            font-size: 1rem;
+        }
+    }
+    
+    @media (max-width: 640px) {
+        .period-badge {
+            font-size: 0.8rem;
+            padding: 0.375rem 0.75rem;
+        }
+        
+        .metric-emoji {
+            font-size: 1.5rem;
+        }
+        
+        .metric-icon-bg svg {
+            width: 1.5rem;
+            height: 1.5rem;
+        }
+        
+        .performer-emoji {
+            font-size: 1.5rem;
+        }
+        
+        .performer-name {
+            font-size: 1.25rem;
+        }
+        
+        .performer-details {
+            font-size: 0.9rem;
+            padding: 0.375rem 0.75rem;
+        }
+        
+        .stat-value {
+            font-size: 1.75rem;
+        }
+        
+        .attendance-rate {
+            font-size: 0.875rem;
+            padding: 0.2rem 0.5rem;
+        }
+        
+        .status-badge {
+            font-size: 0.7rem;
+            padding: 0.25rem 0.5rem;
+        }
+    }
+    
+    /* Prevent horizontal scroll */
+    * {
+        box-sizing: border-box;
+    }
+    
+    .analytics-container {
+        overflow-x: hidden;
+        width: 100%;
+        max-width: 100%;
+    }
+    
+    /* Improve touch targets on mobile */
+    @media (max-width: 768px) {
+        .performance-item {
+            min-height: 60px;
+        }
+        
+        .rank-badge {
+            flex-shrink: 0;
+        }
+        
+        .employee-details {
+            flex: 1;
+            min-width: 0;
+            overflow: hidden;
+        }
+    }
 </style>
 
     @php
