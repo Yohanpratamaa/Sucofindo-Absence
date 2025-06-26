@@ -241,7 +241,10 @@ class IzinResource extends Resource
                             ->body("Izin telah berhasil disetujui oleh {$currentUser->nama}")
                             ->send();
                     })
-                    ->visible(fn (Izin $record): bool => $record->status === 'pending'),
+                    ->visible(function (Izin $record): bool {
+                        $currentUser = Filament::auth()->user();
+                        return $record->status === 'pending' && !$currentUser->isSuperAdmin();
+                    }),
 
                 Tables\Actions\Action::make('reject')
                     ->label('Tolak')
@@ -263,7 +266,10 @@ class IzinResource extends Resource
                             ->body("Izin telah berhasil ditolak oleh {$currentUser->nama}")
                             ->send();
                     })
-                    ->visible(fn (Izin $record): bool => $record->status === 'pending'),
+                    ->visible(function (Izin $record): bool {
+                        $currentUser = Filament::auth()->user();
+                        return $record->status === 'pending' && !$currentUser->isSuperAdmin();
+                    }),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -280,6 +286,17 @@ class IzinResource extends Resource
                         })
                         ->action(function (Collection $records): void {
                             $currentUser = Filament::auth()->user();
+
+                            // Cek apakah user adalah super admin
+                            if ($currentUser->isSuperAdmin()) {
+                                Notification::make()
+                                    ->danger()
+                                    ->title('Akses Ditolak')
+                                    ->body('Super Admin tidak diperbolehkan melakukan approval/reject izin.')
+                                    ->send();
+                                return;
+                            }
+
                             $pending = $records->filter(fn (Izin $record) => $record->status === 'pending');
 
                             foreach ($pending as $record) {
@@ -306,6 +323,17 @@ class IzinResource extends Resource
                         })
                         ->action(function (Collection $records): void {
                             $currentUser = Filament::auth()->user();
+
+                            // Cek apakah user adalah super admin
+                            if ($currentUser->isSuperAdmin()) {
+                                Notification::make()
+                                    ->danger()
+                                    ->title('Akses Ditolak')
+                                    ->body('Super Admin tidak diperbolehkan melakukan approval/reject izin.')
+                                    ->send();
+                                return;
+                            }
+
                             $pending = $records->filter(fn (Izin $record) => $record->status === 'pending');
 
                             foreach ($pending as $record) {
@@ -318,7 +346,10 @@ class IzinResource extends Resource
                                 ->body($pending->count() . " izin telah berhasil ditolak oleh {$currentUser->nama}")
                                 ->send();
                         }),
-                ]),
+                ])->visible(function (): bool {
+                    $currentUser = Filament::auth()->user();
+                    return !$currentUser->isSuperAdmin();
+                }),
             ])
             ->defaultSort('created_at', 'desc');
     }

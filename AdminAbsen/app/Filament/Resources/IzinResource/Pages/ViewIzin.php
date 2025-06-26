@@ -126,7 +126,10 @@ class ViewIzin extends ViewRecord
                         ->body("Izin telah berhasil disetujui oleh {$currentUser->nama}")
                         ->send();
                 })
-                ->visible(fn (): bool => $this->record->status === 'pending'),
+                ->visible(function (): bool {
+                    $currentUser = Filament::auth()->user();
+                    return $this->record->status === 'pending' && !$currentUser->isSuperAdmin();
+                }),
 
             Actions\Action::make('reject')
                 ->label('Tolak Izin')
@@ -148,7 +151,10 @@ class ViewIzin extends ViewRecord
                         ->body("Izin telah berhasil ditolak oleh {$currentUser->nama}")
                         ->send();
                 })
-                ->visible(fn (): bool => $this->record->status === 'pending'),
+                ->visible(function (): bool {
+                    $currentUser = Filament::auth()->user();
+                    return $this->record->status === 'pending' && !$currentUser->isSuperAdmin();
+                }),
         ];
     }
 }

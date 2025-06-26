@@ -224,7 +224,10 @@ class OvertimeAssignmentResource extends Resource
                             ->body("Penugasan lembur telah berhasil diterima oleh {$currentUser->nama}")
                             ->send();
                     })
-                    ->visible(fn (OvertimeAssignment $record): bool => $record->canChangeStatus()),
+                    ->visible(function (OvertimeAssignment $record): bool {
+                        $currentUser = Filament::auth()->user();
+                        return $record->canChangeStatus() && !$currentUser->isSuperAdmin();
+                    }),
 
                 Tables\Actions\Action::make('reject')
                     ->label('Tolak')
@@ -246,7 +249,10 @@ class OvertimeAssignmentResource extends Resource
                             ->body("Penugasan lembur telah berhasil ditolak oleh {$currentUser->nama}")
                             ->send();
                     })
-                    ->visible(fn (OvertimeAssignment $record): bool => $record->canChangeStatus()),
+                    ->visible(function (OvertimeAssignment $record): bool {
+                        $currentUser = Filament::auth()->user();
+                        return $record->canChangeStatus() && !$currentUser->isSuperAdmin();
+                    }),
 
                 Tables\Actions\Action::make('reassign')
                     ->label('Assign Ulang')
@@ -278,6 +284,18 @@ class OvertimeAssignmentResource extends Resource
                         ->color('success')
                         ->requiresConfirmation()
                         ->action(function (Collection $records): void {
+                            $currentUser = Filament::auth()->user();
+
+                            // Cek apakah user adalah super admin
+                            if ($currentUser->isSuperAdmin()) {
+                                Notification::make()
+                                    ->danger()
+                                    ->title('Akses Ditolak')
+                                    ->body('Super Admin tidak diperbolehkan melakukan approval/reject lembur.')
+                                    ->send();
+                                return;
+                            }
+
                             $assignedRecords = $records->filter(fn (OvertimeAssignment $record) => $record->canChangeStatus());
 
                             foreach ($assignedRecords as $record) {
@@ -297,6 +315,18 @@ class OvertimeAssignmentResource extends Resource
                         ->color('danger')
                         ->requiresConfirmation()
                         ->action(function (Collection $records): void {
+                            $currentUser = Filament::auth()->user();
+
+                            // Cek apakah user adalah super admin
+                            if ($currentUser->isSuperAdmin()) {
+                                Notification::make()
+                                    ->danger()
+                                    ->title('Akses Ditolak')
+                                    ->body('Super Admin tidak diperbolehkan melakukan approval/reject lembur.')
+                                    ->send();
+                                return;
+                            }
+
                             $assignedRecords = $records->filter(fn (OvertimeAssignment $record) => $record->canChangeStatus());
 
                             foreach ($assignedRecords as $record) {
@@ -309,7 +339,10 @@ class OvertimeAssignmentResource extends Resource
                                 ->body($assignedRecords->count() . ' penugasan lembur telah berhasil ditolak.')
                                 ->send();
                         }),
-                ]),
+                ])->visible(function (): bool {
+                    $currentUser = Filament::auth()->user();
+                    return !$currentUser->isSuperAdmin();
+                }),
             ])
             ->defaultSort('created_at', 'desc');
     }

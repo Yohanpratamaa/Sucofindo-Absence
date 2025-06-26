@@ -156,6 +156,18 @@ class Pegawai extends Authenticatable implements FilamentUser
         }
     }
 
+    // Method untuk mengecek apakah user adalah super admin
+    public function isSuperAdmin(): bool
+    {
+        return $this->role_user === 'super admin';
+    }
+
+    // Method untuk mengecek apakah user dapat melakukan approval
+    public function canApprove(): bool
+    {
+        return !$this->isSuperAdmin();
+    }
+
     // Additional Filament user methods for better compatibility
     public function getFilamentAvatarUrl(): ?string
     {

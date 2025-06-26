@@ -17,7 +17,7 @@ class OvertimeAssignmentSeeder extends Seeder
     {
         // Ambil data pegawai yang sudah ada
         $pegawai = Pegawai::all();
-        
+
         if ($pegawai->count() < 2) {
             $this->command->warn('Tidak cukup data pegawai untuk membuat sample overtime assignments. Minimal 2 pegawai diperlukan.');
             return;
@@ -137,6 +137,43 @@ class OvertimeAssignmentSeeder extends Seeder
                     'status' => 'Rejected',
                     'created_at' => Carbon::now()->subDays(15),
                     'updated_at' => Carbon::now()->subDays(14),
+                ],
+            ]);
+        }
+
+        // Tambahkan data untuk employee yang mengajukan lembur (status pending)
+        // Cari employee untuk pengajuan lembur
+        $employees = $pegawai->where('role_user', 'employee');
+        $supervisors = $pegawai->whereIn('role_user', ['Kepala Bidang', 'super admin']);
+
+        if ($employees->count() > 0 && $supervisors->count() > 0) {
+            $employee = $employees->first();
+            $supervisor = $supervisors->first();
+
+            $overtimeData = array_merge($overtimeData, [
+                [
+                    'user_id' => $employee->id,
+                    'assigned_by' => $supervisor->id,
+                    'overtime_id' => 'OT-2025-010',
+                    'assigned_at' => Carbon::now()->subHours(2)->format('Y-m-d H:i:s'),
+                    'approved_by' => null,
+                    'approved_at' => null,
+                    'assign_by' => null,
+                    'status' => 'Assigned', // Status pending untuk approval
+                    'created_at' => Carbon::now()->subHours(2),
+                    'updated_at' => Carbon::now()->subHours(2),
+                ],
+                [
+                    'user_id' => $employee->id,
+                    'assigned_by' => $supervisor->id,
+                    'overtime_id' => 'OT-2025-011',
+                    'assigned_at' => Carbon::now()->subMinutes(30)->format('Y-m-d H:i:s'),
+                    'approved_by' => null,
+                    'approved_at' => null,
+                    'assign_by' => null,
+                    'status' => 'Assigned', // Status pending untuk approval
+                    'created_at' => Carbon::now()->subMinutes(30),
+                    'updated_at' => Carbon::now()->subMinutes(30),
                 ],
             ]);
         }

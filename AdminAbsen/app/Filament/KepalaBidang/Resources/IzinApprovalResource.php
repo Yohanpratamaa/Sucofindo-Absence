@@ -169,18 +169,21 @@ class IzinApprovalResource extends Resource
             ])
             ->actions([
                 Tables\Actions\ViewAction::make(),
-                
+
                 Tables\Actions\Action::make('approve')
                     ->label('Setujui')
                     ->icon('heroicon-o-check-circle')
                     ->color('success')
-                    ->visible(fn ($record) => is_null($record->approved_by))
+                    ->visible(function ($record) {
+                        $currentUser = Auth::user();
+                        return is_null($record->approved_by) && !$currentUser->isSuperAdmin();
+                    })
                     ->requiresConfirmation()
                     ->modalHeading('Setujui Izin')
                     ->modalDescription('Apakah Anda yakin ingin menyetujui izin ini?')
                     ->action(function ($record) {
                         $record->approve(Auth::id());
-                        
+
                         Notification::make()
                             ->success()
                             ->title('Izin Disetujui')
@@ -192,13 +195,16 @@ class IzinApprovalResource extends Resource
                     ->label('Tolak')
                     ->icon('heroicon-o-x-circle')
                     ->color('danger')
-                    ->visible(fn ($record) => is_null($record->approved_by))
+                    ->visible(function ($record) {
+                        $currentUser = Auth::user();
+                        return is_null($record->approved_by) && !$currentUser->isSuperAdmin();
+                    })
                     ->requiresConfirmation()
                     ->modalHeading('Tolak Izin')
                     ->modalDescription('Apakah Anda yakin ingin menolak izin ini?')
                     ->action(function ($record) {
                         $record->reject(Auth::id());
-                        
+
                         Notification::make()
                             ->success()
                             ->title('Izin Ditolak')
@@ -215,6 +221,18 @@ class IzinApprovalResource extends Resource
                     ->modalHeading('Setujui Izin Terpilih')
                     ->modalDescription('Apakah Anda yakin ingin menyetujui semua izin yang dipilih?')
                     ->action(function ($records) {
+                        $currentUser = Auth::user();
+
+                        // Cek apakah user adalah super admin
+                        if ($currentUser->isSuperAdmin()) {
+                            Notification::make()
+                                ->danger()
+                                ->title('Akses Ditolak')
+                                ->body('Super Admin tidak diperbolehkan melakukan approval/reject izin.')
+                                ->send();
+                            return;
+                        }
+
                         $count = 0;
                         foreach ($records as $record) {
                             if (is_null($record->approved_by)) {
@@ -222,12 +240,16 @@ class IzinApprovalResource extends Resource
                                 $count++;
                             }
                         }
-                        
+
                         Notification::make()
                             ->success()
                             ->title('Izin Disetujui')
                             ->body("{$count} izin telah disetujui.")
                             ->send();
+                    })
+                    ->visible(function () {
+                        $currentUser = Auth::user();
+                        return !$currentUser->isSuperAdmin();
                     }),
 
                 Tables\Actions\BulkAction::make('bulk_reject')
@@ -238,6 +260,18 @@ class IzinApprovalResource extends Resource
                     ->modalHeading('Tolak Izin Terpilih')
                     ->modalDescription('Apakah Anda yakin ingin menolak semua izin yang dipilih?')
                     ->action(function ($records) {
+                        $currentUser = Auth::user();
+
+                        // Cek apakah user adalah super admin
+                        if ($currentUser->isSuperAdmin()) {
+                            Notification::make()
+                                ->danger()
+                                ->title('Akses Ditolak')
+                                ->body('Super Admin tidak diperbolehkan melakukan approval/reject izin.')
+                                ->send();
+                            return;
+                        }
+
                         $count = 0;
                         foreach ($records as $record) {
                             if (is_null($record->approved_by)) {
@@ -245,12 +279,16 @@ class IzinApprovalResource extends Resource
                                 $count++;
                             }
                         }
-                        
+
                         Notification::make()
                             ->success()
                             ->title('Izin Ditolak')
                             ->body("{$count} izin telah ditolak.")
                             ->send();
+                    })
+                    ->visible(function () {
+                        $currentUser = Auth::user();
+                        return !$currentUser->isSuperAdmin();
                     }),
             ])
             ->defaultSort('created_at', 'desc');
