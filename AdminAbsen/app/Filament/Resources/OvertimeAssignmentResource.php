@@ -23,11 +23,11 @@ class OvertimeAssignmentResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-clock';
 
-    protected static ?string $navigationLabel = 'Manajemen Lembur';
+    protected static ?string $navigationLabel = 'Data Lembur';
 
     protected static ?string $modelLabel = 'Penugasan Lembur';
 
-    protected static ?string $pluralModelLabel = 'Manajemen Lembur';
+    protected static ?string $pluralModelLabel = 'Data Lembur';
 
     protected static ?int $navigationSort = 6;
 
