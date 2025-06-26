@@ -102,9 +102,9 @@ class PegawaiResource extends Resource
                                         Forms\Components\Select::make('role_user')
                                             ->label('Role User')
                                             ->options([
-                                                'super admin' => 'Super Admin (Login: /admin)',
-                                                'employee' => 'Employee (Login: /pegawai)',
-                                                'Kepala Bidang' => 'Kepala Bidang (Login: /kepala-bidang)',
+                                                'super admin' => 'Super Admin ',
+                                                'employee' => 'Employee ',
+                                                'Kepala Bidang' => 'Kepala Bidang',
                                             ])
                                             ->required()
                                             ->helperText('Role menentukan panel mana yang dapat diakses setelah login'),
