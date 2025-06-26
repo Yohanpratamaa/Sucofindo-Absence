@@ -2,7 +2,6 @@
 
 namespace App\Providers\Filament;
 
-use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
@@ -25,7 +24,8 @@ class KepalaBidangPanelProvider extends PanelProvider
         return $panel
             ->id('kepala-bidang')
             ->path('kepala-bidang')
-            ->login()
+            // ->login() // Disable built-in login, use unified login
+            ->loginRouteSlug('disabled-login')
             ->brandName('Smart Absens - Kepala Bidang')
             ->brandLogoHeight('2rem')
             ->favicon(asset('images/favicon.ico'))
@@ -70,11 +70,18 @@ class KepalaBidangPanelProvider extends PanelProvider
                 DispatchServingFilamentEvent::class,
             ])
             ->authMiddleware([
-                Authenticate::class,
+                \App\Http\Middleware\FilamentUnifiedAuthenticate::class,
+                \App\Http\Middleware\ClearFilamentSessionData::class,
                 \App\Http\Middleware\EnsureFilamentUserIntegrity::class,
                 \App\Http\Middleware\EnsureKepalaBidangRole::class,
             ])
             ->sidebarCollapsibleOnDesktop()
+            ->userMenuItems([
+                'logout' => \Filament\Navigation\MenuItem::make()
+                    ->label('Logout')
+                    ->url('/logout')
+                    ->icon('heroicon-m-arrow-left-on-rectangle'),
+            ])
             ->navigationGroups([
                 'Manajemen Tim',
                 'Persetujuan',

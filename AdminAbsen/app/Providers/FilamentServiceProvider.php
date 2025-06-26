@@ -3,13 +3,24 @@
 namespace App\Providers;
 
 use Filament\Facades\Filament;
+use Filament\Http\Responses\Auth\Contracts\LogoutResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\ServiceProvider;
 
 class FilamentServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        //
+        // Override Filament logout response to use our unified logout
+        $this->app->bind(LogoutResponse::class, function () {
+            return new class implements LogoutResponse {
+                public function toResponse($request): RedirectResponse
+                {
+                    // Use our unified logout
+                    return redirect('/logout');
+                }
+            };
+        });
     }
 
     public function boot(): void

@@ -21,9 +21,11 @@ class EnsureFilamentUserIntegrity
 
             // Validate user object integrity
             if (!$this->validateUserIntegrity($user)) {
+                // Simple logout without complex session clearing
                 Auth::logout();
-                return redirect()->route('filament.admin.auth.login')
-                    ->with('error', 'Session expired. Please login again.');
+
+                return redirect()->route('login')
+                    ->with('error', 'Session tidak valid. Silakan login kembali.');
             }
         }
 

@@ -2,7 +2,6 @@
 
 namespace App\Providers\Filament;
 
-use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
@@ -25,7 +24,8 @@ class AdminPanelProvider extends PanelProvider
         return $panel
             ->id('admin')
             ->path('admin')
-            ->login()
+            // ->login() // Disable built-in login, use unified login
+            ->loginRouteSlug('disabled-login')
             ->brandName('Smart Absens')
             ->brandLogoHeight('2rem')
             ->favicon(asset('images/favicon.ico'))
@@ -77,11 +77,18 @@ class AdminPanelProvider extends PanelProvider
                 DispatchServingFilamentEvent::class,
             ])
             ->authMiddleware([
-                Authenticate::class,
+                \App\Http\Middleware\FilamentUnifiedAuthenticate::class,
+                \App\Http\Middleware\ClearFilamentSessionData::class,
                 \App\Http\Middleware\EnsureFilamentUserIntegrity::class,
                 \App\Http\Middleware\EnsureAdminRole::class,
             ])
             ->sidebarCollapsibleOnDesktop()
+            ->userMenuItems([
+                'logout' => \Filament\Navigation\MenuItem::make()
+                    ->label('Logout')
+                    ->url('/logout')
+                    ->icon('heroicon-m-arrow-left-on-rectangle'),
+            ])
             ->navigationGroups([
                 'Master Data',
                 'Absensi',

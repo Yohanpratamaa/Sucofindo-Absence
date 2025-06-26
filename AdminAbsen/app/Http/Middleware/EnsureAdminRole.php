@@ -17,14 +17,14 @@ class EnsureAdminRole
     public function handle(Request $request, Closure $next): Response
     {
         if (!Auth::check()) {
-            return redirect('/admin/login');
+            return redirect()->route('login');
         }
 
         $user = Auth::user();
 
-        if ($user->role_user !== 'super admin') {
-            Auth::logout();
-            return redirect('/admin/login')->with('error', 'Akses ditolak. Anda tidak memiliki izin sebagai admin.');
+        if ($user->role_user !== 'super admin' && $user->role_user !== 'admin') {
+            // Don't logout, just redirect to avoid session conflicts
+            return redirect()->route('login')->with('error', 'Akses ditolak. Anda tidak memiliki izin sebagai admin.');
         }
 
         return $next($request);

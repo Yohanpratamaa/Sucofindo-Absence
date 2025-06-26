@@ -17,14 +17,14 @@ class EnsurePegawaiRole
     public function handle(Request $request, Closure $next): Response
     {
         if (!Auth::check()) {
-            return redirect('/pegawai/login');
+            return redirect()->route('login');
         }
 
         $user = Auth::user();
 
         if ($user->role_user !== 'employee') {
-            Auth::logout();
-            return redirect('/pegawai/login')->with('error', 'Akses ditolak. Anda tidak memiliki izin sebagai pegawai.');
+            // Don't logout, just redirect to avoid session conflicts
+            return redirect()->route('login')->with('error', 'Akses ditolak. Anda tidak memiliki izin sebagai pegawai.');
         }
 
         return $next($request);

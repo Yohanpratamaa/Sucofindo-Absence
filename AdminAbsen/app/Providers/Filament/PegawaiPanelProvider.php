@@ -2,7 +2,6 @@
 
 namespace App\Providers\Filament;
 
-use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
@@ -25,7 +24,8 @@ class PegawaiPanelProvider extends PanelProvider
         return $panel
             ->id('pegawai')
             ->path('pegawai')
-            ->login()
+            // ->login() // Disable built-in login, use unified login
+            ->loginRouteSlug('disabled-login')
             ->brandName('Smart Absens - Pegawai')
             ->brandLogoHeight('2rem')
             ->favicon(asset('images/favicon.ico'))
@@ -70,11 +70,18 @@ class PegawaiPanelProvider extends PanelProvider
                 DispatchServingFilamentEvent::class,
             ])
             ->authMiddleware([
-                Authenticate::class,
+                \App\Http\Middleware\FilamentUnifiedAuthenticate::class,
+                \App\Http\Middleware\ClearFilamentSessionData::class,
                 \App\Http\Middleware\EnsureFilamentUserIntegrity::class,
                 \App\Http\Middleware\EnsurePegawaiRole::class,
             ])
             ->sidebarCollapsibleOnDesktop()
+            ->userMenuItems([
+                'logout' => \Filament\Navigation\MenuItem::make()
+                    ->label('Logout')
+                    ->url('/logout')
+                    ->icon('heroicon-m-arrow-left-on-rectangle'),
+            ])
             ->navigationGroups([
                 'Absensi',
                 'Izin',

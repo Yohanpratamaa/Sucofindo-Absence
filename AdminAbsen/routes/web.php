@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Api\RealTimeController;
 use App\Http\Controllers\SetupController;
+use App\Http\Controllers\Auth\UnifiedLoginController;
 use App\Models\Pegawai;
 
 // Setup routes for initial admin creation
@@ -11,6 +12,16 @@ Route::middleware('guest')->group(function () {
     Route::get('/setup', [SetupController::class, 'showSetupForm'])->name('setup.form');
     Route::post('/setup', [SetupController::class, 'processSetup'])->name('setup.process');
 });
+
+// Unified Login Routes - Single entry point for all roles
+Route::middleware('guest')->group(function () {
+    Route::get('/login', [UnifiedLoginController::class, 'showLoginForm'])->name('login');
+    Route::post('/login', [UnifiedLoginController::class, 'login'])->name('unified.login');
+});
+
+// Unified Logout Route - Works for all panels
+Route::post('/logout', [UnifiedLoginController::class, 'logout'])->name('unified.logout')->middleware('auth');
+Route::get('/logout', [UnifiedLoginController::class, 'logout'])->name('unified.logout.get')->middleware('auth');
 
 // Redirect root URL to appropriate panel based on authentication and setup status
 Route::get('/', function () {
@@ -33,17 +44,17 @@ Route::get('/', function () {
                 $redirectUrl = \App\Services\UserRoleService::getRedirectUrlByRole($user->role_user);
                 return redirect()->to($redirectUrl);
             } else {
-                // If user object is incomplete, logout and redirect to admin login
+                // If user object is incomplete, logout and redirect to login
                 Auth::logout();
-                return redirect()->to('/admin/login');
+                return redirect()->route('login');
             }
         } else {
-            // If not authenticated, redirect to admin login
-            return redirect()->to('/admin/login');
+            // If not authenticated, redirect to unified login
+            return redirect()->route('login');
         }
     } catch (\Exception $e) {
-        // If any error occurs, redirect to admin login
-        return redirect()->to('/admin/login');
+        // If any error occurs, redirect to login
+        return redirect()->route('login');
     }
 })->name('home');
 

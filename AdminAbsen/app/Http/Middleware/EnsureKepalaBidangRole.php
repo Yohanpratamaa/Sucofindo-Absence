@@ -17,14 +17,14 @@ class EnsureKepalaBidangRole
     public function handle(Request $request, Closure $next): Response
     {
         if (!Auth::check()) {
-            return redirect('/kepala-bidang/login');
+            return redirect()->route('login');
         }
 
         $user = Auth::user();
-        
+
         if ($user->role_user !== 'Kepala Bidang') {
-            Auth::logout();
-            return redirect('/kepala-bidang/login')->with('error', 'Akses ditolak. Anda tidak memiliki izin sebagai kepala bidang.');
+            // Don't logout, just redirect to avoid session conflicts
+            return redirect()->route('login')->with('error', 'Akses ditolak. Anda tidak memiliki izin sebagai kepala bidang.');
         }
 
         return $next($request);
