@@ -12,11 +12,11 @@ class ExportQuickAccess extends BaseWidget
     protected function getStats(): array
     {
         return [
-            Stat::make('Export Center', 'Pusat Export Laporan')
-                ->description('Akses semua fitur export dalam satu halaman')
+            Stat::make('Export Laporan', 'Data & Export')
+                ->description('Akses semua fitur export dan data laporan')
                 ->descriptionIcon('heroicon-m-arrow-down-tray')
                 ->color('primary')
-                ->url('/kepala-bidang/export-center'),
+                ->url('/kepala-bidang/attendance-reports'),
 
             Stat::make('Data Laporan', 'View & Export')
                 ->description('Lihat data rekap tim dan export')
