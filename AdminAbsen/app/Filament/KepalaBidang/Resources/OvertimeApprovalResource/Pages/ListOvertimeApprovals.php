@@ -15,7 +15,13 @@ class ListOvertimeApprovals extends ListRecords
         return [
             Actions\CreateAction::make()
                 ->label('Assign Lembur Baru')
-                ->icon('heroicon-o-plus'),
+                ->icon('heroicon-o-plus')
+                ->color('success')
+                ->mutateFormDataUsing(function (array $data): array {
+                    $data['assigned_by'] = auth()->id();
+                    $data['status'] = 'Assigned';
+                    return $data;
+                }),
         ];
     }
 
