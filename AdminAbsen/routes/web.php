@@ -3,21 +3,49 @@
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Api\RealTimeController;
+use App\Http\Controllers\SetupController;
+use App\Models\Pegawai;
 
-// Redirect root URL to Filament admin login/dashboard
+// Setup routes for initial admin creation
+Route::middleware('guest')->group(function () {
+    Route::get('/setup', [SetupController::class, 'showSetupForm'])->name('setup.form');
+    Route::post('/setup', [SetupController::class, 'processSetup'])->name('setup.process');
+});
+
+// Redirect root URL to appropriate panel based on authentication and setup status
 Route::get('/', function () {
-    // Check if user is authenticated
-    if (Auth::check()) {
-        // If authenticated, redirect to admin dashboard
-        return redirect()->to('/admin');
-    } else {
-        // If not authenticated, redirect to admin login
+    try {
+        // Check if super admin exists
+        $adminExists = Pegawai::where('role_user', 'super admin')->exists();
+
+        if (!$adminExists) {
+            // If no super admin, redirect to setup
+            return redirect()->route('setup.form');
+        }
+
+        // Check if user is authenticated
+        if (Auth::check()) {
+            $user = Auth::user();
+
+            // Make sure user object is fully loaded and has role_user attribute
+            if ($user && isset($user->role_user)) {
+                // Redirect based on user role
+                $redirectUrl = \App\Services\UserRoleService::getRedirectUrlByRole($user->role_user);
+                return redirect()->to($redirectUrl);
+            } else {
+                // If user object is incomplete, logout and redirect to admin login
+                Auth::logout();
+                return redirect()->to('/admin/login');
+            }
+        } else {
+            // If not authenticated, redirect to admin login
+            return redirect()->to('/admin/login');
+        }
+    } catch (\Exception $e) {
+        // If any error occurs, redirect to admin login
         return redirect()->to('/admin/login');
     }
 })->name('home');
-
-// Alternative simple redirect (uncomment if preferred)
-// Route::redirect('/', '/admin', 302);
 
 // Real-time API routes
 Route::prefix('api/realtime')->group(function () {

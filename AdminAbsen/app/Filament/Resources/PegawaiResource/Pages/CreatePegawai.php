@@ -7,6 +7,8 @@ use App\Models\Pegawai;
 use Filament\Actions;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Support\Facades\Hash;
+use Filament\Notifications\Notification;
+use App\Services\UserRoleService;
 
 class CreatePegawai extends CreateRecord
 {
@@ -44,6 +46,22 @@ class CreatePegawai extends CreateRecord
         $data['posisi_tunjangan'] = $data['posisi_tunjangan'] ?? 0;
 
         return $data;
+    }
+
+    protected function getCreatedNotification(): ?Notification
+    {
+        $pegawai = $this->getRecord();
+        $roleMessage = match($pegawai->role_user) {
+            'employee' => 'Akun pegawai telah dibuat. Pegawai dapat login di /pegawai',
+            'Kepala Bidang' => 'Akun kepala bidang telah dibuat. Kepala bidang dapat login di /kepala-bidang',
+            'super admin' => 'Akun admin telah dibuat. Admin dapat login di /admin',
+            default => 'Akun telah berhasil dibuat.'
+        };
+
+        return Notification::make()
+            ->success()
+            ->title('Pegawai Berhasil Ditambahkan')
+            ->body($roleMessage . ' Email: ' . $pegawai->email . ' | Password default: password123');
     }
 
     // Override form actions untuk hanya menampilkan Create dan Cancel

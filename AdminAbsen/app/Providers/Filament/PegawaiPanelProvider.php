@@ -18,15 +18,15 @@ use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 
-class AdminPanelProvider extends PanelProvider
+class PegawaiPanelProvider extends PanelProvider
 {
     public function panel(Panel $panel): Panel
     {
         return $panel
-            ->id('admin')
-            ->path('admin')
+            ->id('pegawai')
+            ->path('pegawai')
             ->login()
-            ->brandName('Smart Absens')
+            ->brandName('Smart Absens - Pegawai')
             ->brandLogoHeight('2rem')
             ->favicon(asset('images/favicon.ico'))
             ->renderHook(
@@ -40,30 +40,23 @@ class AdminPanelProvider extends PanelProvider
                 </style>'
             )
             ->colors([
-                'primary' => Color::Blue,
+                'primary' => Color::Green,
                 'secondary' => Color::Gray,
                 'success' => Color::Green,
                 'warning' => Color::Amber,
                 'danger' => Color::Red,
             ])
-            ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
-            ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
+            ->discoverResources(in: app_path('Filament/Pegawai/Resources'), for: 'App\\Filament\\Pegawai\\Resources')
+            ->discoverPages(in: app_path('Filament/Pegawai/Pages'), for: 'App\\Filament\\Pegawai\\Pages')
             ->pages([
-                \App\Filament\Pages\Dashboard::class,
+                \App\Filament\Pegawai\Pages\Dashboard::class,
             ])
-            ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
+            ->discoverWidgets(in: app_path('Filament/Pegawai/Widgets'), for: 'App\\Filament\\Pegawai\\Widgets')
             ->widgets([
                 Widgets\AccountWidget::class,
-                \App\Filament\Widgets\AttendanceStatsOverview::class,
-                \App\Filament\Widgets\ApprovalStatsWidget::class,
-                \App\Filament\Widgets\AttendanceChart::class,
-                \App\Filament\Widgets\AttendanceStatusChart::class,
-                \App\Filament\Widgets\AttendanceTypeChart::class,
-                \App\Filament\Widgets\MonthlyAttendanceChart::class,
-                \App\Filament\Widgets\RecentAttendanceTable::class,
-                \App\Filament\Widgets\TopAttendanceTable::class,
-                \App\Filament\Widgets\RecentApprovalActivityWidget::class,
-                // Remove FilamentInfoWidget to hide default branding
+                \App\Filament\Pegawai\Widgets\MyAttendanceWidget::class,
+                // \App\Filament\Pegawai\Widgets\MyIzinWidget::class,
+                \App\Filament\Pegawai\Widgets\AttendanceStatsWidget::class,
             ])
             ->middleware([
                 EncryptCookies::class,
@@ -79,14 +72,13 @@ class AdminPanelProvider extends PanelProvider
             ->authMiddleware([
                 Authenticate::class,
                 \App\Http\Middleware\EnsureFilamentUserIntegrity::class,
-                \App\Http\Middleware\EnsureAdminRole::class,
+                \App\Http\Middleware\EnsurePegawaiRole::class,
             ])
             ->sidebarCollapsibleOnDesktop()
             ->navigationGroups([
-                'Master Data',
                 'Absensi',
-                'Laporan',
-                'Pengaturan',
+                'Izin',
+                'Profil',
             ])
             ->maxContentWidth('full');
     }
