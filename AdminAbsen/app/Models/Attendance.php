@@ -296,4 +296,65 @@ class Attendance extends Model
             ? Carbon::parse($schedule->end_time)->format('H:i')
             : '17:00';
     }
+
+    // Method untuk mengecek apakah attendance type memerlukan absen siang
+    public function requiresAbsenSiang()
+    {
+        return $this->attendance_type === 'Dinas Luar';
+    }
+
+    // Method untuk mengecek validitas absensi berdasarkan type
+    public function isValidAttendance()
+    {
+        if ($this->attendance_type === 'WFO') {
+            // WFO: Cukup check in dan check out
+            return $this->check_in && $this->check_out;
+        } else {
+            // Dinas Luar: Harus ada check in, absen siang, dan check out
+            return $this->check_in && $this->absen_siang && $this->check_out;
+        }
+    }
+
+    // Method untuk mendapatkan status absensi berdasarkan kelengkapan
+    public function getKelengkapanAbsensiAttribute()
+    {
+        if ($this->attendance_type === 'WFO') {
+            $completed = 0;
+            $total = 2; // check in + check out
+
+            if ($this->check_in) $completed++;
+            if ($this->check_out) $completed++;
+
+            return [
+                'completed' => $completed,
+                'total' => $total,
+                'percentage' => ($completed / $total) * 100,
+                'status' => $completed === $total ? 'Lengkap' : 'Belum Lengkap'
+            ];
+        } else {
+            $completed = 0;
+            $total = 3; // check in + absen siang + check out
+
+            if ($this->check_in) $completed++;
+            if ($this->absen_siang) $completed++;
+            if ($this->check_out) $completed++;
+
+            return [
+                'completed' => $completed,
+                'total' => $total,
+                'percentage' => ($completed / $total) * 100,
+                'status' => $completed === $total ? 'Lengkap' : 'Belum Lengkap'
+            ];
+        }
+    }
+
+    // Method untuk mendapatkan deskripsi requirement absensi
+    public function getAbsensiRequirementAttribute()
+    {
+        if ($this->attendance_type === 'WFO') {
+            return 'Check In + Check Out (Lokasi: Kantor)';
+        } else {
+            return 'Check In + Absen Siang + Check Out (Lokasi: Fleksibel)';
+        }
+    }
 }

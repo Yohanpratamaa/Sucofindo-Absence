@@ -76,15 +76,20 @@ class AttendanceSeeder extends Seeder
         // Generate waktu check in berdasarkan jadwal kantor
         $jamMasuk = $this->generateCheckInTime($tanggal, $jamMasukStandar, $faker);
 
-        // Jam istirahat siang (12:00 - 13:00)
+        // Tentukan attendance type secara random (70% WFO, 30% Dinas Luar)
+        $attendanceType = $faker->boolean(70) ? 'WFO' : 'Dinas Luar';
+
+        // Jam istirahat siang - berbeda berdasarkan attendance type
         $jamSiang = null;
-        if ($faker->boolean(80)) { // 80% peluang absen siang
+        if ($attendanceType === 'Dinas Luar') {
+            // Dinas Luar: WAJIB absen siang
             $jamSiang = $tanggal->copy()->setTime(
                 12,
                 $faker->numberBetween(0, 59),
                 0
             );
         }
+        // WFO: Tidak perlu absen siang (null)
 
         // Generate waktu check out berdasarkan jadwal kantor
         $jamPulang = null;
@@ -98,14 +103,49 @@ class AttendanceSeeder extends Seeder
             $overtime = $faker->numberBetween(30, 180); // 30 menit - 3 jam
         }
 
-        // Koordinat kantor dari database
-        $kantorLat = $office->latitude;
-        $kantorLng = $office->longitude;
+        // Koordinat dan foto berdasarkan attendance type
+        if ($attendanceType === 'WFO') {
+            // WFO: Lokasi di kantor (dalam radius kantor)
+            $kantorLat = $office->latitude;
+            $kantorLng = $office->longitude;
+            $radiusInDegrees = $office->radius / 111000;
 
-        // Variasi lokasi dalam radius kantor
-        $radiusInDegrees = $office->radius / 111000; // Convert meter to degrees (approximate)
-        $latVariation = $faker->randomFloat(6, -$radiusInDegrees, $radiusInDegrees);
-        $lngVariation = $faker->randomFloat(6, -$radiusInDegrees, $radiusInDegrees);
+            $latVariation = $faker->randomFloat(6, -$radiusInDegrees, $radiusInDegrees);
+            $lngVariation = $faker->randomFloat(6, -$radiusInDegrees, $radiusInDegrees);
+
+            $checkInLat = $kantorLat + $latVariation;
+            $checkInLng = $kantorLng + $lngVariation;
+            $checkOutLat = $kantorLat + $faker->randomFloat(6, -$radiusInDegrees, $radiusInDegrees);
+            $checkOutLng = $kantorLng + $faker->randomFloat(6, -$radiusInDegrees, $radiusInDegrees);
+
+            // Absen siang coordinates (tidak digunakan untuk WFO)
+            $siangLat = null;
+            $siangLng = null;
+
+        } else {
+            // Dinas Luar: Lokasi fleksibel (simulasi lokasi berbeda)
+            $baseLocations = [
+                ['lat' => -6.9175, 'lng' => 107.6191], // Bandung area 1
+                ['lat' => -6.8951, 'lng' => 107.6081], // Bandung area 2
+                ['lat' => -6.9389, 'lng' => 107.7186], // Bandung area 3
+                ['lat' => -6.8650, 'lng' => 107.5886], // Bandung area 4
+            ];
+
+            // Check in location
+            $checkInLocation = $faker->randomElement($baseLocations);
+            $checkInLat = $checkInLocation['lat'] + $faker->randomFloat(4, -0.01, 0.01);
+            $checkInLng = $checkInLocation['lng'] + $faker->randomFloat(4, -0.01, 0.01);
+
+            // Absen siang location (berbeda dari check in)
+            $siangLocation = $faker->randomElement($baseLocations);
+            $siangLat = $siangLocation['lat'] + $faker->randomFloat(4, -0.01, 0.01);
+            $siangLng = $siangLocation['lng'] + $faker->randomFloat(4, -0.01, 0.01);
+
+            // Check out location (berbeda lagi)
+            $checkOutLocation = $faker->randomElement($baseLocations);
+            $checkOutLat = $checkOutLocation['lat'] + $faker->randomFloat(4, -0.01, 0.01);
+            $checkOutLng = $checkOutLocation['lng'] + $faker->randomFloat(4, -0.01, 0.01);
+        }
 
         // Cari office schedule ID untuk relasi
         $officeScheduleId = $schedule->id;
@@ -114,19 +154,19 @@ class AttendanceSeeder extends Seeder
             'user_id' => $karyawan->id,
             'office_working_hours_id' => $officeScheduleId, // Relasi ke office schedule
             'check_in' => $jamMasuk->format('H:i:s'),
-            'longitude_absen_masuk' => $kantorLng + $lngVariation,
-            'latitude_absen_masuk' => $kantorLat + $latVariation,
+            'longitude_absen_masuk' => $checkInLng,
+            'latitude_absen_masuk' => $checkInLat,
             'picture_absen_masuk' => null, // Bisa ditambahkan path foto sample
             'absen_siang' => $jamSiang ? $jamSiang->format('H:i:s') : null,
-            'longitude_absen_siang' => $jamSiang ? ($kantorLng + $faker->randomFloat(6, -$radiusInDegrees, $radiusInDegrees)) : null,
-            'latitude_absen_siang' => $jamSiang ? ($kantorLat + $faker->randomFloat(6, -$radiusInDegrees, $radiusInDegrees)) : null,
-            'picture_absen_siang' => null,
+            'longitude_absen_siang' => $siangLng,
+            'latitude_absen_siang' => $siangLat,
+            'picture_absen_siang' => $jamSiang ? null : null, // Foto hanya jika ada absen siang
             'check_out' => $jamPulang ? $jamPulang->format('H:i:s') : null,
-            'longitude_absen_pulang' => $jamPulang ? ($kantorLng + $faker->randomFloat(6, -$radiusInDegrees, $radiusInDegrees)) : null,
-            'latitude_absen_pulang' => $jamPulang ? ($kantorLat + $faker->randomFloat(6, -$radiusInDegrees, $radiusInDegrees)) : null,
-            'picture_absen_pulang' => null,
+            'longitude_absen_pulang' => $jamPulang ? $checkOutLng : null,
+            'latitude_absen_pulang' => $jamPulang ? $checkOutLat : null,
+            'picture_absen_pulang' => $jamPulang ? null : null, // Foto hanya jika ada check out
             'overtime' => $overtime,
-            'attendance_type' => $faker->randomElement(['WFO', 'Dinas Luar']),
+            'attendance_type' => $attendanceType,
             'created_at' => $tanggal,
             'updated_at' => $tanggal,
         ];
