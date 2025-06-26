@@ -6,6 +6,8 @@ use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use App\Models\Attendance;
 use App\Models\Pegawai;
+use App\Models\Office;
+use App\Models\OfficeSchedule;
 use Carbon\Carbon;
 use Faker\Generator;
 
@@ -18,11 +20,17 @@ class AttendanceSeeder extends Seeder
     {
         $faker = fake('id_ID');
 
-        // Ambil data pegawai yang sudah ada
+        // Ambil data pegawai dan office yang sudah ada
         $pegawai = Pegawai::all();
+        $offices = Office::all();
 
         if ($pegawai->count() < 1) {
             $this->command->warn('Tidak ada data pegawai untuk membuat sample attendance. Jalankan PegawaiSeeder terlebih dahulu.');
+            return;
+        }
+
+        if ($offices->count() < 1) {
+            $this->command->warn('Tidak ada data office untuk membuat sample attendance. Jalankan OfficeSeeder terlebih dahulu.');
             return;
         }
 
@@ -38,7 +46,9 @@ class AttendanceSeeder extends Seeder
             foreach ($pegawai as $karyawan) {
                 // 90% peluang karyawan hadir
                 if ($faker->boolean(90)) {
-                    $this->createAttendanceRecord($karyawan, $tanggal, $faker);
+                    // Assign random office untuk karyawan (bisa dikustomisasi sesuai kebutuhan)
+                    $randomOffice = $faker->randomElement($offices);
+                    $this->createAttendanceRecord($karyawan, $tanggal, $randomOffice, $faker);
                 }
             }
         }
@@ -46,23 +56,25 @@ class AttendanceSeeder extends Seeder
         $this->command->info('Sample attendance records berhasil dibuat untuk ' . $pegawai->count() . ' karyawan selama 30 hari terakhir.');
     }
 
-    private function createAttendanceRecord($karyawan, $tanggal, $faker)
+    private function createAttendanceRecord($karyawan, $tanggal, $office, $faker)
     {
-        // Tentukan jam masuk (antara 07:30 - 09:00)
-        $jamMasuk = $tanggal->copy()->setTime(
-            $faker->numberBetween(7, 8),
-            $faker->numberBetween(0, 59),
-            0
-        );
+        // Ambil jadwal kantor untuk hari tersebut
+        $dayOfWeek = strtolower($tanggal->format('l')); // monday, tuesday, etc.
+        $schedule = OfficeSchedule::where('office_id', $office->id)
+                                 ->where('day_of_week', $dayOfWeek)
+                                 ->first();
 
-        // Jika jam masuk > 08:00, maka terlambat
-        if ($jamMasuk->hour >= 8 && $jamMasuk->minute > 0) {
-            $jamMasuk = $tanggal->copy()->setTime(
-                $faker->numberBetween(8, 9),
-                $faker->numberBetween(1, 30),
-                0
-            );
+        // Jika tidak ada jadwal atau hari libur, skip
+        if (!$schedule || !$schedule->start_time) {
+            return;
         }
+
+        // Parse jam masuk standar dari schedule
+        $jamMasukStandar = Carbon::parse($schedule->start_time);
+        $jamKeluarStandar = Carbon::parse($schedule->end_time);
+
+        // Generate waktu check in berdasarkan jadwal kantor
+        $jamMasuk = $this->generateCheckInTime($tanggal, $jamMasukStandar, $faker);
 
         // Jam istirahat siang (12:00 - 13:00)
         $jamSiang = null;
@@ -74,44 +86,44 @@ class AttendanceSeeder extends Seeder
             );
         }
 
-        // Jam pulang (17:00 - 18:30)
+        // Generate waktu check out berdasarkan jadwal kantor
         $jamPulang = null;
         if ($faker->boolean(95)) { // 95% peluang check out
-            $jamPulang = $tanggal->copy()->setTime(
-                $faker->numberBetween(17, 18),
-                $faker->numberBetween(0, 59),
-                0
-            );
+            $jamPulang = $this->generateCheckOutTime($tanggal, $jamKeluarStandar, $faker);
         }
 
-        // Hitung lembur (jika pulang > 17:00)
+        // Hitung lembur (jika pulang lebih dari jam kerja standar)
         $overtime = 0;
-        if ($jamPulang && $jamPulang->hour >= 18) {
+        if ($jamPulang && $jamPulang->greaterThan($jamKeluarStandar->copy()->setDate($tanggal->year, $tanggal->month, $tanggal->day))) {
             $overtime = $faker->numberBetween(30, 180); // 30 menit - 3 jam
         }
 
-        // Koordinat kantor Sucofindo (contoh: Jakarta)
-        $kantorLat = -6.2088;
-        $kantorLng = 106.8456;
+        // Koordinat kantor dari database
+        $kantorLat = $office->latitude;
+        $kantorLng = $office->longitude;
 
-        // Variasi lokasi dalam radius 100 meter
-        $latVariation = $faker->randomFloat(6, -0.001, 0.001);
-        $lngVariation = $faker->randomFloat(6, -0.001, 0.001);
+        // Variasi lokasi dalam radius kantor
+        $radiusInDegrees = $office->radius / 111000; // Convert meter to degrees (approximate)
+        $latVariation = $faker->randomFloat(6, -$radiusInDegrees, $radiusInDegrees);
+        $lngVariation = $faker->randomFloat(6, -$radiusInDegrees, $radiusInDegrees);
+
+        // Cari office schedule ID untuk relasi
+        $officeScheduleId = $schedule->id;
 
         $attendanceData = [
             'user_id' => $karyawan->id,
-            'office_working_hours_id' => 1, // Default office working hours ID
+            'office_working_hours_id' => $officeScheduleId, // Relasi ke office schedule
             'check_in' => $jamMasuk->format('H:i:s'),
             'longitude_absen_masuk' => $kantorLng + $lngVariation,
             'latitude_absen_masuk' => $kantorLat + $latVariation,
             'picture_absen_masuk' => null, // Bisa ditambahkan path foto sample
             'absen_siang' => $jamSiang ? $jamSiang->format('H:i:s') : null,
-            'longitude_absen_siang' => $jamSiang ? ($kantorLng + $faker->randomFloat(6, -0.001, 0.001)) : null,
-            'latitude_absen_siang' => $jamSiang ? ($kantorLat + $faker->randomFloat(6, -0.001, 0.001)) : null,
+            'longitude_absen_siang' => $jamSiang ? ($kantorLng + $faker->randomFloat(6, -$radiusInDegrees, $radiusInDegrees)) : null,
+            'latitude_absen_siang' => $jamSiang ? ($kantorLat + $faker->randomFloat(6, -$radiusInDegrees, $radiusInDegrees)) : null,
             'picture_absen_siang' => null,
             'check_out' => $jamPulang ? $jamPulang->format('H:i:s') : null,
-            'longitude_absen_pulang' => $jamPulang ? ($kantorLng + $faker->randomFloat(6, -0.001, 0.001)) : null,
-            'latitude_absen_pulang' => $jamPulang ? ($kantorLat + $faker->randomFloat(6, -0.001, 0.001)) : null,
+            'longitude_absen_pulang' => $jamPulang ? ($kantorLng + $faker->randomFloat(6, -$radiusInDegrees, $radiusInDegrees)) : null,
+            'latitude_absen_pulang' => $jamPulang ? ($kantorLat + $faker->randomFloat(6, -$radiusInDegrees, $radiusInDegrees)) : null,
             'picture_absen_pulang' => null,
             'overtime' => $overtime,
             'attendance_type' => $faker->randomElement(['WFO', 'Dinas Luar']),
@@ -120,5 +132,35 @@ class AttendanceSeeder extends Seeder
         ];
 
         Attendance::create($attendanceData);
+    }
+
+    private function generateCheckInTime($tanggal, $jamMasukStandar, $faker)
+    {
+        // 70% tepat waktu, 30% terlambat (tanpa toleransi)
+        $statusChance = $faker->numberBetween(1, 100);
+
+        if ($statusChance <= 70) {
+            // Tepat waktu: 30 menit sebelum sampai tepat jam masuk
+            $minutes = $faker->numberBetween(-30, 0);
+            return $tanggal->copy()->setTime($jamMasukStandar->hour, $jamMasukStandar->minute)->addMinutes($minutes);
+        } else {
+            // Terlambat: 1-60 menit setelah jam masuk
+            $minutes = $faker->numberBetween(1, 60);
+            return $tanggal->copy()->setTime($jamMasukStandar->hour, $jamMasukStandar->minute)->addMinutes($minutes);
+        }
+    }
+
+    private function generateCheckOutTime($tanggal, $jamKeluarStandar, $faker)
+    {
+        // 80% pulang normal, 20% lembur
+        if ($faker->boolean(80)) {
+            // Pulang normal: sekitar jam keluar standar ± 30 menit
+            $minutes = $faker->numberBetween(-30, 30);
+            return $tanggal->copy()->setTime($jamKeluarStandar->hour, $jamKeluarStandar->minute)->addMinutes($minutes);
+        } else {
+            // Lembur: 30 menit - 3 jam setelah jam keluar
+            $minutes = $faker->numberBetween(30, 180);
+            return $tanggal->copy()->setTime($jamKeluarStandar->hour, $jamKeluarStandar->minute)->addMinutes($minutes);
+        }
     }
 }

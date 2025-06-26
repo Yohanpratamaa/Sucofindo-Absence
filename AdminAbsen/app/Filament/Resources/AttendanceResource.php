@@ -140,6 +140,33 @@ class AttendanceResource extends Resource
                             ]),
                     ]),
 
+                Forms\Components\Section::make('Informasi Jadwal & Status')
+                    ->schema([
+                        Forms\Components\Grid::make(3)
+                            ->schema([
+                                Forms\Components\Placeholder::make('jam_masuk_standar')
+                                    ->label('Jam Masuk Standar')
+                                    ->content(fn (?Attendance $record): string => $record?->jam_masuk_standar ?? '-'),
+
+                                Forms\Components\Placeholder::make('jam_keluar_standar')
+                                    ->label('Jam Keluar Standar')
+                                    ->content(fn (?Attendance $record): string => $record?->jam_keluar_standar ?? '-'),
+
+                                Forms\Components\Placeholder::make('status_kehadiran')
+                                    ->label('Status Kehadiran')
+                                    ->content(fn (?Attendance $record): string => $record?->status_kehadiran ?? '-'),
+
+                                Forms\Components\Placeholder::make('keterlambatan_detail')
+                                    ->label('Detail Keterlambatan')
+                                    ->content(fn (?Attendance $record): string => $record?->keterlambatan_detail ?? '-')
+                                    ->columnSpan(2),
+
+                                Forms\Components\Placeholder::make('created_at')
+                                    ->label('Tanggal Absensi')
+                                    ->content(fn (?Attendance $record): string => $record?->created_at?->format('d M Y') ?? '-'),
+                            ]),
+                    ]),
+
                 Forms\Components\Section::make('Informasi Tambahan')
                     ->schema([
                         Forms\Components\Grid::make(2)
@@ -149,10 +176,6 @@ class AttendanceResource extends Resource
                                     ->numeric()
                                     ->suffix(' menit')
                                     ->disabled(),
-
-                                Forms\Components\Placeholder::make('created_at')
-                                    ->label('Tanggal Absensi')
-                                    ->content(fn (?Attendance $record): string => $record?->created_at?->format('d M Y') ?? '-'),
                             ]),
                     ]),
             ]);
@@ -209,6 +232,14 @@ class AttendanceResource extends Resource
                         'Tidak Hadir' => 'danger',
                         default => 'gray'
                     }),
+
+                Tables\Columns\TextColumn::make('keterlambatan_detail')
+                    ->label('Detail')
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                Tables\Columns\TextColumn::make('jam_masuk_standar')
+                    ->label('Jam Masuk Std')
+                    ->toggleable(isToggledHiddenByDefault: true),
 
                 Tables\Columns\TextColumn::make('attendance_type')
                     ->label('Tipe')
