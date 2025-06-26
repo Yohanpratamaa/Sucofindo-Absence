@@ -133,7 +133,9 @@ class PegawaiResource extends Resource
                                                     ->afterStateUpdated(function (Forms\Set $set, $state) {
                                                         if ($state) {
                                                             $jabatan = Jabatan::where('nama', $state)->first();
-                                                            $set('jabatan_tunjangan', $jabatan?->tunjangan ?? 0);
+                                                            $tunjangan = $jabatan?->tunjangan ?? 0;
+                                                            // Set nilai numeric asli untuk database
+                                                            $set('jabatan_tunjangan', $tunjangan);
                                                         } else {
                                                             $set('jabatan_tunjangan', 0);
                                                         }
@@ -141,7 +143,6 @@ class PegawaiResource extends Resource
 
                                                 Forms\Components\TextInput::make('jabatan_tunjangan')
                                                     ->label('Tunjangan Jabatan')
-                                                    ->numeric()
                                                     ->prefix('Rp')
                                                     ->placeholder('0')
                                                     ->readOnly()
@@ -170,7 +171,9 @@ class PegawaiResource extends Resource
                                                     ->afterStateUpdated(function (Forms\Set $set, $state) {
                                                         if ($state) {
                                                             $posisi = Posisi::where('nama', $state)->first();
-                                                            $set('posisi_tunjangan', $posisi?->tunjangan ?? 0);
+                                                            $tunjangan = $posisi?->tunjangan ?? 0;
+                                                            // Set nilai numeric asli untuk database
+                                                            $set('posisi_tunjangan', $tunjangan);
                                                         } else {
                                                             $set('posisi_tunjangan', 0);
                                                         }
@@ -178,7 +181,6 @@ class PegawaiResource extends Resource
 
                                                 Forms\Components\TextInput::make('posisi_tunjangan')
                                                     ->label('Tunjangan Posisi')
-                                                    ->numeric()
                                                     ->prefix('Rp')
                                                     ->placeholder('0')
                                                     ->readOnly()
@@ -347,9 +349,20 @@ class PegawaiResource extends Resource
 
                                                 Forms\Components\TextInput::make('nilai_fasilitas')
                                                     ->label('Nominal')
-                                                    ->numeric()
                                                     ->prefix('Rp')
-                                                    ->placeholder('0')
+                                                    ->placeholder('1.500.000')
+                                                    ->formatStateUsing(function ($state) {
+                                                        return $state ? number_format($state, 0, ',', '.') : '';
+                                                    })
+                                                    ->dehydrateStateUsing(function ($state) {
+                                                        // Remove dots and convert to integer
+                                                        return $state ? (int) str_replace('.', '', $state) : 0;
+                                                    })
+                                                    ->live(debounce: 300)
+                                                    ->extraInputAttributes([
+                                                        'oninput' => 'this.value = this.value.replace(/\D/g, "").replace(/\B(?=(\d{3})+(?!\d))/g, ".")',
+                                                        'onkeypress' => 'return event.charCode >= 48 && event.charCode <= 57'
+                                                    ])
                                                     ->helperText('Nilai dalam rupiah per bulan'),
 
                                             ]),

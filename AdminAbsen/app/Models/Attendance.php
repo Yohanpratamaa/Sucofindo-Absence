@@ -50,11 +50,11 @@ class Attendance extends Model
         return $this->belongsTo(Pegawai::class, 'user_id');
     }
 
-    // Relasi dengan Office Working Hours (jika ada tabel tersebut - di comment dulu)
-    // public function officeWorkingHours()
-    // {
-    //     return $this->belongsTo(OfficeWorkingHours::class, 'office_working_hours_id');
-    // }
+    // Relasi dengan Office Schedule melalui office_working_hours_id
+    public function officeSchedule()
+    {
+        return $this->belongsTo(OfficeSchedule::class, 'office_working_hours_id');
+    }
 
     // Accessor untuk format tanggal
     public function getTanggalAbsenAttribute()
@@ -92,7 +92,7 @@ class Attendance extends Model
 
         // Hitung total durasi dalam menit (pastikan urutan parameter benar)
         $totalMinutes = $checkIn->diffInMinutes($checkOut);
-        
+
         // Jika ada absen siang, kurangi 1 jam untuk istirahat
         if ($this->absen_siang) {
             $totalMinutes = max(0, $totalMinutes - 60);
@@ -127,17 +127,37 @@ class Attendance extends Model
         return $hours . ' jam ' . $minutes . ' menit';
     }
 
-    // Accessor untuk status kehadiran
+    // Accessor untuk status kehadiran berdasarkan jadwal kantor
     public function getStatusKehadiranAttribute()
     {
         if (!$this->check_in) {
             return 'Tidak Hadir';
         }
 
-        $checkIn = Carbon::parse($this->check_in);
-        $jamMasukStandar = Carbon::parse('08:00');
+        // Ambil jadwal kantor berdasarkan hari absensi
+        $checkInDate = Carbon::parse($this->check_in);
+        $dayOfWeek = strtolower($checkInDate->format('l')); // monday, tuesday, etc.
 
-        if ($checkIn->greaterThan($jamMasukStandar)) {
+        // Cari jadwal kantor untuk hari tersebut
+        $schedule = null;
+        if ($this->officeSchedule && $this->officeSchedule->office_id) {
+            $schedule = OfficeSchedule::getScheduleForDay($this->officeSchedule->office_id, $dayOfWeek);
+        }
+
+        // Jika tidak ada jadwal ditemukan, gunakan default 08:00
+        $jamMasukStandar = $schedule && $schedule->start_time
+            ? Carbon::parse($schedule->start_time)
+            : Carbon::parse('08:00');
+
+        // Set tanggal yang sama untuk perbandingan waktu
+        $jamMasukStandar->setDate(
+            $checkInDate->year,
+            $checkInDate->month,
+            $checkInDate->day
+        );
+
+        // Langsung cek apakah terlambat atau tepat waktu (tanpa toleransi)
+        if ($checkInDate->greaterThan($jamMasukStandar)) {
             return 'Terlambat';
         }
 
@@ -209,5 +229,132 @@ class Attendance extends Model
     public function hasAbsenSiang()
     {
         return !is_null($this->absen_siang);
+    }
+
+    // Method untuk mendapatkan informasi detail keterlambatan
+    public function getKeterlambatanDetailAttribute()
+    {
+        if (!$this->check_in) {
+            return 'Tidak hadir';
+        }
+
+        // Ambil jadwal kantor berdasarkan hari absensi
+        $checkInDate = Carbon::parse($this->check_in);
+        $dayOfWeek = strtolower($checkInDate->format('l'));
+
+        $schedule = null;
+        if ($this->officeSchedule && $this->officeSchedule->office_id) {
+            $schedule = OfficeSchedule::getScheduleForDay($this->officeSchedule->office_id, $dayOfWeek);
+        }
+
+        $jamMasukStandar = $schedule && $schedule->start_time
+            ? Carbon::parse($schedule->start_time)
+            : Carbon::parse('08:00');
+
+        $jamMasukStandar->setDate(
+            $checkInDate->year,
+            $checkInDate->month,
+            $checkInDate->day
+        );
+
+        if ($checkInDate->lessThanOrEqualTo($jamMasukStandar)) {
+            return 'Tepat waktu';
+        }
+
+        $selisihMenit = $jamMasukStandar->diffInMinutes($checkInDate);
+        return "Terlambat {$selisihMenit} menit";
+    }
+
+    // Method untuk mendapatkan jam masuk standar berdasarkan jadwal
+    public function getJamMasukStandarAttribute()
+    {
+        $checkInDate = Carbon::parse($this->check_in ?? $this->created_at);
+        $dayOfWeek = strtolower($checkInDate->format('l'));
+
+        $schedule = null;
+        if ($this->officeSchedule && $this->officeSchedule->office_id) {
+            $schedule = OfficeSchedule::getScheduleForDay($this->officeSchedule->office_id, $dayOfWeek);
+        }
+
+        return $schedule && $schedule->start_time
+            ? Carbon::parse($schedule->start_time)->format('H:i')
+            : '08:00';
+    }
+
+    // Method untuk mendapatkan jam keluar standar berdasarkan jadwal
+    public function getJamKeluarStandarAttribute()
+    {
+        $checkInDate = Carbon::parse($this->check_in ?? $this->created_at);
+        $dayOfWeek = strtolower($checkInDate->format('l'));
+
+        $schedule = null;
+        if ($this->officeSchedule && $this->officeSchedule->office_id) {
+            $schedule = OfficeSchedule::getScheduleForDay($this->officeSchedule->office_id, $dayOfWeek);
+        }
+
+        return $schedule && $schedule->end_time
+            ? Carbon::parse($schedule->end_time)->format('H:i')
+            : '17:00';
+    }
+
+    // Method untuk mengecek apakah attendance type memerlukan absen siang
+    public function requiresAbsenSiang()
+    {
+        return $this->attendance_type === 'Dinas Luar';
+    }
+
+    // Method untuk mengecek validitas absensi berdasarkan type
+    public function isValidAttendance()
+    {
+        if ($this->attendance_type === 'WFO') {
+            // WFO: Cukup check in dan check out
+            return $this->check_in && $this->check_out;
+        } else {
+            // Dinas Luar: Harus ada check in, absen siang, dan check out
+            return $this->check_in && $this->absen_siang && $this->check_out;
+        }
+    }
+
+    // Method untuk mendapatkan status absensi berdasarkan kelengkapan
+    public function getKelengkapanAbsensiAttribute()
+    {
+        if ($this->attendance_type === 'WFO') {
+            $completed = 0;
+            $total = 2; // check in + check out
+
+            if ($this->check_in) $completed++;
+            if ($this->check_out) $completed++;
+
+            return [
+                'completed' => $completed,
+                'total' => $total,
+                'percentage' => ($completed / $total) * 100,
+                'status' => $completed === $total ? 'Lengkap' : 'Belum Lengkap'
+            ];
+        } else {
+            $completed = 0;
+            $total = 3; // check in + absen siang + check out
+
+            if ($this->check_in) $completed++;
+            if ($this->absen_siang) $completed++;
+            if ($this->check_out) $completed++;
+
+            return [
+                'completed' => $completed,
+                'total' => $total,
+                'percentage' => ($completed / $total) * 100,
+                'status' => $completed === $total ? 'Lengkap' : 'Belum Lengkap'
+            ];
+        }
+    }
+
+    // Method untuk mendapatkan deskripsi requirement absensi
+    public function getAbsensiRequirementAttribute()
+    {
+        if ($this->attendance_type === 'WFO') {
+            return 'Check In + Check Out (Lokasi: Kantor)';
+        } else {
+            return 'Check In + Absen Siang + Check Out (Lokasi: Fleksibel)';
+        }
     }
 }

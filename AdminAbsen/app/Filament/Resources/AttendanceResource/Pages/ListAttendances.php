@@ -8,7 +8,7 @@ use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
 use Filament\Forms;
 use Maatwebsite\Excel\Facades\Excel;
-use Barryvdh\DomPDF\Facade\Pdf;
+// use Barryvdh\DomPDF\Facade\Pdf; // Temporarily disabled
 use App\Models\Attendance;
 use Carbon\Carbon;
 
@@ -66,80 +66,18 @@ class ListAttendances extends ListRecords
                     }
                 }),
 
-            Actions\Action::make('export_all_pdf')
-                ->label('Export Semua ke PDF')
-                ->icon('heroicon-o-document-text')
-                ->color('danger')
-                ->form([
-                    Forms\Components\DatePicker::make('start_date')
-                        ->label('Dari Tanggal')
-                        ->default(now()->startOfMonth())
-                        ->required(),
-                    Forms\Components\DatePicker::make('end_date')
-                        ->label('Sampai Tanggal')
-                        ->default(now()->endOfMonth())
-                        ->required(),
-                    Forms\Components\Select::make('user_id')
-                        ->label('Karyawan (Opsional)')
-                        ->options(\App\Models\Pegawai::pluck('nama', 'id'))
-                        ->searchable()
-                        ->placeholder('Semua Karyawan'),
-                ])
-                ->action(function (array $data) {
-                    try {
-                        $query = Attendance::with('user')
-                            ->whereBetween('created_at', [$data['start_date'], $data['end_date']]);
-
-                        if (!empty($data['user_id'])) {
-                            $query->where('user_id', $data['user_id']);
-                        }
-
-                        $attendances = $query->orderBy('created_at', 'desc')->get();
-
-                        $mappedData = $attendances->map(function ($attendance) {
-                            return [
-                                'tanggal' => $attendance->created_at->format('d M Y'),
-                                'nama' => $attendance->user->nama ?? '-',
-                                'npp' => $attendance->user->npp ?? '-',
-                                'check_in' => $attendance->check_in ? $attendance->check_in->format('H:i') : '-',
-                                'check_out' => $attendance->check_out ? $attendance->check_out->format('H:i') : '-',
-                                'durasi_kerja' => $this->getDurationWork($attendance),
-                                'status_kehadiran' => $this->getAttendanceStatus($attendance),
-                                'attendance_type' => $attendance->attendance_type ?? '-',
-                            ];
-                        });
-
-                        $pdf = Pdf::loadView('exports.attendance-pdf', [
-                            'title' => 'Laporan Absensi Karyawan',
-                            'period' => Carbon::parse($data['start_date'])->format('d M Y') . ' - ' . Carbon::parse($data['end_date'])->format('d M Y'),
-                            'headers' => [
-                                'Tanggal', 'Nama', 'NPP', 'Check In', 'Check Out',
-                                'Durasi Kerja', 'Status', 'Tipe'
-                            ],
-                            'data' => $mappedData,
-                            'summary' => [
-                                'total_records' => $attendances->count(),
-                                'work_days' => $this->getWorkDaysInPeriod($data['start_date'], $data['end_date']),
-                            ]
-                        ]);
-
-                        $filename = 'laporan_absensi_' .
-                                   Carbon::parse($data['start_date'])->format('Y-m-d') . '_to_' .
-                                   Carbon::parse($data['end_date'])->format('Y-m-d') . '.pdf';
-
-                        return response()->streamDownload(function () use ($pdf) {
-                            echo $pdf->stream();
-                        }, $filename);
-                    } catch (\Exception $e) {
-                        \Filament\Notifications\Notification::make()
-                            ->title('Export Error')
-                            ->body('Terjadi kesalahan saat export: ' . $e->getMessage())
-                            ->danger()
-                            ->send();
-
-                        return null;
-                    }
-                }),
+// PDF export temporarily disabled due to dependency issues
+            // Actions\Action::make('export_all_pdf')
+            //     ->label('Export Semua ke PDF')
+            //     ->icon('heroicon-o-document-text')
+            //     ->color('danger')
+            //     ->action(function () {
+            //         \Filament\Notifications\Notification::make()
+            //             ->title('Info')
+            //             ->body('Fitur export PDF sementara dinonaktifkan. Silakan gunakan export Excel.')
+            //             ->info()
+            //             ->send();
+            //     }),
         ];
     }
 

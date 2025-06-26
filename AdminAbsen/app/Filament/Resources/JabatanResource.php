@@ -47,11 +47,21 @@ class JabatanResource extends Resource
 
                                 Forms\Components\TextInput::make('tunjangan')
                                     ->label('Tunjangan')
-                                    ->numeric()
                                     ->prefix('Rp')
-                                    ->placeholder('0')
+                                    ->placeholder('1.500.000')
                                     ->default(0)
-                                    ->step(1000),
+                                    ->formatStateUsing(function ($state) {
+                                        return $state ? number_format($state, 0, ',', '.') : '';
+                                    })
+                                    ->dehydrateStateUsing(function ($state) {
+                                        // Remove dots and convert to integer
+                                        return $state ? (int) str_replace('.', '', $state) : 0;
+                                    })
+                                    ->live(debounce: 300)
+                                    ->extraInputAttributes([
+                                        'oninput' => 'this.value = this.value.replace(/\D/g, "").replace(/\B(?=(\d{3})+(?!\d))/g, ".")',
+                                        'onkeypress' => 'return event.charCode >= 48 && event.charCode <= 57'
+                                    ]),
 
                                 Forms\Components\Select::make('status')
                                     ->options([
@@ -82,7 +92,9 @@ class JabatanResource extends Resource
 
                 Tables\Columns\TextColumn::make('tunjangan')
                     ->label('Tunjangan')
-                    ->money('IDR')
+                    ->formatStateUsing(function ($state) {
+                        return 'Rp' . number_format($state, 0, ',', '.');
+                    })
                     ->sortable(),
 
                 Tables\Columns\BadgeColumn::make('status')

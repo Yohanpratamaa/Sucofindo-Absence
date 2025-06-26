@@ -38,9 +38,9 @@ return new class extends Migration
             $table->index('check_in');
             $table->index('check_out');
 
-            // Foreign key constraints (optional)
+            // Foreign key constraints akan ditambahkan di migration terpisah setelah semua tabel dibuat
             // $table->foreign('user_id')->references('id')->on('pegawais')->onDelete('cascade');
-            // $table->foreign('office_working_hours_id')->references('id')->on('office_working_hours')->onDelete('cascade');
+            // $table->foreign('office_working_hours_id')->references('id')->on('office_schedules')->onDelete('cascade');
         });
     }
 
