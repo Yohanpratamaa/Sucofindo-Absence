@@ -172,7 +172,14 @@ class Pegawai extends Authenticatable implements FilamentUser
     public function setPasswordAttribute($value)
     {
         if ($value) {
-            $this->attributes['password'] = Hash::make($value);
+            // Check if password is already hashed (starts with $2y$ for bcrypt)
+            if (preg_match('/^\$2[ayb]\$.{56}$/', $value)) {
+                // Already hashed, use as-is
+                $this->attributes['password'] = $value;
+            } else {
+                // Plain text, hash it
+                $this->attributes['password'] = Hash::make($value);
+            }
         }
     }
 
