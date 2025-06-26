@@ -211,10 +211,12 @@ class OvertimeAssignmentResource extends Resource
                     ->requiresConfirmation()
                     ->modalHeading('Terima Penugasan Lembur')
                     ->modalDescription(function (OvertimeAssignment $record): string {
+                        /** @var Pegawai $currentUser */
                         $currentUser = Filament::auth()->user();
                         return "Apakah Anda yakin ingin menerima penugasan lembur ini?\n\nLembur akan tercatat diterima oleh: {$currentUser->nama}";
                     })
                     ->action(function (OvertimeAssignment $record): void {
+                        /** @var Pegawai $currentUser */
                         $currentUser = Filament::auth()->user();
                         $record->accept(Filament::auth()->id());
 
@@ -225,6 +227,7 @@ class OvertimeAssignmentResource extends Resource
                             ->send();
                     })
                     ->visible(function (OvertimeAssignment $record): bool {
+                        /** @var Pegawai $currentUser */
                         $currentUser = Filament::auth()->user();
                         return $record->canChangeStatus() && !$currentUser->isSuperAdmin();
                     }),
@@ -236,10 +239,12 @@ class OvertimeAssignmentResource extends Resource
                     ->requiresConfirmation()
                     ->modalHeading('Tolak Penugasan Lembur')
                     ->modalDescription(function (OvertimeAssignment $record): string {
+                        /** @var Pegawai $currentUser */
                         $currentUser = Filament::auth()->user();
                         return "Apakah Anda yakin ingin menolak penugasan lembur ini?\n\nLembur akan tercatat ditolak oleh: {$currentUser->nama}";
                     })
                     ->action(function (OvertimeAssignment $record): void {
+                        /** @var Pegawai $currentUser */
                         $currentUser = Filament::auth()->user();
                         $record->reject(Filament::auth()->id());
 
@@ -250,6 +255,7 @@ class OvertimeAssignmentResource extends Resource
                             ->send();
                     })
                     ->visible(function (OvertimeAssignment $record): bool {
+                        /** @var Pegawai $currentUser */
                         $currentUser = Filament::auth()->user();
                         return $record->canChangeStatus() && !$currentUser->isSuperAdmin();
                     }),
@@ -275,6 +281,7 @@ class OvertimeAssignmentResource extends Resource
                             ->send();
                     })
                     ->visible(function (OvertimeAssignment $record): bool {
+                        /** @var Pegawai $currentUser */
                         $currentUser = Filament::auth()->user();
                         return ($record->status === 'Rejected' || $record->status === 'Assigned') && !$currentUser->isSuperAdmin();
                     }),
@@ -287,6 +294,7 @@ class OvertimeAssignmentResource extends Resource
                         ->color('success')
                         ->requiresConfirmation()
                         ->action(function (Collection $records): void {
+                            /** @var Pegawai $currentUser */
                             $currentUser = Filament::auth()->user();
 
                             // Cek apakah user adalah super admin
@@ -318,6 +326,7 @@ class OvertimeAssignmentResource extends Resource
                         ->color('danger')
                         ->requiresConfirmation()
                         ->action(function (Collection $records): void {
+                            /** @var Pegawai $currentUser */
                             $currentUser = Filament::auth()->user();
 
                             // Cek apakah user adalah super admin
@@ -343,6 +352,7 @@ class OvertimeAssignmentResource extends Resource
                                 ->send();
                         }),
                 ])->visible(function (): bool {
+                    /** @var Pegawai $currentUser */
                     $currentUser = Filament::auth()->user();
                     return !$currentUser->isSuperAdmin();
                 }),
