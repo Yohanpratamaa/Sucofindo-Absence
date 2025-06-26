@@ -27,7 +27,7 @@ class AttendanceReportResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Rekap Absensi';
 
-    protected static ?int $navigationSort = 6;
+    protected static ?int $navigationSort = 8;
 
     public static function form(Form $form): Form
     {

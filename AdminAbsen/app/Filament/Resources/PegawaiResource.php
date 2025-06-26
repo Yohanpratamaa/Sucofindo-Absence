@@ -65,7 +65,9 @@ class PegawaiResource extends Resource
                                             ->password()
                                             ->required(fn (string $context): bool => $context === 'create')
                                             ->minLength(8)
-                                            ->placeholder('Masukkan password'),
+                                            ->placeholder('Default: password123 (minimum 8 karakter)')
+                                            ->helperText('Jika kosong, akan diset otomatis: password123')
+                                            ->hint('Password dapat diubah setelah akun dibuat'),
 
                                         Forms\Components\TextInput::make('nik')
                                             ->label('NIK')
@@ -100,11 +102,12 @@ class PegawaiResource extends Resource
                                         Forms\Components\Select::make('role_user')
                                             ->label('Role User')
                                             ->options([
-                                                'super admin' => 'Super Admin',
-                                                'employee' => 'Employee',
-                                                'Kepala Bidang' => 'Kepala Bidang',
+                                                'super admin' => 'Super Admin (Login: /admin)',
+                                                'employee' => 'Employee (Login: /pegawai)',
+                                                'Kepala Bidang' => 'Kepala Bidang (Login: /kepala-bidang)',
                                             ])
-                                            ->required(),
+                                            ->required()
+                                            ->helperText('Role menentukan panel mana yang dapat diakses setelah login'),
 
                                         Forms\Components\Textarea::make('alamat')
                                             ->rows(3)
