@@ -55,7 +55,9 @@ class PegawaiPanelProvider extends PanelProvider
             ->widgets([
                 Widgets\AccountWidget::class,
                 \App\Filament\Pegawai\Widgets\MyAttendanceWidget::class,
-                // \App\Filament\Pegawai\Widgets\MyIzinWidget::class,
+                \App\Filament\Pegawai\Widgets\MyOvertimeStatsWidget::class,
+                \App\Filament\Pegawai\Widgets\MyIzinStatsWidget::class,
+                \App\Filament\Pegawai\Widgets\RecentRequestsWidget::class,
                 \App\Filament\Pegawai\Widgets\AttendanceStatsWidget::class,
             ])
             ->middleware([
@@ -85,6 +87,7 @@ class PegawaiPanelProvider extends PanelProvider
             ->navigationGroups([
                 'Absensi',
                 'Izin',
+                'Lembur',
                 'Profil',
             ])
             ->maxContentWidth('full');
