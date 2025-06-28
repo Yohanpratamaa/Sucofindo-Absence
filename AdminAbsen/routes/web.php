@@ -23,6 +23,12 @@ Route::middleware('guest')->group(function () {
 Route::post('/logout', [UnifiedLoginController::class, 'logout'])->name('unified.logout')->middleware('auth');
 Route::get('/logout', [UnifiedLoginController::class, 'logout'])->name('unified.logout.get')->middleware('auth');
 
+// Test route untuk checking photo size
+Route::post('/test-photo-size', [App\Http\Controllers\PhotoSizeTestController::class, 'checkPhotoSize'])->name('test.photo.size');
+
+// Test route untuk debugging photo storage
+Route::get('/test-photo', [App\Http\Controllers\PhotoTestController::class, 'testPhoto'])->name('test.photo');
+
 // Redirect root URL to appropriate panel based on authentication and setup status
 Route::get('/', function () {
     try {
