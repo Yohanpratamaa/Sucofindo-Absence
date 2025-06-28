@@ -19,7 +19,7 @@ class Dashboard extends BaseDashboard
 
     public function getSubheading(): string
     {
-        return 'Selamat datang di dashboard kepala bidang';
+        return 'Selamat datang di dashboard kepala bidang. Akses fitur export melalui menu "Export" di sidebar.';
     }
 
     public function getWidgets(): array

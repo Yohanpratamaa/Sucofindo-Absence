@@ -341,16 +341,6 @@ class OvertimeApprovalResource extends Resource
                         return !$currentUser->isSuperAdmin();
                     }),
             ])
-            ->headerActions([
-                Tables\Actions\CreateAction::make()
-                    ->label('Assign Lembur Baru')
-                    ->icon('heroicon-o-plus')
-                    ->mutateFormDataUsing(function (array $data): array {
-                        $data['assigned_by'] = Auth::id();
-                        $data['status'] = 'Assigned';
-                        return $data;
-                    }),
-            ])
             ->defaultSort('created_at', 'desc');
     }
 
@@ -366,7 +356,7 @@ class OvertimeApprovalResource extends Resource
 
     public static function canCreate(): bool
     {
-        return true;
+        return true; // Enable create functionality
     }
 
     public static function canEdit($record): bool
