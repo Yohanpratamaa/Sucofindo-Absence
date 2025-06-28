@@ -55,6 +55,9 @@ class AdminPanelProvider extends PanelProvider
             ->widgets([
                 Widgets\AccountWidget::class,
                 \App\Filament\Widgets\AttendanceStatsOverview::class,
+                \App\Filament\Widgets\AttendanceStatsWidget::class,
+                \App\Filament\Widgets\AttendanceTrendChart::class,
+                \App\Filament\Widgets\LatestAttendanceWidget::class,
                 \App\Filament\Widgets\ApprovalStatsWidget::class,
                 \App\Filament\Widgets\AttendanceChart::class,
                 \App\Filament\Widgets\AttendanceStatusChart::class,

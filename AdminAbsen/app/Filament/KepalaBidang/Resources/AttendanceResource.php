@@ -12,6 +12,8 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Filament\Notifications\Notification;
+use Filament\Support\Enums\FontWeight;
+use Carbon\Carbon;
 
 class AttendanceResource extends Resource
 {
@@ -43,32 +45,203 @@ class AttendanceResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Data Absensi')
+                Forms\Components\Section::make('Detail Absensi Karyawan')
                     ->schema([
-                        Forms\Components\Select::make('user_id')
-                            ->label('Pegawai')
-                            ->relationship('user', 'nama', fn (Builder $query) => $query->where('role_user', 'employee'))
-                            ->required()
-                            ->searchable()
-                            ->preload(),
+                        Forms\Components\Grid::make(2)
+                            ->schema([
+                                Forms\Components\Select::make('user_id')
+                                    ->label('Karyawan')
+                                    ->relationship('user', 'nama', fn (Builder $query) => $query->where('role_user', 'employee'))
+                                    ->searchable()
+                                    ->preload()
+                                    ->disabled(),
 
-                        Forms\Components\DatePicker::make('created_at')
-                            ->label('Tanggal')
-                            ->required()
-                            ->default(now()),
+                                Forms\Components\Select::make('attendance_type')
+                                    ->label('Tipe Absensi')
+                                    ->options([
+                                        'WFO' => 'Work From Office',
+                                        'Dinas Luar' => 'Dinas Luar',
+                                    ])
+                                    ->disabled(),
 
-                        Forms\Components\TimePicker::make('check_in')
-                            ->label('Jam Masuk')
-                            ->required(),
+                                Forms\Components\TextInput::make('office_working_hours_id')
+                                    ->label('ID Jam Kerja')
+                                    ->disabled(),
+                            ]),
+                    ]),
 
-                        Forms\Components\TimePicker::make('check_out')
-                            ->label('Jam Keluar'),
+                Forms\Components\Section::make('Waktu Absensi')
+                    ->schema([
+                        Forms\Components\Grid::make(3)
+                            ->schema([
+                                Forms\Components\TimePicker::make('check_in')
+                                    ->label('Check In')
+                                    ->disabled(),
 
-                        Forms\Components\Textarea::make('notes')
-                            ->label('Catatan')
-                            ->rows(3),
+                                Forms\Components\TimePicker::make('absen_siang')
+                                    ->label('Absen Siang')
+                                    ->disabled(),
+
+                                Forms\Components\TimePicker::make('check_out')
+                                    ->label('Check Out')
+                                    ->disabled(),
+                            ]),
+                    ]),
+
+                Forms\Components\Section::make('Lokasi Check In')
+                    ->description('Untuk WFO: Lokasi harus di area kantor. Untuk Dinas Luar: Lokasi fleksibel sesuai penugasan.')
+                    ->schema([
+                        Forms\Components\Grid::make(3)
+                            ->schema([
+                                Forms\Components\TextInput::make('latitude_absen_masuk')
+                                    ->label('Latitude Check In')
+                                    ->disabled()
+                                    ->helperText(fn (?Attendance $record): string =>
+                                        $record && $record->attendance_type === 'WFO'
+                                            ? '🏢 Harus di area kantor'
+                                            : '📍 Lokasi fleksibel'
+                                    ),
+
+                                Forms\Components\TextInput::make('longitude_absen_masuk')
+                                    ->label('Longitude Check In')
+                                    ->disabled()
+                                    ->helperText(fn (?Attendance $record): string =>
+                                        $record && $record->attendance_type === 'WFO'
+                                            ? '🏢 Harus di area kantor'
+                                            : '📍 Lokasi fleksibel'
+                                    ),
+
+                                Forms\Components\FileUpload::make('picture_absen_masuk')
+                                    ->label('Foto Check In')
+                                    ->image()
+                                    ->disabled(),
+                            ]),
+                    ]),
+
+                Forms\Components\Section::make('Lokasi Absen Siang')
+                    ->description('Untuk WFO: Tidak diperlukan absen siang. Untuk Dinas Luar: WAJIB absen siang dengan lokasi dan foto.')
+                    ->schema([
+                        Forms\Components\Grid::make(3)
+                            ->schema([
+                                Forms\Components\TextInput::make('latitude_absen_siang')
+                                    ->label('Latitude Absen Siang')
+                                    ->disabled()
+                                    ->helperText(fn (?Attendance $record): string =>
+                                        $record && $record->attendance_type === 'WFO'
+                                            ? '❌ Tidak diperlukan untuk WFO'
+                                            : '✅ Wajib untuk Dinas Luar'
+                                    ),
+
+                                Forms\Components\TextInput::make('longitude_absen_siang')
+                                    ->label('Longitude Absen Siang')
+                                    ->disabled()
+                                    ->helperText(fn (?Attendance $record): string =>
+                                        $record && $record->attendance_type === 'WFO'
+                                            ? '❌ Tidak diperlukan untuk WFO'
+                                            : '✅ Wajib untuk Dinas Luar'
+                                    ),
+
+                                Forms\Components\FileUpload::make('picture_absen_siang')
+                                    ->label('Foto Absen Siang')
+                                    ->image()
+                                    ->disabled()
+                                    ->helperText(fn (?Attendance $record): string =>
+                                        $record && $record->attendance_type === 'WFO'
+                                            ? '❌ Tidak diperlukan untuk WFO'
+                                            : '✅ Wajib untuk Dinas Luar'
+                                    ),
+                            ]),
                     ])
-                    ->columns(2),
+                    ->collapsed(fn (?Attendance $record): bool =>
+                        $record && $record->attendance_type === 'WFO'
+                    )
+                    ->collapsible(),
+
+                Forms\Components\Section::make('Lokasi Check Out')
+                    ->description('Untuk WFO: Lokasi harus di area kantor. Untuk Dinas Luar: Lokasi fleksibel sesuai penugasan.')
+                    ->schema([
+                        Forms\Components\Grid::make(3)
+                            ->schema([
+                                Forms\Components\TextInput::make('latitude_absen_pulang')
+                                    ->label('Latitude Check Out')
+                                    ->disabled()
+                                    ->helperText(fn (?Attendance $record): string =>
+                                        $record && $record->attendance_type === 'WFO'
+                                            ? '🏢 Harus di area kantor'
+                                            : '📍 Lokasi fleksibel'
+                                    ),
+
+                                Forms\Components\TextInput::make('longitude_absen_pulang')
+                                    ->label('Longitude Check Out')
+                                    ->disabled()
+                                    ->helperText(fn (?Attendance $record): string =>
+                                        $record && $record->attendance_type === 'WFO'
+                                            ? '🏢 Harus di area kantor'
+                                            : '📍 Lokasi fleksibel'
+                                    ),
+
+                                Forms\Components\FileUpload::make('picture_absen_pulang')
+                                    ->label('Foto Check Out')
+                                    ->image()
+                                    ->disabled(),
+                            ]),
+                    ]),
+
+                Forms\Components\Section::make('Informasi Jadwal & Status')
+                    ->schema([
+                        Forms\Components\Grid::make(3)
+                            ->schema([
+                                Forms\Components\Placeholder::make('attendance_type')
+                                    ->label('Tipe Absensi')
+                                    ->content(fn (?Attendance $record): string => $record?->attendance_type ?? '-'),
+
+                                Forms\Components\Placeholder::make('absensi_requirement')
+                                    ->label('Requirement Absensi')
+                                    ->content(fn (?Attendance $record): string => $record?->absensi_requirement ?? '-')
+                                    ->columnSpan(2),
+
+                                Forms\Components\Placeholder::make('jam_masuk_standar')
+                                    ->label('Jam Masuk Standar')
+                                    ->content(fn (?Attendance $record): string => $record?->jam_masuk_standar ?? '-'),
+
+                                Forms\Components\Placeholder::make('jam_keluar_standar')
+                                    ->label('Jam Keluar Standar')
+                                    ->content(fn (?Attendance $record): string => $record?->jam_keluar_standar ?? '-'),
+
+                                Forms\Components\Placeholder::make('status_kehadiran')
+                                    ->label('Status Kehadiran')
+                                    ->content(fn (?Attendance $record): string => $record?->status_kehadiran ?? '-'),
+
+                                Forms\Components\Placeholder::make('keterlambatan_detail')
+                                    ->label('Detail Keterlambatan')
+                                    ->content(fn (?Attendance $record): string => $record?->keterlambatan_detail ?? '-')
+                                    ->columnSpan(2),
+
+                                Forms\Components\Placeholder::make('kelengkapan_absensi')
+                                    ->label('Kelengkapan Absensi')
+                                    ->content(function (?Attendance $record): string {
+                                        if (!$record) return '-';
+                                        $kelengkapan = $record->kelengkapan_absensi;
+                                        return "{$kelengkapan['completed']}/{$kelengkapan['total']} - {$kelengkapan['status']}";
+                                    }),
+
+                                Forms\Components\Placeholder::make('created_at')
+                                    ->label('Tanggal Absensi')
+                                    ->content(fn (?Attendance $record): string => $record?->created_at?->format('d M Y') ?? '-'),
+                            ]),
+                    ]),
+
+                Forms\Components\Section::make('Informasi Tambahan')
+                    ->schema([
+                        Forms\Components\Grid::make(2)
+                            ->schema([
+                                Forms\Components\TextInput::make('overtime')
+                                    ->label('Lembur (menit)')
+                                    ->numeric()
+                                    ->suffix(' menit')
+                                    ->disabled(),
+                            ]),
+                    ]),
             ]);
     }
 
@@ -77,166 +250,272 @@ class AttendanceResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('user.nama')
-                    ->label('Nama Pegawai')
+                    ->label('Nama Karyawan')
                     ->searchable()
                     ->sortable()
-                    ->weight('medium'),
+                    ->weight(FontWeight::Medium),
 
                 Tables\Columns\TextColumn::make('user.npp')
                     ->label('NPP')
-                    ->searchable(),
-
-                Tables\Columns\TextColumn::make('created_at')
-                    ->label('Tanggal')
-                    ->date('d M Y')
+                    ->searchable()
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('check_in')
-                    ->label('Jam Masuk')
-                    ->time('H:i')
-                    ->badge()
-                    ->color(function ($record): string {
-                        if (!$record->check_in) return 'gray';
-                        $checkIn = \Carbon\Carbon::parse($record->check_in);
-                        $deadline = \Carbon\Carbon::parse('08:00:00');
-                        return $checkIn->gt($deadline) ? 'danger' : 'success';
+                Tables\Columns\TextColumn::make('tanggal_absen')
+                    ->label('Tanggal')
+                    ->sortable(),
+
+                Tables\Columns\TextColumn::make('check_in_formatted')
+                    ->label('Check In')
+                    ->sortable(query: function (Builder $query, string $direction): Builder {
+                        return $query->orderBy('check_in', $direction);
                     }),
 
-                Tables\Columns\TextColumn::make('check_out')
-                    ->label('Jam Keluar')
-                    ->time('H:i')
-                    ->placeholder('Belum absen keluar')
-                    ->badge()
-                    ->color('info'),
-
-                Tables\Columns\TextColumn::make('work_hours')
-                    ->label('Jam Kerja')
-                    ->state(function ($record) {
-                        if ($record->check_in && $record->check_out) {
-                            $checkIn = \Carbon\Carbon::parse($record->check_in);
-                            $checkOut = \Carbon\Carbon::parse($record->check_out);
-                            $diff = $checkIn->diff($checkOut);
-                            return $diff->format('%H:%I');
+                Tables\Columns\TextColumn::make('absen_siang_formatted')
+                    ->label('Absen Siang')
+                    ->getStateUsing(function (?Attendance $record): string {
+                        if (!$record || $record->attendance_type === 'WFO') {
+                            return 'Tidak Perlu';
                         }
-                        return '-';
+                        return $record->absen_siang_formatted;
                     })
-                    ->badge()
-                    ->color('warning'),
+                    ->color(fn (?Attendance $record): string =>
+                        !$record || $record->attendance_type === 'WFO' ? 'gray' : 'primary'
+                    )
+                    ->toggleable(isToggledHiddenByDefault: true),
 
-                Tables\Columns\TextColumn::make('status')
+                Tables\Columns\TextColumn::make('check_out_formatted')
+                    ->label('Check Out')
+                    ->sortable(query: function (Builder $query, string $direction): Builder {
+                        return $query->orderBy('check_out', $direction);
+                    }),
+
+                Tables\Columns\TextColumn::make('durasi_kerja')
+                    ->label('Durasi Kerja'),
+
+                Tables\Columns\TextColumn::make('overtime_formatted')
+                    ->label('Lembur')
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                Tables\Columns\TextColumn::make('status_kehadiran')
                     ->label('Status')
                     ->badge()
-                    ->color(function ($record): string {
-                        if (!$record->check_in) return 'gray';
-                        $checkIn = \Carbon\Carbon::parse($record->check_in);
-                        $deadline = \Carbon\Carbon::parse('08:00:00');
-                        return $checkIn->gt($deadline) ? 'danger' : 'success';
-                    })
-                    ->formatStateUsing(function ($record): string {
-                        if (!$record->check_in) return 'Tidak Hadir';
-                        $checkIn = \Carbon\Carbon::parse($record->check_in);
-                        $deadline = \Carbon\Carbon::parse('08:00:00');
-                        return $checkIn->gt($deadline) ? 'Terlambat' : 'Tepat Waktu';
+                    ->color(fn (string $state): string => match($state) {
+                        'Tepat Waktu' => 'success',
+                        'Terlambat' => 'warning',
+                        'Tidak Hadir' => 'danger',
+                        default => 'gray'
                     }),
 
-                Tables\Columns\TextColumn::make('notes')
-                    ->label('Catatan')
-                    ->limit(30)
-                    ->toggleable(),
+                Tables\Columns\TextColumn::make('keterlambatan_detail')
+                    ->label('Detail')
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                Tables\Columns\TextColumn::make('jam_masuk_standar')
+                    ->label('Jam Masuk Std')
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                Tables\Columns\BadgeColumn::make('kelengkapan_status')
+                    ->label('Kelengkapan')
+                    ->getStateUsing(function (?Attendance $record): string {
+                        if (!$record) return '-';
+                        $kelengkapan = $record->kelengkapan_absensi;
+                        return "{$kelengkapan['completed']}/{$kelengkapan['total']}";
+                    })
+                    ->colors([
+                        'success' => fn (?Attendance $record): bool =>
+                            $record && $record->kelengkapan_absensi['status'] === 'Lengkap',
+                        'warning' => fn (?Attendance $record): bool =>
+                            $record && $record->kelengkapan_absensi['status'] === 'Belum Lengkap',
+                    ])
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                Tables\Columns\TextColumn::make('absensi_requirement')
+                    ->label('Requirement')
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->wrap(),
+
+                Tables\Columns\TextColumn::make('attendance_type')
+                    ->label('Tipe')
+                    ->badge()
+                    ->color(fn (string $state): string => match($state) {
+                        'WFO' => 'primary',
+                        'Dinas Luar' => 'warning',
+                        default => 'gray'
+                    }),
+
+                Tables\Columns\ImageColumn::make('picture_absen_masuk_url')
+                    ->label('Foto Masuk')
+                    ->height(40)
+                    ->width(40)
+                    ->circular()
+                    ->toggleable()
+                    ->tooltip('Foto Check In'),
+
+                Tables\Columns\ImageColumn::make('picture_absen_siang_url')
+                    ->label('Foto Siang')
+                    ->height(40)
+                    ->width(40)
+                    ->circular()
+                    ->toggleable()
+                    ->tooltip('Foto Absen Siang')
+                    ->visible(fn (?Attendance $record): bool => $record && $record->attendance_type === 'Dinas Luar'),
+
+                Tables\Columns\ImageColumn::make('picture_absen_pulang_url')
+                    ->label('Foto Pulang')
+                    ->height(40)
+                    ->width(40)
+                    ->circular()
+                    ->toggleable()
+                    ->tooltip('Foto Check Out'),
+
+                Tables\Columns\TextColumn::make('lokasi_info')
+                    ->label('Info Lokasi')
+                    ->getStateUsing(function (?Attendance $record): string {
+                        if (!$record) return '-';
+
+                        if ($record->attendance_type === 'WFO') {
+                            $office = $record->officeSchedule?->office;
+                            if ($office && $record->latitude_absen_masuk && $record->longitude_absen_masuk) {
+                                $distance = self::calculateDistance(
+                                    $office->latitude,
+                                    $office->longitude,
+                                    $record->latitude_absen_masuk,
+                                    $record->longitude_absen_masuk
+                                );
+                                return "Kantor ({$distance}m dari pusat)";
+                            }
+                            return 'Kantor (lokasi tersedia)';
+                        } else {
+                            $locations = [];
+                            if ($record->latitude_absen_masuk) $locations[] = 'Check In';
+                            if ($record->latitude_absen_siang) $locations[] = 'Siang';
+                            if ($record->latitude_absen_pulang) $locations[] = 'Check Out';
+
+                            return 'Dinas Luar (' . implode(', ', $locations) . ')';
+                        }
+                    })
+                    ->color(fn (?Attendance $record): string =>
+                        !$record ? 'gray' : ($record->attendance_type === 'WFO' ? 'primary' : 'warning')
+                    )
+                    ->toggleable(isToggledHiddenByDefault: true),
 
                 Tables\Columns\TextColumn::make('created_at')
-                    ->label('Dibuat')
-                    ->dateTime('d M Y H:i')
+                    ->label('Dibuat Pada')
+                    ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('user_id')
-                    ->label('Pegawai')
+                    ->label('Karyawan')
                     ->relationship('user', 'nama', fn (Builder $query) => $query->where('role_user', 'employee'))
                     ->searchable()
                     ->preload(),
 
-                Tables\Filters\Filter::make('date_range')
+                Tables\Filters\SelectFilter::make('attendance_type')
+                    ->label('Tipe Absensi')
+                    ->options([
+                        'WFO' => 'Work From Office',
+                        'Dinas Luar' => 'Dinas Luar',
+                    ]),
+
+                Tables\Filters\SelectFilter::make('status_kehadiran')
+                    ->label('Status Kehadiran')
+                    ->options([
+                        'Tepat Waktu' => 'Tepat Waktu',
+                        'Terlambat' => 'Terlambat',
+                        'Tidak Hadir' => 'Tidak Hadir',
+                    ])
+                    ->attribute('status_kehadiran'),
+
+                Tables\Filters\Filter::make('kelengkapan_absensi')
+                    ->label('Kelengkapan Absensi')
                     ->form([
-                        Forms\Components\DatePicker::make('date_from')
-                            ->label('Tanggal Dari'),
-                        Forms\Components\DatePicker::make('date_until')
-                            ->label('Tanggal Sampai'),
+                        Forms\Components\Select::make('kelengkapan')
+                            ->label('Status Kelengkapan')
+                            ->options([
+                                'lengkap' => 'Lengkap',
+                                'tidak_lengkap' => 'Tidak Lengkap',
+                            ])
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        if (!isset($data['kelengkapan'])) {
+                            return $query;
+                        }
+
+                        if ($data['kelengkapan'] === 'lengkap') {
+                            return $query->where(function ($q) {
+                                $q->where(function ($wfo) {
+                                    // WFO lengkap: check_in dan check_out
+                                    $wfo->where('attendance_type', 'WFO')
+                                        ->whereNotNull('check_in')
+                                        ->whereNotNull('check_out');
+                                })->orWhere(function ($dinas) {
+                                    // Dinas Luar lengkap: check_in, absen_siang, dan check_out
+                                    $dinas->where('attendance_type', 'Dinas Luar')
+                                          ->whereNotNull('check_in')
+                                          ->whereNotNull('absen_siang')
+                                          ->whereNotNull('check_out');
+                                });
+                            });
+                        } else {
+                            // Tidak lengkap
+                            return $query->where(function ($q) {
+                                $q->where(function ($wfo) {
+                                    // WFO tidak lengkap: tidak ada check_in atau check_out
+                                    $wfo->where('attendance_type', 'WFO')
+                                        ->where(function ($incomplete) {
+                                            $incomplete->whereNull('check_in')
+                                                      ->orWhereNull('check_out');
+                                        });
+                                })->orWhere(function ($dinas) {
+                                    // Dinas Luar tidak lengkap: tidak ada salah satu dari check_in, absen_siang, atau check_out
+                                    $dinas->where('attendance_type', 'Dinas Luar')
+                                          ->where(function ($incomplete) {
+                                              $incomplete->whereNull('check_in')
+                                                        ->orWhereNull('absen_siang')
+                                                        ->orWhereNull('check_out');
+                                          });
+                                });
+                            });
+                        }
+                    }),
+
+                Tables\Filters\Filter::make('tanggal')
+                    ->form([
+                        Forms\Components\DatePicker::make('dari_tanggal')
+                            ->label('Dari Tanggal'),
+                        Forms\Components\DatePicker::make('sampai_tanggal')
+                            ->label('Sampai Tanggal'),
                     ])
                     ->query(function (Builder $query, array $data): Builder {
                         return $query
                             ->when(
-                                $data['date_from'],
+                                $data['dari_tanggal'],
                                 fn (Builder $query, $date): Builder => $query->whereDate('created_at', '>=', $date),
                             )
                             ->when(
-                                $data['date_until'],
+                                $data['sampai_tanggal'],
                                 fn (Builder $query, $date): Builder => $query->whereDate('created_at', '<=', $date),
                             );
                     }),
 
-                Tables\Filters\Filter::make('late_arrivals')
-                    ->label('Terlambat')
-                    ->query(function (Builder $query): Builder {
-                        return $query->whereTime('check_in', '>', '08:00:00');
-                    }),
-
-                Tables\Filters\Filter::make('no_checkout')
-                    ->label('Belum Absen Keluar')
-                    ->query(function (Builder $query): Builder {
-                        return $query->whereNull('check_out');
-                    }),
-
-                Tables\Filters\Filter::make('today')
-                    ->label('Hari Ini')
-                    ->query(function (Builder $query): Builder {
-                        return $query->whereDate('created_at', today());
-                    }),
-
-                Tables\Filters\Filter::make('this_week')
-                    ->label('Minggu Ini')
-                    ->query(function (Builder $query): Builder {
-                        return $query->whereBetween('created_at', [
-                            now()->startOfWeek(),
-                            now()->endOfWeek()
-                        ]);
-                    }),
-
-                Tables\Filters\Filter::make('this_month')
+                Tables\Filters\Filter::make('bulan_ini')
                     ->label('Bulan Ini')
-                    ->query(function (Builder $query): Builder {
-                        return $query->whereMonth('created_at', now()->month)
-                            ->whereYear('created_at', now()->year);
-                    }),
+                    ->query(fn (Builder $query): Builder => $query->thisMonth())
+                    ->toggle(),
+
+                Tables\Filters\Filter::make('hari_ini')
+                    ->label('Hari Ini')
+                    ->query(fn (Builder $query): Builder => $query->today())
+                    ->toggle(),
             ])
             ->actions([
+                // Hanya menampilkan action Detail untuk Kepala Bidang
                 Tables\Actions\ViewAction::make()
-                    ->label('Lihat'),
-
-                Tables\Actions\EditAction::make()
-                    ->label('Edit')
-                    ->visible(fn ($record) => !$record->check_out), // Hanya bisa edit jika belum checkout
-
-                Tables\Actions\Action::make('checkout')
-                    ->label('Absen Keluar')
-                    ->icon('heroicon-o-arrow-right-on-rectangle')
-                    ->color('success')
-                    ->visible(fn ($record) => $record->check_in && !$record->check_out)
-                    ->requiresConfirmation()
-                    ->modalHeading('Absen Keluar Pegawai')
-                    ->modalDescription(fn ($record) => "Absenkan keluar {$record->user->nama} untuk hari ini?")
-                    ->action(function ($record) {
-                        $record->update([
-                            'check_out' => now()->format('H:i:s')
-                        ]);
-
-                        Notification::make()
-                            ->success()
-                            ->title('Absen Keluar Berhasil')
-                            ->body("{$record->user->nama} telah diabsen keluar pada " . now()->format('H:i'))
-                            ->send();
-                    }),
+                    ->label('Detail')
+                    ->icon('heroicon-o-eye')
+                    ->color('info'),
             ])
             ->bulkActions([
                 Tables\Actions\BulkAction::make('bulk_checkout')
@@ -308,5 +587,25 @@ class AttendanceResource extends Resource
     public static function canDelete($record): bool
     {
         return false; // Kepala bidang tidak bisa menghapus data absensi
+    }
+
+    /**
+     * Calculate distance between two coordinates in meters
+     */
+    public static function calculateDistance($lat1, $lon1, $lat2, $lon2)
+    {
+        if (!$lat1 || !$lon1 || !$lat2 || !$lon2) {
+            return 0;
+        }
+
+        $earthRadius = 6371000; // Earth radius in meters
+
+        $dLat = deg2rad($lat2 - $lat1);
+        $dLon = deg2rad($lon2 - $lon1);
+
+        $a = sin($dLat/2) * sin($dLat/2) + cos(deg2rad($lat1)) * cos(deg2rad($lat2)) * sin($dLon/2) * sin($dLon/2);
+        $c = 2 * atan2(sqrt($a), sqrt(1-$a));
+
+        return round($earthRadius * $c);
     }
 }

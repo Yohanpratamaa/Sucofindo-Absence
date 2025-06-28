@@ -87,10 +87,11 @@ class RecentAttendanceTable extends BaseWidget
                     ->placeholder('-'),
             ])
             ->actions([
+                // Hanya menampilkan action Detail untuk admin
                 Tables\Actions\Action::make('view')
                     ->label('Detail')
                     ->icon('heroicon-m-eye')
-                    ->url(fn (Attendance $record): string => \App\Filament\Resources\AttendanceResource::getUrl('view', ['record' => $record]))
+                    ->url(fn (?Attendance $record): string => $record ? \App\Filament\Resources\AttendanceResource::getUrl('view', ['record' => $record]) : '#')
                     ->openUrlInNewTab(),
             ])
             ->paginated(false);
