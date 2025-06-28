@@ -30,22 +30,49 @@
 
             <!-- Status Cards -->
             @php
-                $todayAttendance = $this->getTodayAttendance();
+                $attendanceStatus = $this->getAttendanceStatus();
             @endphp
+
+            <!-- Status Hari Ini -->
+            @if($attendanceStatus['status'] !== 'Belum Absen')
+                <div class="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-700">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h4 class="text-sm font-medium text-gray-900 dark:text-gray-100">Status Kehadiran</h4>
+                            <div class="flex items-center gap-2 mt-1">
+                                <x-filament::badge :color="$attendanceStatus['color']">
+                                    {{ $attendanceStatus['status'] }}
+                                </x-filament::badge>
+                                <span class="text-xs text-gray-500 dark:text-gray-400">
+                                    {{ $attendanceStatus['type'] ?? 'WFO' }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            @if($attendanceStatus['check_in'])
+                                <p class="text-sm text-gray-600 dark:text-gray-400">Check In: {{ $attendanceStatus['check_in'] }}</p>
+                            @endif
+                            @if($attendanceStatus['check_out'])
+                                <p class="text-sm text-gray-600 dark:text-gray-400">Check Out: {{ $attendanceStatus['check_out'] }}</p>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+            @endif
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <!-- Check In Status -->
                 <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
                     <div class="flex items-center">
                         <div class="flex-shrink-0">
-                            <svg class="h-8 w-8 {{ $todayAttendance && $todayAttendance->check_in ? 'text-green-600' : 'text-gray-400' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <svg class="h-8 w-8 {{ $attendanceStatus['check_in'] ? 'text-green-600' : 'text-gray-400' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
                             </svg>
                         </div>
                         <div class="ml-3">
                             <p class="text-sm font-medium text-gray-900 dark:text-gray-100">Check In</p>
                             <p class="text-lg text-gray-600 dark:text-gray-400">
-                                {{ $todayAttendance && $todayAttendance->check_in ? $todayAttendance->check_in->format('H:i') : '-' }}
+                                {{ $attendanceStatus['check_in'] ?? '-' }}
                             </p>
                         </div>
                     </div>
@@ -55,14 +82,14 @@
                 <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
                     <div class="flex items-center">
                         <div class="flex-shrink-0">
-                            <svg class="h-8 w-8 {{ $todayAttendance && $todayAttendance->check_out ? 'text-green-600' : 'text-gray-400' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <svg class="h-8 w-8 {{ $attendanceStatus['check_out'] ? 'text-green-600' : 'text-gray-400' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013 3v1" />
                             </svg>
                         </div>
                         <div class="ml-3">
                             <p class="text-sm font-medium text-gray-900 dark:text-gray-100">Check Out</p>
                             <p class="text-lg text-gray-600 dark:text-gray-400">
-                                {{ $todayAttendance && $todayAttendance->check_out ? $todayAttendance->check_out->format('H:i') : '-' }}
+                                {{ $attendanceStatus['check_out'] ?? '-' }}
                             </p>
                         </div>
                     </div>

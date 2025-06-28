@@ -3,6 +3,7 @@
 namespace App\Filament\Pegawai\Widgets;
 
 use App\Models\Attendance;
+use App\Models\OfficeSchedule;
 use Carbon\Carbon;
 use Filament\Widgets\Widget;
 use Illuminate\Support\Facades\Auth;
@@ -19,8 +20,29 @@ class WfoAttendanceStatusWidget extends Widget
     {
         return Attendance::where('user_id', Auth::id())
             ->whereDate('created_at', Carbon::today())
-            ->where('attendance_type', 'WFO')
-            ->first();
+            ->first(); // Get any attendance type for today
+    }
+
+    public function getAttendanceStatus()
+    {
+        $todayAttendance = $this->getTodayAttendance();
+
+        if (!$todayAttendance) {
+            return [
+                'status' => 'Belum Absen',
+                'color' => 'gray',
+                'check_in' => null,
+                'check_out' => null
+            ];
+        }
+
+        return [
+            'status' => $todayAttendance->status_kehadiran,
+            'color' => $todayAttendance->status_color,
+            'check_in' => $todayAttendance->check_in_formatted,
+            'check_out' => $todayAttendance->check_out_formatted,
+            'type' => $todayAttendance->attendance_type
+        ];
     }
 
     public function getCanCheckIn()
@@ -47,13 +69,17 @@ class WfoAttendanceStatusWidget extends Widget
                 ->whereYear('created_at', $currentYear)
                 ->whereNotNull('check_in')
                 ->count(),
-            
+
             'total_terlambat' => Attendance::where('user_id', $userId)
                 ->whereMonth('created_at', $currentMonth)
                 ->whereYear('created_at', $currentYear)
-                ->whereTime('check_in', '>', '08:00:00')
+                ->whereNotNull('check_in')
+                ->get()
+                ->filter(function ($attendance) {
+                    return $attendance->status_kehadiran === 'Terlambat';
+                })
                 ->count(),
-            
+
             'total_wfo' => Attendance::where('user_id', $userId)
                 ->whereMonth('created_at', $currentMonth)
                 ->whereYear('created_at', $currentYear)

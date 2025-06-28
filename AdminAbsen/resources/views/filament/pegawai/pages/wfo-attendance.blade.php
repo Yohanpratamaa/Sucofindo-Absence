@@ -24,7 +24,7 @@
                 </div>
 
                 @if($todayAttendance)
-                    <div class="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2">
+                    <div class="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-3">
                         <div>
                             <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Check In</dt>
                             <dd class="mt-1 text-lg text-gray-900 dark:text-gray-100">
@@ -35,6 +35,16 @@
                             <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Check Out</dt>
                             <dd class="mt-1 text-lg text-gray-900 dark:text-gray-100">
                                 {{ $todayAttendance->check_out ? $todayAttendance->check_out->format('H:i') : '-' }}
+                            </dd>
+                        </div>
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Status</dt>
+                            <dd class="mt-1">
+                                <x-filament::badge
+                                    :color="$todayAttendance->status_color"
+                                >
+                                    {{ $todayAttendance->status_kehadiran }}
+                                </x-filament::badge>
                             </dd>
                         </div>
                     </div>

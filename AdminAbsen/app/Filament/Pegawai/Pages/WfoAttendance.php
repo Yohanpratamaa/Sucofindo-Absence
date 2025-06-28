@@ -4,6 +4,7 @@ namespace App\Filament\Pegawai\Pages;
 
 use App\Models\Attendance;
 use App\Models\Office;
+use App\Models\OfficeSchedule;
 use App\Models\Pegawai;
 use Carbon\Carbon;
 use Filament\Pages\Page;
@@ -150,25 +151,65 @@ class WfoAttendance extends Page implements HasForms
             return;
         }
 
-        // Buat record attendance
+        // Buat record attendance dengan office schedule
+        $currentTime = Carbon::now();
+        $currentDay = strtolower($currentTime->format('l')); // monday, tuesday, etc.
+
+        // Cari jadwal kantor untuk hari ini
+        $officeSchedule = OfficeSchedule::getScheduleForDay($this->nearestOffice->id, $currentDay);
+
+        // Tentukan status kehadiran
+        $attendanceStatus = 'Tepat Waktu';
+        $isLate = false;
+
+        if ($officeSchedule && $officeSchedule->start_time) {
+            $scheduledStartTime = Carbon::parse($officeSchedule->start_time)
+                ->setDate($currentTime->year, $currentTime->month, $currentTime->day);
+
+            if ($currentTime->greaterThan($scheduledStartTime)) {
+                $attendanceStatus = 'Terlambat';
+                $isLate = true;
+            }
+        } else {
+            // Jika tidak ada jadwal, gunakan default 08:00
+            $defaultStartTime = Carbon::parse('08:00')
+                ->setDate($currentTime->year, $currentTime->month, $currentTime->day);
+
+            if ($currentTime->greaterThan($defaultStartTime)) {
+                $attendanceStatus = 'Terlambat';
+                $isLate = true;
+            }
+        }
+
         $attendance = Attendance::create([
             'user_id' => Auth::id(),
-            'check_in' => Carbon::now(),
+            'office_working_hours_id' => $officeSchedule ? $officeSchedule->id : null,
+            'check_in' => $currentTime,
             'latitude_absen_masuk' => $latitude,
             'longitude_absen_masuk' => $longitude,
             'picture_absen_masuk' => $photoPath,
             'attendance_type' => 'WFO',
         ]);
 
-        Log::info('Attendance created', ['id' => $attendance->id]);
+        Log::info('Attendance created', [
+            'id' => $attendance->id,
+            'status' => $attendanceStatus,
+            'is_late' => $isLate,
+            'office_schedule_id' => $officeSchedule ? $officeSchedule->id : null
+        ]);
 
         $this->loadTodayAttendance();
         $this->calculateAttendanceStatus();
 
+        // Notifikasi dengan status kehadiran
+        $notificationBody = $isLate
+            ? 'Anda telah berhasil melakukan check in WFO. Status: Terlambat'
+            : 'Anda telah berhasil melakukan check in WFO. Status: Tepat Waktu';
+
         Notification::make()
             ->success()
             ->title('Check In Berhasil')
-            ->body('Anda telah berhasil melakukan check in WFO.')
+            ->body($notificationBody)
             ->send();
     }
 
@@ -322,6 +363,41 @@ class WfoAttendance extends Page implements HasForms
                 'radius' => (float) $office->radius,
             ];
         });
+    }
+
+    public function getCurrentAttendanceStatus()
+    {
+        if (!$this->todayAttendance) {
+            return [
+                'status' => 'Belum Absen',
+                'color' => 'gray',
+                'check_in' => null,
+                'check_out' => null
+            ];
+        }
+
+        return [
+            'status' => $this->todayAttendance->status_kehadiran,
+            'color' => $this->todayAttendance->status_color,
+            'check_in' => $this->todayAttendance->check_in_formatted,
+            'check_out' => $this->todayAttendance->check_out_formatted
+        ];
+    }
+
+    public function getScheduledStartTime()
+    {
+        if (!$this->nearestOffice) {
+            return '08:00'; // Default time
+        }
+
+        $currentDay = strtolower(Carbon::now()->format('l'));
+        $schedule = OfficeSchedule::getScheduleForDay($this->nearestOffice->id, $currentDay);
+
+        if ($schedule && $schedule->start_time) {
+            return Carbon::parse($schedule->start_time)->format('H:i');
+        }
+
+        return '08:00'; // Default time
     }
 
     // Test method untuk debugging foto
