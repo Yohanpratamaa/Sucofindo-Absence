@@ -70,11 +70,12 @@ class ViewMyDinasLuarAttendance extends ViewRecord
                                         ->label('Longitude')
                                         ->formatStateUsing(fn ($state) => $state ? number_format($state, 6) : '-'),
 
-                                    Infolists\Components\ImageEntry::make('picture_absen_masuk')
+                                    Infolists\Components\ImageEntry::make('picture_absen_masuk_url')
                                         ->label('Foto Absen Pagi')
-                                        ->disk('public')
                                         ->height(200)
-                                        ->visible(fn ($state) => !empty($state)),
+                                        ->extraAttributes(['class' => 'rounded-lg'])
+                                        ->defaultImageUrl(asset('images/no-image.png'))
+                                        ->visible(fn ($record) => $record->picture_absen_masuk),
                                 ]),
 
                                 Infolists\Components\Group::make([
@@ -92,11 +93,12 @@ class ViewMyDinasLuarAttendance extends ViewRecord
                                         ->label('Longitude')
                                         ->formatStateUsing(fn ($state) => $state ? number_format($state, 6) : '-'),
 
-                                    Infolists\Components\ImageEntry::make('picture_absen_siang')
+                                    Infolists\Components\ImageEntry::make('picture_absen_siang_url')
                                         ->label('Foto Absen Siang')
-                                        ->disk('public')
                                         ->height(200)
-                                        ->visible(fn ($state) => !empty($state)),
+                                        ->extraAttributes(['class' => 'rounded-lg'])
+                                        ->defaultImageUrl(asset('images/no-image.png'))
+                                        ->visible(fn ($record) => $record->picture_absen_siang),
                                 ]),
 
                                 Infolists\Components\Group::make([
@@ -114,11 +116,12 @@ class ViewMyDinasLuarAttendance extends ViewRecord
                                         ->label('Longitude')
                                         ->formatStateUsing(fn ($state) => $state ? number_format($state, 6) : '-'),
 
-                                    Infolists\Components\ImageEntry::make('picture_absen_pulang')
+                                    Infolists\Components\ImageEntry::make('picture_absen_pulang_url')
                                         ->label('Foto Absen Sore')
-                                        ->disk('public')
                                         ->height(200)
-                                        ->visible(fn ($state) => !empty($state)),
+                                        ->extraAttributes(['class' => 'rounded-lg'])
+                                        ->defaultImageUrl(asset('images/no-image.png'))
+                                        ->visible(fn ($record) => $record->picture_absen_pulang),
                                 ]),
                             ])
                     ]),

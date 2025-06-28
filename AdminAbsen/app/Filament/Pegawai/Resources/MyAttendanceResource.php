@@ -3,6 +3,7 @@
 namespace App\Filament\Pegawai\Resources;
 
 use App\Filament\Pegawai\Resources\MyAttendanceResource\Pages;
+use App\Filament\Components\AttendanceImageColumn;
 use App\Models\Attendance;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -87,20 +88,24 @@ class MyAttendanceResource extends Resource
                         default => 'gray',
                     }),
 
-                Tables\Columns\ImageColumn::make('picture_absen_masuk')
+                Tables\Columns\ImageColumn::make('picture_absen_masuk_url')
                     ->label('Foto Masuk')
-                    ->disk('public')
                     ->height(60)
                     ->width(60)
-                    ->toggleable(),
+                    ->circular()
+                    ->toggleable()
+                    ->tooltip('Klik untuk memperbesar')
+                    ->extraAttributes(['style' => 'object-fit: cover;']),
 
-                Tables\Columns\ImageColumn::make('picture_absen_pulang')
+                Tables\Columns\ImageColumn::make('picture_absen_pulang_url')
                     ->label('Foto Pulang')
-                    ->disk('public')
                     ->height(60)
                     ->width(60)
+                    ->circular()
                     ->placeholder('Belum check out')
-                    ->toggleable(),
+                    ->toggleable()
+                    ->tooltip('Klik untuk memperbesar')
+                    ->extraAttributes(['style' => 'object-fit: cover;']),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('attendance_type')

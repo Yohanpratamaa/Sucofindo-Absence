@@ -104,6 +104,30 @@ class MyDinasLuarAttendanceResource extends Resource
                         if ($percentage >= 33) return 'info';
                         return 'gray';
                     }),
+
+                Tables\Columns\ImageColumn::make('picture_absen_masuk_url')
+                    ->label('Foto Pagi')
+                    ->height(40)
+                    ->width(40)
+                    ->circular()
+                    ->toggleable()
+                    ->tooltip('Foto Absensi Pagi'),
+
+                Tables\Columns\ImageColumn::make('picture_absen_siang_url')
+                    ->label('Foto Siang')
+                    ->height(40)
+                    ->width(40)
+                    ->circular()
+                    ->toggleable()
+                    ->tooltip('Foto Absensi Siang'),
+
+                Tables\Columns\ImageColumn::make('picture_absen_pulang_url')
+                    ->label('Foto Sore')
+                    ->height(40)
+                    ->width(40)
+                    ->circular()
+                    ->toggleable()
+                    ->tooltip('Foto Absensi Sore'),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('month')

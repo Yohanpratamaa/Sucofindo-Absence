@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 
 class Attendance extends Model
@@ -356,5 +358,89 @@ class Attendance extends Model
         } else {
             return 'Check In + Absen Siang + Check Out (Lokasi: Fleksibel)';
         }
+    }
+
+    // Accessor untuk URL gambar check in dengan validasi
+    public function getPictureAbsenMasukUrlAttribute()
+    {
+        if (!$this->picture_absen_masuk) {
+            return asset('images/no-image.png');
+        }
+        
+        // Check if file exists
+        if (Storage::disk('public')->exists($this->picture_absen_masuk)) {
+            return asset('storage/' . $this->picture_absen_masuk);
+        }
+        
+        // Log missing file
+        Log::warning('Attendance image missing', [
+            'id' => $this->id,
+            'path' => $this->picture_absen_masuk,
+            'field' => 'picture_absen_masuk'
+        ]);
+        
+        return asset('images/no-image.png');
+    }
+
+    // Accessor untuk URL gambar check out dengan validasi
+    public function getPictureAbsenPulangUrlAttribute()
+    {
+        if (!$this->picture_absen_pulang) {
+            return asset('images/no-image.png');
+        }
+        
+        // Check if file exists
+        if (Storage::disk('public')->exists($this->picture_absen_pulang)) {
+            return asset('storage/' . $this->picture_absen_pulang);
+        }
+        
+        // Log missing file
+        Log::warning('Attendance image missing', [
+            'id' => $this->id,
+            'path' => $this->picture_absen_pulang,
+            'field' => 'picture_absen_pulang'
+        ]);
+        
+        return asset('images/no-image.png');
+    }
+
+    // Accessor untuk URL gambar absen siang dengan validasi
+    public function getPictureAbsenSiangUrlAttribute()
+    {
+        if (!$this->picture_absen_siang) {
+            return asset('images/no-image.png');
+        }
+        
+        // Check if file exists
+        if (Storage::disk('public')->exists($this->picture_absen_siang)) {
+            return asset('storage/' . $this->picture_absen_siang);
+        }
+        
+        // Log missing file
+        Log::warning('Attendance image missing', [
+            'id' => $this->id,
+            'path' => $this->picture_absen_siang,
+            'field' => 'picture_absen_siang'
+        ]);
+        
+        return asset('images/no-image.png');
+    }
+
+    // Method untuk mengecek apakah gambar ada
+    public function hasValidImage($type = 'check_in')
+    {
+        $fieldMap = [
+            'check_in' => 'picture_absen_masuk',
+            'check_out' => 'picture_absen_pulang',
+            'absen_siang' => 'picture_absen_siang'
+        ];
+        
+        $field = $fieldMap[$type] ?? 'picture_absen_masuk';
+        
+        if (!$this->$field) {
+            return false;
+        }
+        
+        return Storage::disk('public')->exists($this->$field);
     }
 }

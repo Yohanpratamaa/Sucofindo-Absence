@@ -71,19 +71,23 @@ class ViewMyAttendance extends ViewRecord
                     ->schema([
                         Components\Grid::make(2)
                             ->schema([
-                                Components\ImageEntry::make('picture_absen_masuk')
+                                Components\ImageEntry::make('picture_absen_masuk_url')
                                     ->label('Foto Check In')
-                                    ->disk('public')
-                                    ->height(200)
+                                    ->height(250)
+                                    ->width('100%')
+                                    ->extraAttributes(['class' => 'rounded-lg'])
                                     ->placeholder('Tidak ada foto'),
 
-                                Components\ImageEntry::make('picture_absen_pulang')
+                                Components\ImageEntry::make('picture_absen_pulang_url')
                                     ->label('Foto Check Out')
-                                    ->disk('public')
-                                    ->height(200)
+                                    ->height(250)
+                                    ->width('100%')
+                                    ->extraAttributes(['class' => 'rounded-lg'])
                                     ->placeholder('Belum check out'),
                             ]),
                     ])
+                    ->collapsible()
+                    ->persistCollapsed()
                     ->visible(fn ($record) => $record->picture_absen_masuk || $record->picture_absen_pulang),
 
                 Components\Section::make('Informasi Lokasi')
