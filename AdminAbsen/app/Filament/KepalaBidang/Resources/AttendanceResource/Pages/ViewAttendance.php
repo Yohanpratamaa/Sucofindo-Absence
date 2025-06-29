@@ -163,9 +163,9 @@ class ViewAttendance extends ViewRecord
                                     ->visible(fn ($record) => !empty($record->picture_absen_pulang)),
                             ]),
                     ])
-                    ->visible(fn ($record) => 
-                        !empty($record->picture_absen_masuk) || 
-                        !empty($record->picture_absen_siang) || 
+                    ->visible(fn ($record) =>
+                        !empty($record->picture_absen_masuk) ||
+                        !empty($record->picture_absen_siang) ||
                         !empty($record->picture_absen_pulang)
                     ),
 
@@ -204,9 +204,9 @@ class ViewAttendance extends ViewRecord
                                     ->visible(fn ($record) => !empty($record->longitude_absen_pulang)),
                             ]),
                     ])
-                    ->visible(fn ($record) => 
-                        !empty($record->latitude_absen_masuk) || 
-                        !empty($record->latitude_absen_siang) || 
+                    ->visible(fn ($record) =>
+                        !empty($record->latitude_absen_masuk) ||
+                        !empty($record->latitude_absen_siang) ||
                         !empty($record->latitude_absen_pulang)
                     ),
 
