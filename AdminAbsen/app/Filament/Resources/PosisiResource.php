@@ -19,11 +19,11 @@ class PosisiResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-building-office';
 
-    protected static ?string $navigationLabel = 'Data Posisi';
+    protected static ?string $navigationLabel = 'Manajemen Posisi';
 
     protected static ?string $modelLabel = 'Posisi';
 
-    protected static ?string $pluralModelLabel = 'Data Posisi';
+    protected static ?string $pluralModelLabel = 'Manajemen Posisi';
 
     protected static ?int $navigationSort = 2;
 

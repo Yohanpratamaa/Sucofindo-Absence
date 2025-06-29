@@ -28,11 +28,11 @@ class AttendanceResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-user-group';
 
-    protected static ?string $navigationLabel = 'Manajemen Absensi';
+    protected static ?string $navigationLabel = 'Data Absensi';
 
     protected static ?string $modelLabel = 'Data Absensi';
 
-    protected static ?string $pluralModelLabel = 'Manajemen Absensi';
+    protected static ?string $pluralModelLabel = 'Data Absensi';
 
     protected static ?int $navigationSort = 7;
 

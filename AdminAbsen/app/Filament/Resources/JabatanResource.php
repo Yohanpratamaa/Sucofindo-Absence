@@ -19,11 +19,11 @@ class JabatanResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-briefcase';
 
-    protected static ?string $navigationLabel = 'Data Jabatan';
+    protected static ?string $navigationLabel = 'Manajemen Jabatan';
 
     protected static ?string $modelLabel = 'Jabatan';
 
-    protected static ?string $pluralModelLabel = 'Data Jabatan';
+    protected static ?string $pluralModelLabel = 'Manajemen Jabatan';
 
     protected static ?int $navigationSort = 2;
 

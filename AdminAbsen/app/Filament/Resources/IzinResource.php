@@ -23,11 +23,11 @@ class IzinResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-calendar-days';
 
-    protected static ?string $navigationLabel = 'Manajemen Izin';
+    protected static ?string $navigationLabel = 'Data Izin';
 
     protected static ?string $modelLabel = 'Izin';
 
-    protected static ?string $pluralModelLabel = 'Manajemen Izin';
+    protected static ?string $pluralModelLabel = 'Data Izin';
 
     protected static ?int $navigationSort = 5;
 
