@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Login Form</title>
+</head>
+<body>
+    <h1>Test Login Form Submission</h1>
+
+    <form id="testForm" method="POST" action="http://127.0.0.1:8000/login">
+        <input type="hidden" name="_token" value="test">
+        <div>
+            <label>Email:</label>
+            <input type="email" name="email" value="admin@sucofindo.com" required>
+        </div>
+        <div>
+            <label>Password:</label>
+            <input type="password" name="password" value="password123" required>
+        </div>
+        <button type="submit">Login</button>
+    </form>
+
+    <script>
+        console.log('Test form loaded');
+
+        // Test form submission
+        document.getElementById('testForm').addEventListener('submit', function(e) {
+            console.log('Form submitted!');
+        });
+
+        // Test Enter key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                console.log('Enter key pressed');
+            }
+        });
+    </script>
+</body>
+</html>

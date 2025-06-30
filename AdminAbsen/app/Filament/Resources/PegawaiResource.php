@@ -137,10 +137,11 @@ class PegawaiResource extends Resource
                                                         if ($state) {
                                                             $jabatan = Jabatan::where('nama', $state)->first();
                                                             $tunjangan = $jabatan?->tunjangan ?? 0;
-                                                            // Set nilai numeric asli untuk database
-                                                            $set('jabatan_tunjangan', $tunjangan);
+                                                            // Set nilai yang sudah diformat langsung
+                                                            $formatted = $tunjangan > 0 ? number_format($tunjangan, 0, ',', '.') : '0';
+                                                            $set('jabatan_tunjangan', $formatted);
                                                         } else {
-                                                            $set('jabatan_tunjangan', 0);
+                                                            $set('jabatan_tunjangan', '0');
                                                         }
                                                     }),
 
@@ -149,6 +150,35 @@ class PegawaiResource extends Resource
                                                     ->prefix('Rp')
                                                     ->placeholder('0')
                                                     ->readOnly()
+                                                    ->live()
+                                                    ->extraInputAttributes([
+                                                        'id' => 'jabatan_tunjangan_field'
+                                                    ])
+                                                    ->extraAttributes([
+                                                        'x-data' => '{
+                                                            formatNumber(value) {
+                                                                if (!value || value == 0) return "0";
+                                                                return parseInt(value).toLocaleString("id-ID");
+                                                            }
+                                                        }',
+                                                        'x-effect' => '$el.querySelector("input").addEventListener("input", function() {
+                                                            if (this.value && this.value !== "0" && !this.value.includes(".")) {
+                                                                this.value = parseInt(this.value).toLocaleString("id-ID");
+                                                            }
+                                                        })'
+                                                    ])
+                                                    ->dehydrateStateUsing(function ($state) {
+                                                        // Simpan sebagai numeric untuk database
+                                                        return is_string($state) ? (int) str_replace(['.', ','], '', $state) : $state;
+                                                    })
+                                                    ->formatStateUsing(function ($state) {
+                                                        if (!$state || $state == 0) {
+                                                            return '0';
+                                                        }
+                                                        // Force format dengan titik pemisah ribuan
+                                                        $formatted = number_format((float) $state, 0, ',', '.');
+                                                        return $formatted;
+                                                    })
                                                     ->helperText('Otomatis terisi berdasarkan jabatan yang dipilih'),
                                             ]),
                                     ]),
@@ -175,10 +205,11 @@ class PegawaiResource extends Resource
                                                         if ($state) {
                                                             $posisi = Posisi::where('nama', $state)->first();
                                                             $tunjangan = $posisi?->tunjangan ?? 0;
-                                                            // Set nilai numeric asli untuk database
-                                                            $set('posisi_tunjangan', $tunjangan);
+                                                            // Set nilai yang sudah diformat langsung
+                                                            $formatted = $tunjangan > 0 ? number_format($tunjangan, 0, ',', '.') : '0';
+                                                            $set('posisi_tunjangan', $formatted);
                                                         } else {
-                                                            $set('posisi_tunjangan', 0);
+                                                            $set('posisi_tunjangan', '0');
                                                         }
                                                     }),
 
@@ -187,6 +218,19 @@ class PegawaiResource extends Resource
                                                     ->prefix('Rp')
                                                     ->placeholder('0')
                                                     ->readOnly()
+                                                    ->live()
+                                                    ->dehydrateStateUsing(function ($state) {
+                                                        // Simpan sebagai numeric untuk database
+                                                        return is_string($state) ? (int) str_replace(['.', ','], '', $state) : $state;
+                                                    })
+                                                    ->formatStateUsing(function ($state) {
+                                                        if (!$state || $state == 0) {
+                                                            return '0';
+                                                        }
+                                                        // Force format dengan titik pemisah ribuan
+                                                        $formatted = number_format((float) $state, 0, ',', '.');
+                                                        return $formatted;
+                                                    })
                                                     ->helperText('Otomatis terisi berdasarkan posisi yang dipilih'),
                                             ]),
                                     ]),
@@ -218,7 +262,7 @@ class PegawaiResource extends Resource
                                                     ->placeholder('Pilih jenjang'),
 
                                                 Forms\Components\TextInput::make('sekolah_univ')
-                                                    ->label('Sekolah / Univ')
+                                                    ->label('Sekolah / Universitas')
                                                     ->required()
                                                     ->placeholder('Nama sekolah/universitas'),
 
