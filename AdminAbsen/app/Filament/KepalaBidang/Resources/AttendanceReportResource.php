@@ -204,15 +204,16 @@ class AttendanceReportResource extends Resource
                     ->toggle(),
             ])
             ->actions([
-                Tables\Actions\Action::make('detail_attendance')
-                    ->label('Detail Absensi')
-                    ->icon('heroicon-o-eye')
-                    ->color('info')
-                    ->url(function ($record) {
-                        // Navigate to a detailed attendance view for this employee
-                        return '#'; // Akan diimplementasikan jika diperlukan
-                    })
-                    ->openUrlInNewTab(),
+                // Detail Absensi button removed as per request
+                // Tables\Actions\Action::make('detail_attendance')
+                //     ->label('Detail Absensi')
+                //     ->icon('heroicon-o-eye')
+                //     ->color('info')
+                //     ->url(function ($record) {
+                //         // Navigate to a detailed attendance view for this employee
+                //         return '#'; // Akan diimplementasikan jika diperlukan
+                //     })
+                //     ->openUrlInNewTab(),
             ])
             ->bulkActions([
                 // Bulk actions akan diimplementasikan jika diperlukan

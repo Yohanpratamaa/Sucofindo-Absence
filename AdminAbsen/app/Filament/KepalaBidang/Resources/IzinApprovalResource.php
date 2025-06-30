@@ -5,6 +5,7 @@ namespace App\Filament\KepalaBidang\Resources;
 use App\Filament\KepalaBidang\Resources\IzinApprovalResource\Pages;
 use App\Models\Izin;
 use App\Models\Pegawai;
+use App\Helpers\DocumentHelper;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -127,6 +128,14 @@ class IzinApprovalResource extends Resource
                     ->label('Keterangan')
                     ->limit(50),
 
+                Tables\Columns\TextColumn::make('dokumen_pendukung')
+                    ->label('Dokumen')
+                    ->formatStateUsing(function (?string $state, Izin $record): string {
+                        return DocumentHelper::getDocumentPreviewHtml($state, $record);
+                    })
+                    ->html()
+                    ->toggleable(),
+
                 Tables\Columns\TextColumn::make('approval_status')
                     ->label('Status')
                     ->badge()
@@ -176,7 +185,7 @@ class IzinApprovalResource extends Resource
                     ->color('success')
                     ->visible(function ($record) {
                         $currentUser = Auth::user();
-                        return is_null($record->approved_by) && !$currentUser->isSuperAdmin();
+                        return is_null($record->approved_by) && $currentUser->role_user !== 'super admin';
                     })
                     ->requiresConfirmation()
                     ->modalHeading('Setujui Izin')
@@ -197,7 +206,7 @@ class IzinApprovalResource extends Resource
                     ->color('danger')
                     ->visible(function ($record) {
                         $currentUser = Auth::user();
-                        return is_null($record->approved_by) && !$currentUser->isSuperAdmin();
+                        return is_null($record->approved_by) && $currentUser->role_user !== 'super admin';
                     })
                     ->requiresConfirmation()
                     ->modalHeading('Tolak Izin')
@@ -224,7 +233,7 @@ class IzinApprovalResource extends Resource
                         $currentUser = Auth::user();
 
                         // Cek apakah user adalah super admin
-                        if ($currentUser->isSuperAdmin()) {
+                        if ($currentUser->role_user === 'super admin') {
                             Notification::make()
                                 ->danger()
                                 ->title('Akses Ditolak')
@@ -249,7 +258,7 @@ class IzinApprovalResource extends Resource
                     })
                     ->visible(function () {
                         $currentUser = Auth::user();
-                        return !$currentUser->isSuperAdmin();
+                        return $currentUser->role_user !== 'super admin';
                     }),
 
                 Tables\Actions\BulkAction::make('bulk_reject')
@@ -263,7 +272,7 @@ class IzinApprovalResource extends Resource
                         $currentUser = Auth::user();
 
                         // Cek apakah user adalah super admin
-                        if ($currentUser->isSuperAdmin()) {
+                        if ($currentUser->role_user === 'super admin') {
                             Notification::make()
                                 ->danger()
                                 ->title('Akses Ditolak')
@@ -288,7 +297,7 @@ class IzinApprovalResource extends Resource
                     })
                     ->visible(function () {
                         $currentUser = Auth::user();
-                        return !$currentUser->isSuperAdmin();
+                        return $currentUser->role_user !== 'super admin';
                     }),
             ])
             ->defaultSort('created_at', 'desc');
@@ -298,7 +307,7 @@ class IzinApprovalResource extends Resource
     {
         return [
             'index' => Pages\ListIzinApprovals::route('/'),
-            // 'view' => Pages\ViewIzinApproval::route('/{record}'),
+            'view' => Pages\ViewIzinApproval::route('/{record}'),
         ];
     }
 

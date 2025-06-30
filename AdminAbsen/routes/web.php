@@ -81,6 +81,13 @@ Route::get('/', function () {
     }
 })->name('home');
 
+// Izin Document Routes
+Route::middleware('auth')->group(function () {
+    Route::get('/izin/{izin}/print', [App\Http\Controllers\IzinController::class, 'print'])->name('izin.print');
+    Route::get('/izin/{izin}/document/download', [App\Http\Controllers\IzinController::class, 'downloadDocument'])->name('izin.document.download');
+    Route::get('/izin/{izin}/document/preview', [App\Http\Controllers\IzinController::class, 'previewDocument'])->name('izin.document.preview');
+});
+
 // Real-time API routes
 Route::prefix('api/realtime')->group(function () {
     Route::get('/stats', [RealTimeController::class, 'getStats']);
