@@ -1,0 +1,68 @@
+/* Custom Login Background Styles */
+/* File ini bisa digunakan sebagai alternatif untuk mengatur background login */
+
+/* Default background */
+.bg-with-image {
+    background-image: linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3)),
+        url("/images/background.png");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    min-height: 100vh;
+}
+
+/* Responsive background untuk mobile */
+@media (max-width: 768px) {
+    .bg-with-image {
+        background-attachment: scroll;
+        background-image: linear-gradient(
+                rgba(0, 0, 0, 0.4),
+                rgba(0, 0, 0, 0.4)
+            ),
+            url("/images/background.png");
+    }
+}
+
+/* Alternative: Seasonal backgrounds */
+/* Uncomment salah satu untuk menggunakan background berbeda */
+
+/* Spring theme */
+/*
+.bg-with-image {
+    background-image:
+        linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3)),
+        url('/images/spring-background.jpg');
+}
+*/
+
+/* Corporate theme */
+/*
+.bg-with-image {
+    background-image:
+        linear-gradient(rgba(0, 61, 121, 0.8), rgba(0, 91, 181, 0.8)),
+        url('/images/corporate-background.jpg');
+}
+*/
+
+/* Modern gradient (tanpa gambar) */
+/*
+.bg-with-image {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+*/
+
+/* Animated gradient */
+/*
+.bg-with-image {
+    background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+    background-size: 400% 400%;
+    animation: gradientShift 15s ease infinite;
+}
+
+@keyframes gradientShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+*/

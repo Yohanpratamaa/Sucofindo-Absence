@@ -234,32 +234,32 @@ class OvertimeApprovalResource extends Resource
                             ->title('Lembur Ditolak')
                             ->body("Pengajuan lembur {$record->user->nama} telah ditolak.")
                             ->send();
-                    }),
-
-                Tables\Actions\Action::make('reassign')
-                    ->label('Assign Ulang')
-                    ->icon('heroicon-o-arrow-path')
-                    ->color('info')
-                    ->form([
-                        Forms\Components\Select::make('new_user_id')
-                            ->label('Pegawai Baru')
-                            ->options(function () {
-                                return Pegawai::where('role_user', 'employee')
-                                    ->where('status', 'active')
-                                    ->pluck('nama', 'id');
-                            })
-                            ->searchable()
-                            ->required(),
-                    ])
-                    ->action(function (OvertimeAssignment $record, array $data): void {
-                        $record->reassign($data['new_user_id'], Auth::id());
-
-                        Notification::make()
-                            ->success()
-                            ->title('Lembur Di-assign Ulang')
-                            ->body('Penugasan lembur telah berhasil di-assign ulang.')
-                            ->send();
                     })
+
+                // Tables\Actions\Action::make('reassign')
+                //     ->label('Assign Ulang')
+                //     ->icon('heroicon-o-arrow-path')
+                //     ->color('info')
+                //     ->form([
+                //         Forms\Components\Select::make('new_user_id')
+                //             ->label('Pegawai Baru')
+                //             ->options(function () {
+                //                 return Pegawai::where('role_user', 'employee')
+                //                     ->where('status', 'active')
+                //                     ->pluck('nama', 'id');
+                //             })
+                //             ->searchable()
+                //             ->required(),
+                //     ])
+                //     ->action(function (OvertimeAssignment $record, array $data): void {
+                //         $record->reassign($data['new_user_id'], Auth::id());
+
+                //         Notification::make()
+                //             ->success()
+                //             ->title('Lembur Di-assign Ulang')
+                //             ->body('Penugasan lembur telah berhasil di-assign ulang.')
+                //             ->send();
+                //     })
                     ->visible(fn (OvertimeAssignment $record): bool => in_array($record->status, ['Rejected', 'Assigned'])),
             ])
             ->bulkActions([
