@@ -1,664 +1,820 @@
 <x-filament-panels::page>
-    <div class="dinas-luar-attendance-container">
-        <!-- Header Status -->
-        <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg mb-6">
-            <div class="px-4 py-5 sm:p-6">
-                <div class="sm:flex sm:items-center sm:justify-between">
-                    <div>
-                        <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-gray-100">
-                            Status Absensi Dinas Luar Hari Ini
-                        </h3>
-                        <p class="mt-1 max-w-2xl text-sm text-gray-500 dark:text-gray-400">
-                            {{ Carbon\Carbon::now()->isoFormat('dddd, D MMMM Y') }}
-                        </p>
+    @php
+        $currentTime = \Carbon\Carbon::now();
+        $currentAction = null;
+        $actionTitle = 'Tidak Ada Aksi Tersedia';
+        $actionDescription = 'Belum saatnya untuk melakukan absensi';
+
+        if ($canCheckInPagi) {
+            $currentAction = 'pagi';
+            $actionTitle = 'Absensi Pagi';
+            $actionDescription = 'Memulai hari kerja dinas luar';
+        } elseif ($canCheckInSiang) {
+            $currentAction = 'siang';
+            $actionTitle = 'Absensi Siang';
+            $actionDescription = 'Waktu istirahat siang';
+        } elseif ($canCheckOut) {
+            $currentAction = 'sore';
+            $actionTitle = 'Absensi Sore';
+            $actionDescription = 'Mengakhiri hari kerja';
+        }
+
+        $progress = $this->getAttendanceProgress();
+    @endphp
+
+    <div class="space-y-6">
+        <!-- Header Information -->
+        <x-filament::section>
+            <x-slot name="heading">
+                {{ $actionTitle }}
+            </x-slot>
+
+            <x-slot name="description">
+                {{ $currentTime->isoFormat('dddd, D MMMM Y • H:mm') }} WIB
+            </x-slot>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="space-y-2">
+                    <div class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                        <x-heroicon-s-map-pin class="w-4 h-4" />
+                        <span id="location-text">Mendeteksi lokasi...</span>
                     </div>
-                    @if($todayAttendance)
-                        <div class="mt-3 sm:mt-0">
-                            @php
-                                $progress = $this->getAttendanceProgress();
-                            @endphp
-                            <x-filament::badge
-                                :color="$progress['percentage'] == 100 ? 'success' : 'warning'"
+                    <div class="text-sm text-gray-500 dark:text-gray-500">
+                        {{ $actionDescription }}
+                    </div>
+                    <!-- Location Controls -->
+                    <div class="flex gap-2 mt-2">
+                        <x-filament::button
+                            color="gray"
+                            size="xs"
+                            id="manual-location-btn"
+                            wire:ignore
+                        >
+                            <x-heroicon-o-arrow-path class="w-3 h-3" />
+                            Coba Lagi
+                        </x-filament::button>
+                        @if(config('app.debug'))
+                            <x-filament::button
+                                color="warning"
+                                size="xs"
+                                id="force-location-btn"
+                                wire:ignore
                             >
-                                Progress: {{ $progress['percentage'] }}%
-                            </x-filament::badge>
-                        </div>
-                    @endif
+                                <x-heroicon-o-map-pin class="w-3 h-3" />
+                                Paksa Lokasi
+                            </x-filament::button>
+                        @endif
+                    </div>
                 </div>
 
                 @if($todayAttendance)
-                    <div class="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-4">
-                        <div>
-                            <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Absen Pagi</dt>
-                            <dd class="mt-1 text-lg text-gray-900 dark:text-gray-100">
-                                {{ $todayAttendance->check_in ? $todayAttendance->check_in->format('H:i') : '-' }}
-                            </dd>
-                        </div>
-                        <div>
-                            <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Absen Siang</dt>
-                            <dd class="mt-1 text-lg text-gray-900 dark:text-gray-100">
-                                {{ $todayAttendance->absen_siang ? $todayAttendance->absen_siang->format('H:i') : '-' }}
-                            </dd>
-                        </div>
-                        <div>
-                            <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Absen Sore</dt>
-                            <dd class="mt-1 text-lg text-gray-900 dark:text-gray-100">
-                                {{ $todayAttendance->check_out ? $todayAttendance->check_out->format('H:i') : '-' }}
-                            </dd>
-                        </div>
-                        <div>
-                            <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Status</dt>
-                            <dd class="mt-1">
-                                <x-filament::badge
-                                    :color="$todayAttendance->status_color"
-                                >
-                                    {{ $todayAttendance->status_kehadiran }}
-                                </x-filament::badge>
-                            </dd>
-                        </div>
-                    </div>
-
-                    <!-- Progress Bar -->
-                    @php
-                        $progress = $this->getAttendanceProgress();
-                    @endphp
-                    <div class="mt-5">
-                        <div class="flex justify-between text-sm text-gray-600 dark:text-gray-400 mb-1">
-                            <span>Progress Absensi</span>
-                            <span>{{ $progress['percentage'] }}%</span>
-                        </div>
-                        <div class="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
-                            <div class="bg-blue-600 h-2.5 rounded-full" style="width: {{ $progress['percentage'] }}%"></div>
-                        </div>
-                        <div class="mt-2 flex justify-between text-xs text-gray-500 dark:text-gray-400">
-                            <span class="{{ $progress['pagi'] ? 'text-green-600' : '' }}">✓ Pagi</span>
-                            <span class="{{ $progress['siang'] ? 'text-green-600' : '' }}">✓ Siang</span>
-                            <span class="{{ $progress['sore'] ? 'text-green-600' : '' }}">✓ Sore</span>
+                    <div class="text-right">
+                        <div class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-primary-100 text-primary-800 dark:bg-primary-900 dark:text-primary-200">
+                            Progress: {{ $progress['percentage'] }}%
                         </div>
                     </div>
                 @endif
             </div>
-        </div>
+        </x-filament::section>
 
-        <!-- Location Status -->
-        <div id="location-status" class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg mb-6" style="display: none;">
-            <div class="px-4 py-5 sm:p-6">
-                <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-gray-100 mb-4">
-                    Status Lokasi Saat Ini
-                </h3>
-                <div id="location-info" class="space-y-2">
-                    <!-- Location info will be populated by JavaScript -->
+        <!-- Status Absensi -->
+        @if($todayAttendance)
+            <x-filament::section>
+                <x-slot name="heading">
+                    Status Absensi Hari Ini
+                </x-slot>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <!-- Absen Pagi -->
+                    <div class="border rounded-lg p-4 {{ $todayAttendance->check_in ? 'bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-800' : 'bg-gray-50 border-gray-200 dark:bg-gray-900/20 dark:border-gray-700' }}">
+                        <div class="flex items-center gap-3">
+                            <div class="flex-shrink-0">
+                                <x-heroicon-s-sun class="w-8 h-8 {{ $todayAttendance->check_in ? 'text-green-600' : 'text-gray-400' }}" />
+                            </div>
+                            <div>
+                                <h3 class="font-medium {{ $todayAttendance->check_in ? 'text-green-900 dark:text-green-100' : 'text-gray-900 dark:text-gray-100' }}">
+                                    Absen Pagi
+                                </h3>
+                                <p class="text-sm {{ $todayAttendance->check_in ? 'text-green-700 dark:text-green-300' : 'text-gray-500 dark:text-gray-400' }}">
+                                    {{ $todayAttendance->check_in ? $todayAttendance->check_in->format('H:i') . ' WIB' : 'Belum absen' }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Absen Siang -->
+                    <div class="border rounded-lg p-4 {{ $todayAttendance->absen_siang ? 'bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-800' : 'bg-gray-50 border-gray-200 dark:bg-gray-900/20 dark:border-gray-700' }}">
+                        <div class="flex items-center gap-3">
+                            <div class="flex-shrink-0">
+                                <x-heroicon-s-sun class="w-8 h-8 {{ $todayAttendance->absen_siang ? 'text-blue-600' : 'text-gray-400' }}" />
+                            </div>
+                            <div>
+                                <h3 class="font-medium {{ $todayAttendance->absen_siang ? 'text-blue-900 dark:text-blue-100' : 'text-gray-900 dark:text-gray-100' }}">
+                                    Absen Siang
+                                </h3>
+                                <p class="text-sm {{ $todayAttendance->absen_siang ? 'text-blue-700 dark:text-blue-300' : 'text-gray-500 dark:text-gray-400' }}">
+                                    {{ $todayAttendance->absen_siang ? $todayAttendance->absen_siang->format('H:i') . ' WIB' : 'Belum absen' }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Absen Sore -->
+                    <div class="border rounded-lg p-4 {{ $todayAttendance->check_out ? 'bg-orange-50 border-orange-200 dark:bg-orange-900/20 dark:border-orange-800' : 'bg-gray-50 border-gray-200 dark:bg-gray-900/20 dark:border-gray-700' }}">
+                        <div class="flex items-center gap-3">
+                            <div class="flex-shrink-0">
+                                <x-heroicon-s-moon class="w-8 h-8 {{ $todayAttendance->check_out ? 'text-orange-600' : 'text-gray-400' }}" />
+                            </div>
+                            <div>
+                                <h3 class="font-medium {{ $todayAttendance->check_out ? 'text-orange-900 dark:text-orange-100' : 'text-gray-900 dark:text-gray-100' }}">
+                                    Absen Sore
+                                </h3>
+                                <p class="text-sm {{ $todayAttendance->check_out ? 'text-orange-700 dark:text-orange-300' : 'text-gray-500 dark:text-gray-400' }}">
+                                    {{ $todayAttendance->check_out ? $todayAttendance->check_out->format('H:i') . ' WIB' : 'Belum absen' }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-            </div>
+
+                <!-- Progress Bar -->
+                <div class="mt-6">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Progress Absensi</span>
+                        <span class="text-sm text-gray-500 dark:text-gray-400">{{ $progress['percentage'] }}%</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2 dark:bg-gray-700">
+                        <div class="bg-primary-600 h-2 rounded-full transition-all duration-300" style="width: {{ $progress['percentage'] }}%"></div>
+                    </div>
+                </div>
+            </x-filament::section>
+        @endif
+
+        <!-- Lokasi Status -->
+        <div id="location-status" class="hidden">
+            <x-filament::section>
+                <x-slot name="heading">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <x-heroicon-s-map-pin class="w-5 h-5 text-green-600" />
+                            Lokasi Terdeteksi
+                        </div>
+                        <x-filament::button
+                            color="gray"
+                            size="xs"
+                            id="refresh-location-btn"
+                            wire:ignore
+                        >
+                            <x-heroicon-o-arrow-path class="w-4 h-4" />
+                            Refresh
+                        </x-filament::button>
+                    </div>
+                </x-slot>
+
+                <div id="location-info" class="space-y-2">
+                    <!-- Will be populated by JavaScript -->
+                </div>
+            </x-filament::section>
         </div>
 
         <!-- Camera Section -->
-        <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
-            <div class="px-4 py-5 sm:p-6">
-                @php
-                    $currentAction = null;
-                    $actionTitle = 'Tidak Ada Aksi Tersedia';
-
-                    if ($canCheckInPagi) {
-                        $currentAction = 'pagi';
-                        $actionTitle = 'Absensi Pagi - Dinas Luar';
-                    } elseif ($canCheckInSiang) {
-                        $currentAction = 'siang';
-                        $actionTitle = 'Absensi Siang - Dinas Luar';
-                    } elseif ($canCheckOut) {
-                        $currentAction = 'sore';
-                        $actionTitle = 'Absensi Sore - Dinas Luar';
-                    }
-                @endphp
-
-                <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-gray-100 mb-4">
+        @if($currentAction)
+            <x-filament::section>
+                <x-slot name="heading">
                     {{ $actionTitle }}
-                </h3>
+                </x-slot>
 
-                @if($currentAction)
-                    <!-- Action Information -->
-                    <div class="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                        <div class="flex">
-                            <div class="flex-shrink-0">
-                                <svg class="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
-                                </svg>
-                            </div>
-                            <div class="ml-3">
-                                <h3 class="text-sm font-medium text-blue-800">
-                                    Informasi Absensi {{ ucfirst($currentAction) }}
-                                </h3>
-                                <div class="mt-2 text-sm text-blue-700">
-                                    <p>
-                                        @if($currentAction === 'pagi')
-                                            Lakukan absensi pagi untuk memulai hari kerja dinas luar. Lokasi Anda akan dicatat secara otomatis.
-                                        @elseif($currentAction === 'siang')
-                                            Waktu absensi siang. Pastikan Anda berada di lokasi tugas yang tepat.
-                                        @else
-                                            Absensi sore untuk mengakhiri hari kerja dinas luar. Terima kasih atas kerja keras Anda.
-                                        @endif
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                <x-slot name="description">
+                    Ambil foto selfie untuk melakukan absensi {{ strtolower($currentAction) }}
+                </x-slot>
 
+                <div class="space-y-6">
                     <!-- Camera Status -->
-                    <div id="camera-status" class="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg" style="display: none;">
-                        <div class="flex items-center">
-                            <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
-                            <span class="text-blue-700">Mengakses kamera...</span>
+                    <div id="camera-status" class="hidden">
+                        <div class="flex items-center justify-center p-4 bg-blue-50 border border-blue-200 rounded-lg dark:bg-blue-900/20 dark:border-blue-800">
+                            <div class="flex items-center gap-3">
+                                <div class="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
+                                <span class="text-sm font-medium text-blue-800 dark:text-blue-200" id="status-text">
+                                    Mengakses kamera...
+                                </span>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Camera Preview -->
-                    <div class="mb-4">
-                        <video id="camera" width="100%" height="300" autoplay playsinline muted class="rounded-lg border bg-gray-100" style="display: none;"></video>
-                        <div id="camera-placeholder" class="w-full h-72 bg-gray-100 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center">
-                            <div class="text-center">
-                                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                                </svg>
-                                <h3 class="mt-2 text-sm font-medium text-gray-900">Kamera belum aktif</h3>
-                                <p class="mt-1 text-sm text-gray-500">Klik tombol di bawah untuk mengaktifkan kamera</p>
+                    <!-- Camera Preview Area -->
+                    <div class="relative bg-gray-100 dark:bg-gray-800 rounded-xl overflow-hidden aspect-video max-w-md mx-auto">
+                        <!-- Video Element -->
+                        <video id="camera" class="hidden w-full h-full object-cover" autoplay playsinline muted></video>
+
+                        <!-- Camera Placeholder -->
+                        <div id="camera-placeholder" class="flex flex-col items-center justify-center h-full text-center p-6">
+                            <div class="w-16 h-16 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center mb-4">
+                                <x-heroicon-o-camera class="w-8 h-8 text-gray-500 dark:text-gray-400" />
+                            </div>
+                            <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">Aktifkan Kamera</h3>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Klik tombol di bawah untuk mengambil foto selfie</p>
+                        </div>
+
+                        <!-- Photo Preview -->
+                        <div id="photo-preview" class="hidden relative w-full h-full">
+                            <img id="captured-photo" class="w-full h-full object-cover">
+                            <div class="absolute top-4 right-4">
+                                <x-filament::button
+                                    id="retake-photo"
+                                    color="gray"
+                                    size="sm"
+                                    icon="heroicon-o-arrow-path"
+                                >
+                                    Ambil Ulang
+                                </x-filament::button>
                             </div>
                         </div>
                     </div>
 
                     <!-- Camera Controls -->
-                    <div class="mb-4">
-                        <button id="start-camera-btn" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
-                            </svg>
-                            Aktifkan Kamera
-                        </button>
+                    <div class="flex flex-col items-center gap-4">
+                        <!-- Primary Controls -->
+                        <div class="flex gap-4">
+                            <x-filament::button
+                                id="start-camera-btn"
+                                color="primary"
+                                icon="heroicon-o-camera"
+                            >
+                                Aktifkan Kamera
+                            </x-filament::button>
 
-                        <button id="stop-camera-btn" style="display: none;" class="ml-2 inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z"></path>
-                            </svg>
-                            Matikan Kamera
-                        </button>
-                    </div>
-
-                    <!-- Captured Photo Preview -->
-                    <div id="photo-preview" style="display: none;" class="mb-4">
-                        <img id="captured-photo" class="rounded-lg border w-full max-h-80 object-cover">
-                        <div class="mt-2 flex gap-2">
-                            <button id="retake-photo" class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-                                Ambil Ulang
-                            </button>
+                            <x-filament::button
+                                id="stop-camera-btn"
+                                color="gray"
+                                icon="heroicon-o-stop"
+                                style="display: none;"
+                            >
+                                Matikan Kamera
+                            </x-filament::button>
                         </div>
+
+                        <!-- Action Controls -->
+                        <div class="flex gap-4">
+                            <x-filament::button
+                                id="capture-btn"
+                                color="success"
+                                icon="heroicon-o-camera"
+                                size="lg"
+                                style="display: none;"
+                            >
+                                Ambil Foto
+                            </x-filament::button>
+
+                            <x-filament::button
+                                id="submit-btn"
+                                color="primary"
+                                icon="heroicon-o-check"
+                                size="lg"
+                                style="display: none;"
+                            >
+                                Konfirmasi Absen {{ ucfirst($currentAction) }}
+                            </x-filament::button>
+                        </div>
+
+                        <!-- Test Button (Development) -->
+                        @if(config('app.debug'))
+                            <x-filament::button
+                                id="test-photo-btn"
+                                color="warning"
+                                icon="heroicon-o-beaker"
+                                size="sm"
+                                style="display: none;"
+                            >
+                                Test Photo Save
+                            </x-filament::button>
+                        @endif
                     </div>
-
-                    <!-- Action Buttons -->
-                    <div class="flex gap-4">
-                        <button id="capture-btn" style="display: none;" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                            </svg>
-                            Ambil Foto
-                        </button>
-
-                        <button id="test-photo-btn" style="display: none;" class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
-                            Test Foto
-                        </button>
-
-                        <button id="submit-btn" style="display: none;" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
-                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                            </svg>
-                            Absen {{ ucfirst($currentAction) }}
-                        </button>
+                </div>
+            </x-filament::section>
+        @else
+            <!-- No Action Available -->
+            <x-filament::section>
+                <div class="text-center py-12">
+                    <div class="w-16 h-16 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <x-heroicon-s-check class="w-8 h-8 text-green-600 dark:text-green-400" />
                     </div>
-                @else
-                    <div class="text-center py-8">
-                        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">Tidak Ada Aksi Tersedia</h3>
-                        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                            @if($todayAttendance && $todayAttendance->check_out)
-                                Semua absensi hari ini telah selesai.
-                            @else
-                                Silakan tunggu hingga waktu yang tepat untuk melakukan absensi.
-                            @endif
-                        </p>
-                    </div>
-                @endif
-            </div>
-        </div>
-
-    </div>
-</x-filament-panels::page>
-
-@push('scripts')
-<script>
-    let stream;
-    let currentLocation = null;
-    let capturedPhoto = null;
-
-    const currentAction = @json($currentAction);
-
-    document.addEventListener('DOMContentLoaded', function() {
-        setupEventListeners();
-
-        @if($currentAction)
-            // Auto-start location detection
-            getCurrentLocation();
-
-            // Hide camera status initially
-            hideCameraStatus();
+                    <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+                        @if($todayAttendance && $todayAttendance->check_out)
+                            Semua Absensi Selesai
+                        @else
+                            Belum Saatnya Absensi
+                        @endif
+                    </h3>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">
+                        @if($todayAttendance && $todayAttendance->check_out)
+                            Terima kasih! Semua absensi hari ini telah selesai.
+                        @else
+                            Silakan tunggu waktu absensi yang sesuai.
+                        @endif
+                    </p>
+                </div>
+            </x-filament::section>
         @endif
-    });
+    </div>
 
-    function hideCameraStatus() {
-        const cameraStatus = document.getElementById('camera-status');
-        if (cameraStatus) {
-            cameraStatus.style.display = 'none';
-        }
-    }
+    @push('scripts')
+    <script>
+        let stream;
+        let currentLocation = null;
+        let capturedPhoto = null;
 
-    function showCameraStatus(message, isLoading = false) {
-        const cameraStatus = document.getElementById('camera-status');
-        if (cameraStatus) {
-            cameraStatus.style.display = 'block';
-            const spinner = cameraStatus.querySelector('.animate-spin');
-            const text = cameraStatus.querySelector('span');
+        const currentAction = @json($currentAction);
 
-            if (spinner) {
-                spinner.style.display = isLoading ? 'block' : 'none';
-            }
-            if (text) {
-                text.textContent = message;
-            }
-        }
-    }
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded, setting up dinas luar attendance...');
+            setupEventListeners();
+            updateTime();
+            setInterval(updateTime, 1000);
 
-    function setupEventListeners() {
-        const startCameraBtn = document.getElementById('start-camera-btn');
-        const stopCameraBtn = document.getElementById('stop-camera-btn');
-        const captureBtn = document.getElementById('capture-btn');
-        const retakeBtn = document.getElementById('retake-photo');
-        const submitBtn = document.getElementById('submit-btn');
-        const testPhotoBtn = document.getElementById('test-photo-btn');
+            @if($currentAction)
+                console.log('Current action available:', @json($currentAction));
+                // Start geolocation immediately
+                setTimeout(() => {
+                    getCurrentLocation();
+                }, 500); // Small delay to ensure DOM is ready
+                hideCameraStatus();
+            @else
+                console.log('No current action available');
+            @endif
+        });
 
-        if (startCameraBtn) {
-            startCameraBtn.addEventListener('click', startCamera);
-        }
+        // Event listeners
+        function setupEventListeners() {
+            const startCameraBtn = document.getElementById('start-camera-btn');
+            const stopCameraBtn = document.getElementById('stop-camera-btn');
+            const captureBtn = document.getElementById('capture-btn');
+            const retakeBtn = document.getElementById('retake-photo');
+            const submitBtn = document.getElementById('submit-btn');
+            const testPhotoBtn = document.getElementById('test-photo-btn');
+            const refreshLocationBtn = document.getElementById('refresh-location-btn');
+            const manualLocationBtn = document.getElementById('manual-location-btn');
+            const forceLocationBtn = document.getElementById('force-location-btn');
 
-        if (stopCameraBtn) {
-            stopCameraBtn.addEventListener('click', stopCamera);
-        }
-
-        if (captureBtn) {
-            captureBtn.addEventListener('click', capturePhoto);
-        }
-
-        if (retakeBtn) {
-            retakeBtn.addEventListener('click', retakePhoto);
-        }
-
-        if (submitBtn) {
-            submitBtn.addEventListener('click', submitAttendance);
-        }
-
-        if (testPhotoBtn) {
-            testPhotoBtn.addEventListener('click', testPhoto);
-        }
-    }
-
-    function startCamera() {
-        console.log('Starting camera...');
-        showCameraStatus('Mengakses kamera...', true);
-        initializeCamera();
-    }
-
-    function stopCamera() {
-        console.log('Stopping camera...');
-        if (stream) {
-            stream.getTracks().forEach(track => track.stop());
-            stream = null;
-        }
-
-        // Hide camera and show placeholder
-        document.getElementById('camera').style.display = 'none';
-        document.getElementById('camera-placeholder').style.display = 'flex';
-
-        // Hide buttons
-        document.getElementById('stop-camera-btn').style.display = 'none';
-        document.getElementById('capture-btn').style.display = 'none';
-        document.getElementById('test-photo-btn').style.display = 'none';
-
-        // Show start button
-        document.getElementById('start-camera-btn').style.display = 'inline-flex';
-
-        hideCameraStatus();
-        showNotification('Kamera dimatikan', 'info');
-    }
-
-    async function initializeCamera() {
-        try {
-            console.log('Requesting camera access...');
-
-            // Check if browser supports getUserMedia
-            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                throw new Error('Browser tidak mendukung akses kamera');
-            }
-
-            // Request camera access with fallback options
-            const constraints = {
-                video: {
-                    facingMode: 'user', // Front camera for selfie
-                    width: { ideal: 640, max: 1280 },
-                    height: { ideal: 480, max: 720 }
-                },
-                audio: false
-            };
-
-            console.log('Camera constraints:', constraints);
-            stream = await navigator.mediaDevices.getUserMedia(constraints);
-
-            const videoElement = document.getElementById('camera');
-            if (videoElement) {
-                videoElement.srcObject = stream;
-
-                // Wait for video to be ready
-                videoElement.onloadedmetadata = function() {
-                    console.log('Camera ready, video dimensions:', videoElement.videoWidth, 'x', videoElement.videoHeight);
-
-                    // Show camera and hide placeholder
-                    videoElement.style.display = 'block';
-                    document.getElementById('camera-placeholder').style.display = 'none';
-
-                    // Show camera controls
-                    document.getElementById('start-camera-btn').style.display = 'none';
-                    document.getElementById('stop-camera-btn').style.display = 'inline-flex';
-                    document.getElementById('capture-btn').style.display = 'inline-flex';
-                    document.getElementById('test-photo-btn').style.display = 'inline-flex';
-
-                    hideCameraStatus();
-                    showNotification('Kamera berhasil diaktifkan', 'success');
+            startCameraBtn?.addEventListener('click', startCamera);
+            stopCameraBtn?.addEventListener('click', stopCamera);
+            captureBtn?.addEventListener('click', capturePhoto);
+            retakeBtn?.addEventListener('click', retakePhoto);
+            submitBtn?.addEventListener('click', submitAttendance);
+            testPhotoBtn?.addEventListener('click', testPhoto);
+            refreshLocationBtn?.addEventListener('click', () => {
+                showNotification('Memperbarui lokasi...', 'info');
+                getCurrentLocation();
+            });
+            manualLocationBtn?.addEventListener('click', () => {
+                showNotification('Mencoba deteksi lokasi ulang...', 'info');
+                currentLocation = null; // Reset location
+                getCurrentLocation();
+            });
+            forceLocationBtn?.addEventListener('click', () => {
+                // Force set location for debugging
+                currentLocation = {
+                    latitude: -6.2088, // Jakarta
+                    longitude: 106.8456,
+                    accuracy: 1000
                 };
-
-                videoElement.onerror = function(error) {
-                    console.error('Video element error:', error);
-                    throw new Error('Gagal menampilkan video dari kamera');
-                };
-            }
-
-        } catch (err) {
-            console.error('Error accessing camera:', err);
-            hideCameraStatus();
-
-            let errorMessage = 'Error mengakses kamera: ';
-            if (err.name === 'NotAllowedError') {
-                errorMessage += 'Akses kamera ditolak. Silakan izinkan akses kamera pada browser.';
-            } else if (err.name === 'NotFoundError') {
-                errorMessage += 'Kamera tidak ditemukan pada perangkat ini.';
-            } else if (err.name === 'NotSupportedError') {
-                errorMessage += 'Browser tidak mendukung fitur kamera.';
-            } else {
-                errorMessage += err.message;
-            }
-
-            showNotification(errorMessage, 'danger');
-
-            // Show troubleshooting info
-            showCameraStatus('❌ ' + errorMessage);
+                updateLocationText(`${currentLocation.latitude}, ${currentLocation.longitude} (Manual)`);
+                updateLocationStatus();
+                showNotification('Lokasi dipaksa untuk testing', 'warning');
+            });
         }
-    }
 
-    function getCurrentLocation() {
-        if (navigator.geolocation) {
+        // Time update
+        function updateTime() {
+            const timeElements = document.querySelectorAll('#current-time');
+            timeElements.forEach(element => {
+                const now = new Date();
+                element.textContent = now.toLocaleTimeString('id-ID', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: false
+                });
+            });
+        }        // Location functions
+        function getCurrentLocation() {
+            console.log('Requesting geolocation...');
+            updateLocationText('Mendeteksi lokasi...');
+
+            if (!navigator.geolocation) {
+                const errorMsg = 'GPS tidak didukung oleh browser ini';
+                updateLocationText(errorMsg);
+                showNotification(errorMsg, 'danger');
+                return;
+            }
+
             navigator.geolocation.getCurrentPosition(
                 function(position) {
+                    console.log('Geolocation success:', position);
                     currentLocation = {
                         latitude: position.coords.latitude,
-                        longitude: position.coords.longitude
+                        longitude: position.coords.longitude,
+                        accuracy: position.coords.accuracy
                     };
+                    console.log('Location set:', currentLocation);
                     updateLocationStatus();
+                    updateLocationText(`${currentLocation.latitude.toFixed(6)}, ${currentLocation.longitude.toFixed(6)}`);
+                    showNotification('Lokasi berhasil terdeteksi', 'success');
                 },
                 function(error) {
                     console.error('Error getting location:', error);
-                    showNotification('Error mendapatkan lokasi: ' + error.message, 'danger');
+                    console.error('Error code:', error.code);
+                    console.error('Error message:', error.message);
+
+                    let errorMessage = 'Gagal mendeteksi lokasi: ';
+                    switch(error.code) {
+                        case error.PERMISSION_DENIED:
+                            errorMessage += 'Akses lokasi ditolak. Silakan izinkan akses lokasi pada browser.';
+                            break;
+                        case error.POSITION_UNAVAILABLE:
+                            errorMessage += 'Informasi lokasi tidak tersedia. Pastikan GPS aktif.';
+                            break;
+                        case error.TIMEOUT:
+                            errorMessage += 'Timeout. Mencoba lagi...';
+                            break;
+                        default:
+                            errorMessage += 'Error tidak diketahui: ' + error.message;
+                            break;
+                    }
+                    updateLocationText(errorMessage);
+                    showNotification(errorMessage, 'warning');
+
+                    // Auto retry for timeout or unavailable errors
+                    if (error.code === error.TIMEOUT || error.code === error.POSITION_UNAVAILABLE) {
+                        setTimeout(() => {
+                            console.log('Retrying geolocation...');
+                            getCurrentLocation();
+                        }, 3000);
+                    }
                 },
                 {
                     enableHighAccuracy: true,
-                    timeout: 10000,
-                    maximumAge: 0
+                    timeout: 15000, // 15 seconds timeout
+                    maximumAge: 30000 // 30 seconds cache
                 }
             );
-        } else {
-            showNotification('Geolocation tidak didukung oleh browser ini.', 'danger');
-        }
-    }
-
-    function updateLocationStatus() {
-        if (!currentLocation) return;
-
-        const locationStatus = document.getElementById('location-status');
-        const locationInfo = document.getElementById('location-info');
-
-        locationStatus.style.display = 'block';
-
-        locationInfo.innerHTML = `
-            <div class="flex items-center">
-                <span class="text-green-600 text-lg font-bold mr-2">📍</span>
-                <span class="text-green-600 font-medium">Lokasi berhasil terdeteksi</span>
-            </div>
-            <div class="text-sm text-gray-600 dark:text-gray-400">
-                <p>Latitude: ${currentLocation.latitude.toFixed(6)}</p>
-                <p>Longitude: ${currentLocation.longitude.toFixed(6)}</p>
-                <p class="text-xs text-gray-500 mt-1">Lokasi ini akan disimpan sebagai bukti kehadiran dinas luar</p>
-            </div>
-        `;
-    }
-
-    function capturePhoto() {
-        console.log('Capturing photo...');
-
-        const video = document.getElementById('camera');
-        if (!video || !stream) {
-            showNotification('Kamera belum diaktifkan. Silakan aktifkan kamera terlebih dahulu.', 'danger');
-            return;
         }
 
-        if (video.videoWidth === 0 || video.videoHeight === 0) {
-            showNotification('Video belum siap. Silakan tunggu sebentar dan coba lagi.', 'danger');
-            return;
+        function updateLocationText(text) {
+            const locationText = document.getElementById('location-text');
+            if (locationText) {
+                locationText.textContent = text;
+            }
         }
 
-        const canvas = document.createElement('canvas');
-        const context = canvas.getContext('2d');
+        function updateLocationStatus() {
+            if (!currentLocation) return;
 
-        // Set smaller canvas dimensions to reduce file size
-        const maxWidth = 640;
-        const maxHeight = 480;
-        const videoAspectRatio = video.videoWidth / video.videoHeight;
+            const locationStatus = document.getElementById('location-status');
+            const locationInfo = document.getElementById('location-info');
 
-        let canvasWidth, canvasHeight;
+            locationStatus.classList.remove('hidden');
 
-        if (video.videoWidth > video.videoHeight) {
-            canvasWidth = Math.min(maxWidth, video.videoWidth);
-            canvasHeight = canvasWidth / videoAspectRatio;
-        } else {
-            canvasHeight = Math.min(maxHeight, video.videoHeight);
-            canvasWidth = canvasHeight * videoAspectRatio;
+            locationInfo.innerHTML = `
+                <div class="space-y-2">
+                    <div class="flex items-center gap-2 text-sm text-green-600 dark:text-green-400">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                        </svg>
+                        <span>Lokasi berhasil terdeteksi</span>
+                    </div>
+                    <div class="text-sm text-gray-600 dark:text-gray-400">
+                        <p><strong>Koordinat:</strong> ${currentLocation.latitude.toFixed(6)}, ${currentLocation.longitude.toFixed(6)}</p>
+                        <p><strong>Akurasi:</strong> ±${Math.round(currentLocation.accuracy)} meter</p>
+                        <p class="text-gray-500 dark:text-gray-500 mt-2">Lokasi ini akan dicatat untuk keperluan absensi</p>
+                    </div>
+                </div>
+            `;
         }
 
-        canvas.width = canvasWidth;
-        canvas.height = canvasHeight;
-
-        console.log('Original video dimensions:', video.videoWidth, 'x', video.videoHeight);
-        console.log('Canvas dimensions:', canvasWidth, 'x', canvasHeight);
-
-        // Draw the video frame to canvas
-        context.drawImage(video, 0, 0, canvasWidth, canvasHeight);
-
-        // Convert to base64 with compression
-        capturedPhoto = canvas.toDataURL('image/jpeg', 0.6);
-
-        console.log('Captured photo data length:', capturedPhoto.length);
-        console.log('Captured photo size MB:', (capturedPhoto.length / 1024 / 1024).toFixed(2));
-
-        // Show preview
-        const capturedPhotoImg = document.getElementById('captured-photo');
-        if (capturedPhotoImg) {
-            capturedPhotoImg.src = capturedPhoto;
+        // Camera functions
+        function showCameraStatus(message) {
+            const cameraStatus = document.getElementById('camera-status');
+            const statusText = document.getElementById('status-text');
+            if (cameraStatus && statusText) {
+                statusText.textContent = message;
+                cameraStatus.classList.remove('hidden');
+            }
         }
 
-        // Hide camera and show photo preview
-        document.getElementById('camera').style.display = 'none';
-        document.getElementById('photo-preview').style.display = 'block';
-        document.getElementById('capture-btn').style.display = 'none';
-        document.getElementById('submit-btn').style.display = 'inline-flex';
-
-        showNotification('Foto berhasil diambil!', 'success');
-    }
-
-    function retakePhoto() {
-        console.log('Retaking photo...');
-
-        capturedPhoto = null;
-
-        // Hide photo preview and show camera
-        document.getElementById('photo-preview').style.display = 'none';
-        document.getElementById('camera').style.display = 'block';
-        document.getElementById('capture-btn').style.display = 'inline-flex';
-        document.getElementById('submit-btn').style.display = 'none';
-
-        showNotification('Siap untuk mengambil foto lagi', 'info');
-    }
-
-    function testPhoto() {
-        if (!capturedPhoto) {
-            showNotification('Silakan ambil foto terlebih dahulu dengan tombol "Ambil Foto".', 'danger');
-            return;
+        function hideCameraStatus() {
+            const cameraStatus = document.getElementById('camera-status');
+            if (cameraStatus) {
+                cameraStatus.classList.add('hidden');
+            }
         }
 
-        console.log('Testing photo save...');
-        const testBtn = document.getElementById('test-photo-btn');
-        testBtn.disabled = true;
-        testBtn.innerHTML = 'Testing...';
-
-        @this.call('testPhotoSave', capturedPhoto)
-            .then((result) => {
-                console.log('Test photo result:', result);
-                testBtn.disabled = false;
-                testBtn.innerHTML = '<svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>Test Foto';
-            })
-            .catch((error) => {
-                console.error('Test photo error:', error);
-                testBtn.disabled = false;
-                testBtn.innerHTML = '<svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>Test Foto';
-                showNotification('Error testing photo: ' + error.message, 'danger');
-            });
-    }
-
-    function submitAttendance() {
-        if (!capturedPhoto) {
-            showNotification('Silakan ambil foto terlebih dahulu.', 'danger');
-            return;
+        function startCamera() {
+            console.log('Starting camera...');
+            showCameraStatus('Mengakses kamera...');
+            initializeCamera();
         }
 
-        if (!currentLocation) {
-            showNotification('Lokasi belum terdeteksi. Silakan coba lagi.', 'danger');
-            getCurrentLocation();
-            return;
+        function stopCamera() {
+            console.log('Stopping camera...');
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                stream = null;
+            }
+
+            document.getElementById('camera').classList.add('hidden');
+            document.getElementById('camera-placeholder').classList.remove('hidden');
+            document.getElementById('stop-camera-btn').style.display = 'none';
+            document.getElementById('capture-btn').style.display = 'none';
+            document.getElementById('test-photo-btn').style.display = 'none';
+            document.getElementById('start-camera-btn').style.display = 'block';
+
+            hideCameraStatus();
+            showNotification('Kamera dimatikan', 'info');
         }
 
-        console.log('Submitting attendance with photo length:', capturedPhoto.length);
-        console.log('Location:', currentLocation);
-        console.log('Current action:', currentAction);
+        async function initializeCamera() {
+            try {
+                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                    throw new Error('Browser tidak mendukung akses kamera');
+                }
 
-        const submitBtn = document.getElementById('submit-btn');
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = '<svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>Memproses...';
+                const constraints = {
+                    video: {
+                        width: { ideal: 1280, max: 1920 },
+                        height: { ideal: 720, max: 1080 },
+                        facingMode: "user"
+                    }
+                };
 
-        // Call appropriate Livewire method based on current action
-        let methodName = '';
-        switch(currentAction) {
-            case 'pagi':
-                methodName = 'processCheckInPagi';
-                break;
-            case 'siang':
-                methodName = 'processCheckInSiang';
-                break;
-            case 'sore':
-                methodName = 'processCheckOut';
-                break;
+                stream = await navigator.mediaDevices.getUserMedia(constraints);
+
+                const videoElement = document.getElementById('camera');
+                if (videoElement) {
+                    videoElement.srcObject = stream;
+                    videoElement.classList.remove('hidden');
+                    document.getElementById('camera-placeholder').classList.add('hidden');
+
+                    document.getElementById('start-camera-btn').style.display = 'none';
+                    document.getElementById('stop-camera-btn').style.display = 'block';
+                    document.getElementById('capture-btn').style.display = 'block';
+                    document.getElementById('test-photo-btn').style.display = 'block';
+
+                    hideCameraStatus();
+                    showNotification('Kamera berhasil diaktifkan', 'success');
+                }
+            } catch (err) {
+                console.error('Error accessing camera:', err);
+                hideCameraStatus();
+
+                let errorMessage = 'Error mengakses kamera: ';
+                if (err.name === 'NotAllowedError') {
+                    errorMessage += 'Akses kamera ditolak. Silakan izinkan akses kamera pada browser.';
+                } else if (err.name === 'NotFoundError') {
+                    errorMessage += 'Kamera tidak ditemukan pada perangkat ini.';
+                } else if (err.name === 'NotSupportedError') {
+                    errorMessage += 'Browser tidak mendukung fitur kamera.';
+                } else {
+                    errorMessage += err.message;
+                }
+
+                showNotification(errorMessage, 'danger');
+                showCameraStatus('❌ ' + errorMessage);
+            }
         }
 
-        if (methodName) {
-            console.log('Calling method:', methodName);
-            @this.call(methodName, capturedPhoto, currentLocation.latitude, currentLocation.longitude)
+        function capturePhoto() {
+            const video = document.getElementById('camera');
+            if (!video || !stream) {
+                showNotification('Kamera belum diaktifkan. Silakan aktifkan kamera terlebih dahulu.', 'danger');
+                return;
+            }
+
+            if (video.videoWidth === 0 || video.videoHeight === 0) {
+                showNotification('Video belum siap. Silakan tunggu sebentar dan coba lagi.', 'danger');
+                return;
+            }
+
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+
+            const maxWidth = 640;
+            const maxHeight = 480;
+            const videoAspectRatio = video.videoWidth / video.videoHeight;
+
+            let canvasWidth, canvasHeight;
+
+            if (video.videoWidth > video.videoHeight) {
+                canvasWidth = Math.min(maxWidth, video.videoWidth);
+                canvasHeight = canvasWidth / videoAspectRatio;
+            } else {
+                canvasHeight = Math.min(maxHeight, video.videoHeight);
+                canvasWidth = canvasHeight * videoAspectRatio;
+            }
+
+            canvas.width = canvasWidth;
+            canvas.height = canvasHeight;
+
+            context.drawImage(video, 0, 0, canvasWidth, canvasHeight);
+            capturedPhoto = canvas.toDataURL('image/jpeg', 0.6);
+
+            // Show preview
+            const capturedPhotoImg = document.getElementById('captured-photo');
+            if (capturedPhotoImg) {
+                capturedPhotoImg.src = capturedPhoto;
+            }
+
+            document.getElementById('camera').classList.add('hidden');
+            document.getElementById('photo-preview').classList.remove('hidden');
+            document.getElementById('capture-btn').style.display = 'none';
+            document.getElementById('submit-btn').style.display = 'block';
+
+            showNotification('Foto berhasil diambil!', 'success');
+        }
+
+        function retakePhoto() {
+            capturedPhoto = null;
+            document.getElementById('photo-preview').classList.add('hidden');
+            document.getElementById('camera').classList.remove('hidden');
+            document.getElementById('capture-btn').style.display = 'block';
+            document.getElementById('submit-btn').style.display = 'none';
+            showNotification('Siap untuk mengambil foto lagi', 'info');
+        }
+
+        function testPhoto() {
+            if (!capturedPhoto) {
+                showNotification('Silakan ambil foto terlebih dahulu dengan tombol "Ambil Foto".', 'danger');
+                return;
+            }
+
+            const testBtn = document.getElementById('test-photo-btn');
+            const originalText = testBtn.textContent;
+            testBtn.disabled = true;
+            testBtn.textContent = 'Testing...';
+
+            @this.call('testPhotoSave', capturedPhoto)
                 .then((result) => {
-                    console.log('Method success:', result);
-                    location.reload();
+                    testBtn.textContent = originalText;
+                    testBtn.disabled = false;
                 })
                 .catch((error) => {
-                    console.error('Method error:', error);
-                    submitBtn.disabled = false;
-                    submitBtn.innerHTML = 'Absen ' + currentAction.charAt(0).toUpperCase() + currentAction.slice(1);
-                    showNotification('Error: ' + error.message, 'danger');
+                    testBtn.textContent = originalText;
+                    testBtn.disabled = false;
+                    showNotification('Error testing photo: ' + error.message, 'danger');
                 });
         }
-    }
 
-    function showNotification(message, type = 'info') {
-        // Create notification using Filament's notification system if available
-        if (window.FilamentData && window.FilamentData.notifications) {
-            window.FilamentData.notifications.push({
-                id: Date.now(),
-                title: type === 'danger' ? 'Error' : 'Info',
-                body: message,
-                color: type === 'danger' ? 'danger' : 'info',
-                duration: 5000
+        function submitAttendance() {
+            console.log('submitAttendance called', {
+                currentAction: currentAction,
+                capturedPhoto: capturedPhoto ? 'exists' : 'null',
+                currentLocation: currentLocation
             });
-        } else {
-            alert(message);
+
+            if (!capturedPhoto) {
+                showNotification('Silakan ambil foto terlebih dahulu.', 'danger');
+                return;
+            }
+
+            if (!currentLocation) {
+                console.log('Location not available, trying to get location...');
+                showNotification('Lokasi belum terdeteksi. Mencoba mendapatkan lokasi...', 'warning');
+
+                // Try to get location immediately
+                getCurrentLocation();
+
+                // Wait a bit and try again
+                setTimeout(() => {
+                    if (currentLocation) {
+                        console.log('Location obtained, retrying submit...');
+                        submitAttendance(); // Retry after getting location
+                    } else {
+                        // Use fallback coordinates if still no location
+                        console.log('Using fallback location...');
+                        currentLocation = {
+                            latitude: -6.2088, // Jakarta coordinates as fallback
+                            longitude: 106.8456,
+                            accuracy: 1000 // Large accuracy to indicate fallback
+                        };
+                        showNotification('Menggunakan lokasi default. Pastikan GPS aktif untuk akurasi yang lebih baik.', 'warning');
+                        setTimeout(() => submitAttendance(), 1000); // Retry with fallback
+                    }
+                }, 5000);
+                return;
+            }
+
+            const submitBtn = document.getElementById('submit-btn');
+            const originalText = submitBtn.textContent;
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Memproses...';
+
+            // Call appropriate Livewire method based on current action
+            let methodName = '';
+            switch(currentAction) {
+                case 'pagi':
+                    methodName = 'processCheckInPagi';
+                    break;
+                case 'siang':
+                    methodName = 'processCheckInSiang';
+                    break;
+                case 'sore':
+                    methodName = 'processCheckOut';
+                    break;
+            }
+
+            console.log('Calling method:', methodName, 'with location:', currentLocation);
+
+            if (methodName) {
+                @this.call(methodName, capturedPhoto, currentLocation.latitude, currentLocation.longitude)
+                    .then((result) => {
+                        console.log('Method call success:', result);
+                        submitBtn.textContent = originalText;
+                        submitBtn.disabled = false;
+                        showNotification('Absensi berhasil disimpan!', 'success');
+                        // Dispatch event for auto-refresh
+                        @this.dispatch('attendance-submitted');
+                    })
+                    .catch((error) => {
+                        console.error('Method call error:', error);
+                        submitBtn.textContent = originalText;
+                        submitBtn.disabled = false;
+                        showNotification('Error: ' + (error.message || 'Terjadi kesalahan saat menyimpan absensi'), 'danger');
+                    });
+            } else {
+                console.error('No method name found for action:', currentAction);
+                submitBtn.textContent = originalText;
+                submitBtn.disabled = false;
+                showNotification('Error: Action tidak valid', 'danger');
+            }
         }
-    }
 
-    // Cleanup camera stream when page unloads
-    window.addEventListener('beforeunload', function() {
-        if (stream) {
-            console.log('Cleaning up camera stream...');
-            stream.getTracks().forEach(track => track.stop());
+        function showNotification(message, type = 'info') {
+            console.log(`${type.toUpperCase()}: ${message}`);
+
+            // Try different Livewire notification methods
+            try {
+                if (window.Livewire && window.Livewire.emit) {
+                    // Livewire v2
+                    window.Livewire.emit('notification', { message, type });
+                } else if (window.Livewire && window.Livewire.dispatch) {
+                    // Livewire v3
+                    window.Livewire.dispatch('notification', { message, type });
+                } else if (window.$wire && window.$wire.dispatchSelf) {
+                    // Alternative Livewire v3 method
+                    window.$wire.dispatchSelf('notification', { message, type });
+                } else {
+                    // Fallback: Create a toast-like notification
+                    createToastNotification(message, type);
+                }
+            } catch (error) {
+                console.error('Notification error:', error);
+                createToastNotification(message, type);
+            }
         }
-    });
 
-    // Also cleanup when user navigates away
-    window.addEventListener('pagehide', function() {
-        if (stream) {
-            console.log('Page hidden, cleaning up camera stream...');
-            stream.getTracks().forEach(track => track.stop());
+        function createToastNotification(message, type) {
+            // Create a simple toast notification as fallback
+            const toast = document.createElement('div');
+            toast.className = `fixed top-4 right-4 z-50 p-4 rounded-lg text-white max-w-md transition-all duration-300 ${
+                type === 'success' ? 'bg-green-500' :
+                type === 'danger' ? 'bg-red-500' :
+                type === 'warning' ? 'bg-yellow-500' :
+                'bg-blue-500'
+            }`;
+            toast.textContent = message;
+
+            document.body.appendChild(toast);
+
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => {
+                    if (toast.parentNode) {
+                        toast.parentNode.removeChild(toast);
+                    }
+                }, 300);
+            }, 5000);
         }
-    });
-</script>
-@endpush
 
-@push('styles')
-<style>
-    #camera {
-        max-height: 400px;
-        object-fit: cover;
-    }
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', function() {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+            }
+        });
 
-    #captured-photo {
-        max-height: 400px;
-        object-fit: cover;
-    }
-</style>
-@endpush
+        window.addEventListener('pagehide', function() {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+            }
+        });
+
+        // Listen for attendance events to auto-refresh
+        document.addEventListener('livewire:init', () => {
+            Livewire.on('attendance-submitted', () => {
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1500);
+            });
+        });
+    </script>
+    @endpush
+</x-filament-panels::page>

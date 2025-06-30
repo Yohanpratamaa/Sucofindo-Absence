@@ -330,4 +330,75 @@ class Pegawai extends Authenticatable implements FilamentUser
     {
         return $query->where('role_user', 'Kepala Bidang');
     }
+
+    // Accessor methods untuk memastikan JSON fields selalu return array
+    public function getFasilitasListAttribute($value)
+    {
+        if (empty($value)) {
+            return [];
+        }
+
+        if (is_string($value)) {
+            $decoded = json_decode($value, true);
+            return is_array($decoded) ? $decoded : [];
+        }
+
+        if (is_array($value)) {
+            return $value;
+        }
+
+        return [];
+    }
+
+    public function getPendidikanListAttribute($value)
+    {
+        if (empty($value)) {
+            return [];
+        }
+
+        if (is_string($value)) {
+            $decoded = json_decode($value, true);
+            return is_array($decoded) ? $decoded : [];
+        }
+
+        if (is_array($value)) {
+            return $value;
+        }
+
+        return [];
+    }
+
+    public function getEmergencyContactsAttribute($value)
+    {
+        if (empty($value)) {
+            return [];
+        }
+
+        if (is_string($value)) {
+            $decoded = json_decode($value, true);
+            return is_array($decoded) ? $decoded : [];
+        }
+
+        if (is_array($value)) {
+            return $value;
+        }
+
+        return [];
+    }
+
+    // Mutator methods untuk memastikan data disimpan sebagai JSON string
+    public function setFasilitasListAttribute($value)
+    {
+        $this->attributes['fasilitas_list'] = is_array($value) ? json_encode($value) : $value;
+    }
+
+    public function setPendidikanListAttribute($value)
+    {
+        $this->attributes['pendidikan_list'] = is_array($value) ? json_encode($value) : $value;
+    }
+
+    public function setEmergencyContactsAttribute($value)
+    {
+        $this->attributes['emergency_contacts'] = is_array($value) ? json_encode($value) : $value;
+    }
 }

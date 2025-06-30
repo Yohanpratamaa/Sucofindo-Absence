@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
+use Filament\Widgets\Widget;
 
 class WfoAttendance extends Page implements HasForms
 {
@@ -211,6 +212,9 @@ class WfoAttendance extends Page implements HasForms
             ->title('Check In Berhasil')
             ->body($notificationBody)
             ->send();
+
+        // Dispatch event for frontend refresh
+        $this->dispatch('attendance-submitted');
     }
 
     public function processCheckOut($photoData, $latitude, $longitude)
@@ -277,6 +281,9 @@ class WfoAttendance extends Page implements HasForms
             ->title('Check Out Berhasil')
             ->body('Anda telah berhasil melakukan check out WFO.')
             ->send();
+
+        // Dispatch event for frontend refresh
+        $this->dispatch('attendance-submitted');
     }
 
     protected function savePhotoFromBase64($base64Data, $type)
