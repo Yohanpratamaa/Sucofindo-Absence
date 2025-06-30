@@ -2,32 +2,34 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Detail Absensi Karyawan</title>
+    <title>Detail Absensi - {{ $employee->nama }}</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             font-size: 12px;
             margin: 0;
             padding: 20px;
+            color: #333;
         }
 
         .header {
             text-align: center;
             margin-bottom: 30px;
             border-bottom: 2px solid #366092;
-            padding-bottom: 10px;
+            padding-bottom: 15px;
         }
 
         .header h1 {
             color: #366092;
             margin: 0;
-            font-size: 18px;
+            font-size: 20px;
+            font-weight: bold;
         }
 
         .header h2 {
             color: #666;
             margin: 5px 0 0 0;
-            font-size: 14px;
+            font-size: 16px;
             font-weight: normal;
         }
 
@@ -35,6 +37,7 @@
             text-align: center;
             margin-bottom: 20px;
             color: #666;
+            font-size: 12px;
         }
 
         .employee-info {
@@ -42,84 +45,64 @@
             padding: 15px;
             border-radius: 5px;
             margin-bottom: 20px;
-            border-left: 4px solid #366092;
+            border: 1px solid #dee2e6;
         }
 
         .employee-info .row {
             display: flex;
-            margin-bottom: 5px;
+            margin-bottom: 8px;
+            align-items: center;
         }
 
         .employee-info .label {
             font-weight: bold;
-            width: 120px;
-            color: #366092;
+            width: 150px;
+            color: #495057;
         }
 
         .period-info {
             text-align: center;
             margin-bottom: 20px;
-            background-color: #e8f4f8;
             padding: 10px;
+            background-color: #e9ecef;
             border-radius: 5px;
-        }
-
-        .summary-stats {
-            display: flex;
-            justify-content: space-around;
-            margin-bottom: 20px;
-            background-color: #f0f8ff;
-            padding: 15px;
-            border-radius: 5px;
-        }
-
-        .stat-item {
-            text-align: center;
-        }
-
-        .stat-value {
-            font-size: 20px;
             font-weight: bold;
-            color: #366092;
-        }
-
-        .stat-label {
-            font-size: 11px;
-            color: #666;
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 20px;
+            font-size: 10px;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px 4px;
+            text-align: center;
+            vertical-align: middle;
         }
 
         th {
             background-color: #366092;
             color: white;
-            padding: 8px 5px;
-            text-align: center;
             font-weight: bold;
-            border: 1px solid #ddd;
-            font-size: 10px;
+            font-size: 9px;
         }
 
-        td {
-            padding: 6px 5px;
-            border: 1px solid #ddd;
-            text-align: center;
-            font-size: 9px;
+        tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+
+        tr:hover {
+            background-color: #e9ecef;
         }
 
         .text-left {
             text-align: left !important;
         }
 
-        tr:nth-child(even) {
-            background-color: #f9f9f9;
-        }
-
-        .status-tepat-waktu {
+        .status-hadir {
             color: #28a745;
             font-weight: bold;
         }
@@ -137,42 +120,92 @@
         .tipe-wfo {
             background-color: #007bff;
             color: white;
-            padding: 2px 4px;
+            padding: 2px 6px;
             border-radius: 3px;
             font-size: 8px;
+            font-weight: bold;
         }
 
         .tipe-dinas-luar {
             background-color: #ffc107;
             color: black;
-            padding: 2px 4px;
+            padding: 2px 6px;
             border-radius: 3px;
             font-size: 8px;
+            font-weight: bold;
         }
 
         .overtime-badge {
             background-color: #17a2b8;
             color: white;
-            padding: 2px 4px;
+            padding: 2px 6px;
             border-radius: 3px;
             font-size: 8px;
+            font-weight: bold;
+        }
+
+        .summary-stats {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            border: 1px solid #dee2e6;
+        }
+
+        .summary-stats h3 {
+            margin: 0 0 10px 0;
+            color: #366092;
+            font-size: 14px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            text-align: center;
+        }
+
+        .stat-item {
+            padding: 8px;
+            background-color: white;
+            border-radius: 3px;
+            border: 1px solid #dee2e6;
+        }
+
+        .stat-number {
+            font-size: 18px;
+            font-weight: bold;
+            color: #366092;
+        }
+
+        .stat-label {
+            font-size: 10px;
+            color: #6c757d;
+            margin-top: 2px;
         }
 
         .footer {
             margin-top: 30px;
-            text-align: right;
+            text-align: center;
             color: #666;
             font-size: 10px;
-        }
-
-        .page-break {
-            page-break-after: always;
+            border-top: 1px solid #dee2e6;
+            padding-top: 10px;
         }
 
         .no-data {
             text-align: center;
-            margin-top: 50px;
-            color: #666;
+            margin: 50px 0;
+            color: #6c757d;
+        }
+
+        .no-data h3 {
+            color: #dc3545;
+            margin-bottom: 10px;
+        }
+
+        .page-break {
+            page-break-after: always;
         }
     </style>
 </head>
@@ -193,105 +226,90 @@
         </div>
         <div class="row">
             <span class="label">NPP:</span>
-            <span>{{ $employee->npp }}</span>
+            <span>{{ $employee->npp ?? '-' }}</span>
         </div>
         <div class="row">
             <span class="label">Jabatan:</span>
             <span>{{ $employee->jabatan_nama ?? '-' }}</span>
         </div>
         <div class="row">
-            <span class="label">Departemen:</span>
-            <span>{{ $employee->departemen ?? '-' }}</span>
+            <span class="label">Posisi:</span>
+            <span>{{ $employee->posisi_nama ?? '-' }}</span>
+        </div>
+        <div class="row">
+            <span class="label">Email:</span>
+            <span>{{ $employee->email ?? '-' }}</span>
         </div>
     </div>
 
     <div class="period-info">
-        <strong>Periode:</strong> {{ $startDate }} s/d {{ $endDate }}<br>
-        <strong>Total Record:</strong> {{ $totalAttendance }} hari<br>
-        <strong>Tanggal Cetak:</strong> {{ date('d/m/Y H:i:s') }}
-    </div>
-
-    @php
-        $totalTerlambat = $attendances->where('check_in', '>', '08:00:00')->count();
-        $totalTidakCheckout = $attendances->whereNull('check_out')->count();
-        $totalOvertime = $attendances->sum('overtime');
-        $avgWorkTime = $attendances->filter(function($attendance) {
-            return $attendance->check_in && $attendance->check_out;
-        })->average(function($attendance) {
-            return \Carbon\Carbon::parse($attendance->check_out)->diffInMinutes(\Carbon\Carbon::parse($attendance->check_in)) - 60;
-        });
-    @endphp
-
-    <div class="summary-stats">
-        <div class="stat-item">
-            <div class="stat-value">{{ $totalAttendance }}</div>
-            <div class="stat-label">Total Hadir</div>
-        </div>
-        <div class="stat-item">
-            <div class="stat-value">{{ $totalTerlambat }}</div>
-            <div class="stat-label">Terlambat</div>
-        </div>
-        <div class="stat-item">
-            <div class="stat-value">{{ $totalTidakCheckout }}</div>
-            <div class="stat-label">Tidak Checkout</div>
-        </div>
-        <div class="stat-item">
-            <div class="stat-value">{{ round($totalOvertime / 60, 1) }}j</div>
-            <div class="stat-label">Total Lembur</div>
-        </div>
-        <div class="stat-item">
-            <div class="stat-value">{{ round($avgWorkTime / 60, 1) }}j</div>
-            <div class="stat-label">Rata-rata Kerja</div>
-        </div>
+        <strong>Periode: {{ $startDate }} s/d {{ $endDate }}</strong><br>
+        <span style="font-size: 10px;">Total Record: {{ $total_records }} data</span>
     </div>
 
     @if($attendances->count() > 0)
+        @php
+            $totalHadir = $attendances->whereNotNull('check_in')->count();
+            $totalTerlambat = $attendances->where('check_in', '>', '08:00:00')->count();
+            $totalTidakCheckout = $attendances->whereNull('check_out')->whereNotNull('check_in')->count();
+            $totalOvertime = $attendances->where('overtime', '>', 0)->count();
+        @endphp
+
+        <div class="summary-stats">
+            <h3>Ringkasan Kehadiran</h3>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-number">{{ $totalHadir }}</div>
+                    <div class="stat-label">Total Hadir</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">{{ $totalTerlambat }}</div>
+                    <div class="stat-label">Terlambat</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">{{ $totalTidakCheckout }}</div>
+                    <div class="stat-label">Tidak Checkout</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">{{ $totalOvertime }}</div>
+                    <div class="stat-label">Lembur</div>
+                </div>
+            </div>
+        </div>
+
         <table>
             <thead>
                 <tr>
-                    <th style="width: 5%;">No</th>
+                    <th style="width: 8%;">No</th>
                     <th style="width: 12%;">Tanggal</th>
-                    <th style="width: 8%;">Hari</th>
                     <th style="width: 10%;">Check In</th>
                     <th style="width: 10%;">Check Out</th>
-                    <th style="width: 10%;">Durasi Kerja</th>
+                    <th style="width: 12%;">Durasi Kerja</th>
                     <th style="width: 8%;">Lembur</th>
-                    <th style="width: 12%;">Tipe Absensi</th>
-                    <th style="width: 10%;">Status</th>
-                    <th style="width: 15%;">Lokasi</th>
+                    <th style="width: 10%;">Tipe</th>
+                    <th style="width: 12%;">Status</th>
+                    <th style="width: 18%;">Lokasi</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach($attendances as $index => $attendance)
                     @php
-                        $date = \Carbon\Carbon::parse($attendance->created_at);
-                        $checkIn = $attendance->check_in ? \Carbon\Carbon::parse($attendance->check_in) : null;
-                        $checkOut = $attendance->check_out ? \Carbon\Carbon::parse($attendance->check_out) : null;
-
                         // Calculate work duration
                         $workDuration = '-';
-                        if ($checkIn && $checkOut) {
-                            $minutes = $checkOut->diffInMinutes($checkIn) - 60; // Minus 1 hour break
-                            $hours = intval($minutes / 60);
-                            $mins = $minutes % 60;
-                            $workDuration = $hours . 'j ' . $mins . 'm';
-                        }
-
-                        // Format overtime
-                        $overtimeFormatted = '-';
-                        if ($attendance->overtime > 0) {
-                            $hours = intval($attendance->overtime / 60);
-                            $minutes = $attendance->overtime % 60;
-                            $overtimeFormatted = $hours . 'j ' . $minutes . 'm';
+                        if ($attendance->check_in && $attendance->check_out) {
+                            $checkIn = \Carbon\Carbon::parse($attendance->check_in);
+                            $checkOut = \Carbon\Carbon::parse($attendance->check_out);
+                            $duration = $checkIn->diff($checkOut);
+                            $workDuration = sprintf('%02d:%02d', $duration->h, $duration->i);
                         }
 
                         // Determine status
                         $status = 'Tidak Hadir';
                         $statusClass = 'status-tidak-hadir';
-                        if ($checkIn) {
-                            if ($checkIn->format('H:i:s') <= '08:00:00') {
+                        if ($attendance->check_in) {
+                            if (\Carbon\Carbon::parse($attendance->check_in)->format('H:i') <= '08:00') {
                                 $status = 'Tepat Waktu';
-                                $statusClass = 'status-tepat-waktu';
+                                $statusClass = 'status-hadir';
                             } else {
                                 $status = 'Terlambat';
                                 $statusClass = 'status-terlambat';
@@ -300,14 +318,13 @@
                     @endphp
                     <tr>
                         <td>{{ $index + 1 }}</td>
-                        <td>{{ $date->format('d/m/Y') }}</td>
-                        <td>{{ $date->locale('id')->dayName }}</td>
-                        <td>{{ $checkIn ? $checkIn->format('H:i:s') : '-' }}</td>
-                        <td>{{ $checkOut ? $checkOut->format('H:i:s') : '-' }}</td>
+                        <td>{{ \Carbon\Carbon::parse($attendance->created_at)->format('d/m/Y') }}</td>
+                        <td>{{ $attendance->check_in ? \Carbon\Carbon::parse($attendance->check_in)->format('H:i') : '-' }}</td>
+                        <td>{{ $attendance->check_out ? \Carbon\Carbon::parse($attendance->check_out)->format('H:i') : '-' }}</td>
                         <td>{{ $workDuration }}</td>
                         <td>
                             @if($attendance->overtime > 0)
-                                <span class="overtime-badge">{{ $overtimeFormatted }}</span>
+                                <span class="overtime-badge">{{ $attendance->overtime }} min</span>
                             @else
                                 -
                             @endif
@@ -330,13 +347,15 @@
     @else
         <div class="no-data">
             <h3>Tidak ada data absensi untuk periode yang dipilih</h3>
-            <p>Karyawan belum melakukan absensi pada periode {{ $startDate }} - {{ $endDate }}</p>
+            <p>Karyawan <strong>{{ $employee->nama }}</strong> belum melakukan absensi pada periode {{ $startDate }} - {{ $endDate }}</p>
         </div>
     @endif
 
     <div class="footer">
-        <p>Laporan ini dibuat secara otomatis oleh sistem Sucofindo Absen<br>
-        Dicetak pada: {{ date('d/m/Y H:i:s') }} | Karyawan: {{ $employee->nama }}</p>
+        <p><strong>Laporan Detail Absensi - {{ $employee->nama }}</strong></p>
+        <p>Periode: {{ $startDate }} - {{ $endDate }}</p>
+        <p>Digenerate pada: {{ $generated_at }}</p>
+        <p>PT. Sucofindo (Persero) - Sistem Manajemen Absensi</p>
     </div>
 </body>
 </html>

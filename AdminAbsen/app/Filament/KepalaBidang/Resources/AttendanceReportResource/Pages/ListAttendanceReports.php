@@ -11,10 +11,11 @@ use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
 use Filament\Forms;
 use Maatwebsite\Excel\Facades\Excel;
-use Barryvdh\DomPDF\Facade\Pdf;
+use Barryvdh\DomPDF\Facade\Pdf; // ✅ Pastikan import ini ada
 use Carbon\Carbon;
 use Filament\Notifications\Notification;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log; // ✅ Tambahkan untuk debugging
 
 class ListAttendanceReports extends ListRecords
 {
@@ -213,6 +214,17 @@ class ListAttendanceReports extends ListRecords
                                 'employee' => $employee,
                                 'startDate' => $startDate->format('d/m/Y'),
                                 'endDate' => $endDate->format('d/m/Y'),
+                                'total_records' => $attendances->count(),
+                                'generated_at' => now()->format('d/m/Y H:i:s'),
+                                'totalAttendance' => $attendances->whereNotNull('check_in')->count(),
+                                'totalTerlambat' => $attendances->where('check_in', '>', '08:00:00')->count(),
+                                'totalTidakCheckout' => $attendances->whereNull('check_out')->whereNotNull('check_in')->count(),
+                                'totalOvertime' => $attendances->where('overtime', '>', 0)->sum('overtime'),
+                                'avgWorkTime' => $attendances->whereNotNull('check_in')->whereNotNull('check_out')->avg(function($attendance) {
+                                    $checkIn = \Carbon\Carbon::parse($attendance->check_in);
+                                    $checkOut = \Carbon\Carbon::parse($attendance->check_out);
+                                    return $checkIn->diffInMinutes($checkOut) - 60; // Kurangi 60 menit istirahat
+                                })
                             ]);
 
                             return response()->streamDownload(function () use ($pdf) {
@@ -285,11 +297,11 @@ class ListAttendanceReports extends ListRecords
     {
         return Pegawai::select([
                 'pegawais.*',
-                \DB::raw('COUNT(attendances.id) as total_hadir'),
-                \DB::raw('COUNT(CASE WHEN TIME(attendances.check_in) > "08:00:00" THEN 1 END) as total_terlambat'),
-                \DB::raw('COUNT(CASE WHEN attendances.check_out IS NULL THEN 1 END) as total_tidak_checkout'),
-                \DB::raw('SUM(attendances.overtime) as total_overtime_minutes'),
-                \DB::raw('AVG(CASE WHEN attendances.check_in IS NOT NULL AND attendances.check_out IS NOT NULL
+                DB::raw('COUNT(attendances.id) as total_hadir'),
+                DB::raw('COUNT(CASE WHEN TIME(attendances.check_in) > "08:00:00" THEN 1 END) as total_terlambat'),
+                DB::raw('COUNT(CASE WHEN attendances.check_out IS NULL THEN 1 END) as total_tidak_checkout'),
+                DB::raw('SUM(attendances.overtime) as total_overtime_minutes'),
+                DB::raw('AVG(CASE WHEN attendances.check_in IS NOT NULL AND attendances.check_out IS NOT NULL
                                THEN TIMESTAMPDIFF(MINUTE, attendances.check_in, attendances.check_out) - 60
                                ELSE NULL END) as avg_work_minutes'),
             ])
