@@ -384,23 +384,23 @@
             }
         }
 
-        // Form submission handling
-        document.querySelector('form').addEventListener('submit', function() {
-            const button = document.getElementById('login-btn');
-            const btnText = document.getElementById('btn-text');
+        // Form submission handling - only handle loading state, don't prevent submission
+        const loginForm = document.querySelector('form');
+        if (loginForm) {
+            loginForm.addEventListener('submit', function(e) {
+                const button = document.getElementById('login-btn');
+                const btnText = document.getElementById('btn-text');
 
-            // Add loading state
-            button.classList.add('btn-loading');
-            button.disabled = true;
-            btnText.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Signing In...';
+                // Add loading state without preventing form submission
+                if (button && btnText) {
+                    button.classList.add('btn-loading');
+                    button.disabled = true;
+                    btnText.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Masuk...';
+                }
 
-            // Reset after 10 seconds if no response
-            setTimeout(() => {
-                button.classList.remove('btn-loading');
-                button.disabled = false;
-                btnText.innerHTML = '<i class="fas fa-sign-in-alt mr-2"></i>Sign In';
-            }, 10000);
-        });
+                // Let the form submit naturally - don't prevent default
+            });
+        }
 
         // Initialize on page load
         window.addEventListener('load', function() {
@@ -422,15 +422,7 @@
                 });
             });
 
-            // Add keyboard shortcut (Enter to submit)
-            document.addEventListener('keydown', function(e) {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                    const form = document.querySelector('form');
-                    if (document.activeElement.tagName === 'INPUT') {
-                        form.dispatchEvent(new Event('submit'));
-                    }
-                }
-            });
+            // Form inputs will naturally submit on Enter - no custom handling needed
 
             // Add parallax effect for floating decorations
             window.addEventListener('mousemove', function(e) {

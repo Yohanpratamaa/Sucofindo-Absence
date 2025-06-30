@@ -10,43 +10,65 @@ use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithStyles;
 use Maatwebsite\Excel\Concerns\WithColumnWidths;
 use Maatwebsite\Excel\Concerns\WithTitle;
+use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use PhpOffice\PhpSpreadsheet\Style\Color;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
-class AttendanceReportExport implements FromCollection, WithHeadings, WithMapping, WithStyles, WithColumnWidths, WithTitle
+class AttendanceReportExport implements FromCollection, WithHeadings, WithMapping, WithStyles, WithColumnWidths, WithTitle, ShouldAutoSize
 {
     protected $startDate;
     protected $endDate;
 
     public function __construct($startDate = null, $endDate = null)
     {
-        $this->startDate = $startDate ?? Carbon::now()->startOfMonth();
-        $this->endDate = $endDate ?? Carbon::now()->endOfMonth();
+        try {
+            $this->startDate = $startDate ?
+                Carbon::parse($startDate)->format('Y-m-d H:i:s') :
+                Carbon::now()->startOfMonth()->format('Y-m-d H:i:s');
+
+            $this->endDate = $endDate ?
+                Carbon::parse($endDate)->endOfDay()->format('Y-m-d H:i:s') :
+                Carbon::now()->endOfMonth()->format('Y-m-d H:i:s');
+        } catch (\Exception $e) {
+            \Log::error('AttendanceReportExport constructor error: ' . $e->getMessage());
+            $this->startDate = Carbon::now()->startOfMonth()->format('Y-m-d H:i:s');
+            $this->endDate = Carbon::now()->endOfMonth()->format('Y-m-d H:i:s');
+        }
     }
 
     public function collection()
     {
-        return Pegawai::select([
-                'pegawais.*',
-                DB::raw('COUNT(attendances.id) as total_hadir'),
-                DB::raw('COUNT(CASE WHEN TIME(attendances.check_in) > "08:00:00" THEN 1 END) as total_terlambat'),
-                DB::raw('COUNT(CASE WHEN attendances.check_out IS NULL THEN 1 END) as total_tidak_checkout'),
-                DB::raw('SUM(attendances.overtime) as total_overtime_minutes'),
-                DB::raw('AVG(CASE WHEN attendances.check_in IS NOT NULL AND attendances.check_out IS NOT NULL
-                               THEN TIMESTAMPDIFF(MINUTE, attendances.check_in, attendances.check_out) - 60
-                               ELSE NULL END) as avg_work_minutes'),
-            ])
-            ->leftJoin('attendances', function($join) {
-                $join->on('pegawais.id', '=', 'attendances.user_id')
-                     ->whereBetween('attendances.created_at', [$this->startDate, $this->endDate]);
-            })
-            ->where('pegawais.status', 'active')
-            ->groupBy('pegawais.id')
-            ->orderBy('total_hadir', 'desc')
-            ->get();
+        try {
+            return Pegawai::select([
+                    'pegawais.id',
+                    'pegawais.nama',
+                    'pegawais.npp',
+                    'pegawais.jabatan_nama',
+                    'pegawais.posisi_nama',
+                    'pegawais.status',
+                    DB::raw('COALESCE(COUNT(attendances.id), 0) as total_hadir'),
+                    DB::raw('COALESCE(COUNT(CASE WHEN TIME(attendances.check_in) > "08:00:00" THEN 1 END), 0) as total_terlambat'),
+                    DB::raw('COALESCE(COUNT(CASE WHEN attendances.check_out IS NULL THEN 1 END), 0) as total_tidak_checkout'),
+                    DB::raw('COALESCE(SUM(attendances.overtime), 0) as total_overtime_minutes'),
+                    DB::raw('COALESCE(AVG(CASE WHEN attendances.check_in IS NOT NULL AND attendances.check_out IS NOT NULL
+                                   THEN TIMESTAMPDIFF(MINUTE, attendances.check_in, attendances.check_out) - 60
+                                   ELSE NULL END), 0) as avg_work_minutes'),
+                ])
+                ->leftJoin('attendances', function($join) {
+                    $join->on('pegawais.id', '=', 'attendances.user_id')
+                         ->whereBetween('attendances.created_at', [$this->startDate, $this->endDate]);
+                })
+                ->where('pegawais.status', 'active')
+                ->groupBy('pegawais.id', 'pegawais.nama', 'pegawais.npp', 'pegawais.jabatan_nama', 'pegawais.posisi_nama', 'pegawais.status')
+                ->orderBy('total_hadir', 'desc')
+                ->get();
+        } catch (\Exception $e) {
+            \Log::error('AttendanceReportExport collection error: ' . $e->getMessage());
+            return collect([]);
+        }
     }
 
     public function headings(): array
@@ -68,28 +90,48 @@ class AttendanceReportExport implements FromCollection, WithHeadings, WithMappin
 
     public function map($pegawai): array
     {
-        $workDays = $this->getWorkDaysInPeriod();
-        $tingkatKehadiran = $workDays > 0 ? round(($pegawai->total_hadir / $workDays) * 100, 1) : 0;
+        try {
+            $workDays = $this->getWorkDaysInPeriod();
+            $totalHadir = (int) ($pegawai->total_hadir ?? 0);
+            $tingkatKehadiran = $workDays > 0 ? round(($totalHadir / $workDays) * 100, 1) : 0;
 
-        $totalOvertimeHours = $pegawai->total_overtime_minutes ?
-            number_format($pegawai->total_overtime_minutes / 60, 1) : '0';
+            $totalOvertimeMinutes = (float) ($pegawai->total_overtime_minutes ?? 0);
+            $totalOvertimeHours = $totalOvertimeMinutes > 0 ?
+                number_format($totalOvertimeMinutes / 60, 1) : '0.0';
 
-        $avgWorkHours = $pegawai->avg_work_minutes ?
-            number_format($pegawai->avg_work_minutes / 60, 1) : '0';
+            $avgWorkMinutes = (float) ($pegawai->avg_work_minutes ?? 0);
+            $avgWorkHours = $avgWorkMinutes > 0 ?
+                number_format($avgWorkMinutes / 60, 1) : '0.0';
 
-        return [
-            $pegawai->nama,
-            $pegawai->npp,
-            $pegawai->jabatan_nama ?? '-',
-            $pegawai->posisi_nama ?? '-',
-            $pegawai->total_hadir ?? 0,
-            $pegawai->total_terlambat ?? 0,
-            $pegawai->total_tidak_checkout ?? 0,
-            $totalOvertimeHours,
-            $avgWorkHours,
-            $tingkatKehadiran,
-            ucfirst($pegawai->status),
-        ];
+            return [
+                $pegawai->nama ?? '-',
+                $pegawai->npp ?? '-',
+                $pegawai->jabatan_nama ?? '-',
+                $pegawai->posisi_nama ?? '-',
+                $totalHadir,
+                (int) ($pegawai->total_terlambat ?? 0),
+                (int) ($pegawai->total_tidak_checkout ?? 0),
+                $totalOvertimeHours,
+                $avgWorkHours,
+                $tingkatKehadiran . '%',
+                ucfirst($pegawai->status ?? 'inactive'),
+            ];
+        } catch (\Exception $e) {
+            \Log::error('AttendanceReportExport map error: ' . $e->getMessage());
+            return [
+                $pegawai->nama ?? '-',
+                $pegawai->npp ?? '-',
+                '-',
+                '-',
+                0,
+                0,
+                0,
+                '0.0',
+                '0.0',
+                '0%',
+                'inactive',
+            ];
+        }
     }
 
     public function styles(Worksheet $sheet)
