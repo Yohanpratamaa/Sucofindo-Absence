@@ -37,32 +37,52 @@ class MyIzinResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Select::make('jenis_izin')
-                    ->label('Jenis Izin')
-                    ->options([
-                        'sakit' => 'Sakit',
-                        'cuti' => 'Cuti',
-                        'izin' => 'Izin',
-                    ])
-                    ->required(),
+                Forms\Components\Section::make('Pengajuan Izin')
+                    ->description('Ajukan izin tidak hadir untuk mendapatkan persetujuan resmi')
+                    ->schema([
+                        Forms\Components\Grid::make(2)
+                            ->schema([
+                                Forms\Components\Select::make('jenis_izin')
+                                    ->label('Jenis Izin')
+                                    ->options([
+                                        'sakit' => 'Sakit',
+                                        'cuti' => 'Cuti',
+                                        'izin' => 'Izin',
+                                    ])
+                                    ->required()
+                                    ->columnSpan(1),
 
-                Forms\Components\DatePicker::make('tanggal_mulai')
-                    ->label('Tanggal Mulai')
-                    ->required(),
+                                Forms\Components\DatePicker::make('tanggal_mulai')
+                                    ->label('Tanggal Mulai')
+                                    ->required()
+                                    ->default(now())
+                                    ->columnSpan(1),
 
-                Forms\Components\DatePicker::make('tanggal_akhir')
-                    ->label('Tanggal Akhir')
-                    ->required(),
+                                Forms\Components\DatePicker::make('tanggal_akhir')
+                                    ->label('Tanggal Akhir')
+                                    ->required()
+                                    ->default(now())
+                                    ->afterOrEqual('tanggal_mulai')
+                                    ->columnSpan(1),
 
-                Forms\Components\Textarea::make('keterangan')
-                    ->label('Keterangan/Alasan')
-                    ->required()
-                    ->rows(3),
+                                Forms\Components\Textarea::make('keterangan')
+                                    ->label('Keterangan/Alasan')
+                                    ->required()
+                                    ->rows(4)
+                                    ->placeholder('Jelaskan alasan izin Anda...')
+                                    ->columnSpanFull(),
 
-                Forms\Components\FileUpload::make('dokumen_pendukung')
-                    ->label('Dokumen Pendukung')
-                    ->acceptedFileTypes(['application/pdf', 'image/*'])
-                    ->maxSize(2048),
+                                Forms\Components\FileUpload::make('dokumen_pendukung')
+                                    ->label('Dokumen Pendukung')
+                                    ->acceptedFileTypes(['application/pdf', 'image/*'])
+                                    ->maxSize(2048)
+                                    ->helperText('Upload surat dokter, surat keterangan, atau dokumen pendukung lainnya (Max: 2MB)')
+                                    ->columnSpanFull(),
+
+                                Forms\Components\Hidden::make('user_id')
+                                    ->default(Auth::id()),
+                            ]),
+                    ]),
             ]);
     }
 
@@ -152,9 +172,9 @@ class MyIzinResource extends Resource
     {
         return [
             'index' => Pages\ListMyIzins::route('/'),
-            // 'create' => Pages\CreateMyIzin::route('/create'),
-            // 'view' => Pages\ViewMyIzin::route('/{record}'),
-            // 'edit' => Pages\EditMyIzin::route('/{record}/edit'),
+            'create' => Pages\CreateMyIzin::route('/create'),
+            'view' => Pages\ViewMyIzin::route('/{record}'),
+            'edit' => Pages\EditMyIzin::route('/{record}/edit'),
         ];
     }
 
@@ -166,5 +186,17 @@ class MyIzinResource extends Resource
     public static function canDelete($record): bool
     {
         return is_null($record->approved_by);
+    }
+
+    public static function getNavigationBadge(): ?string
+    {
+        return static::getModel()::where('user_id', Auth::id())
+            ->whereNull('approved_by')
+            ->count();
+    }
+
+    public static function getNavigationBadgeColor(): string|array|null
+    {
+        return 'warning';
     }
 }

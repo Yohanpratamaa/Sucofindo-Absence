@@ -23,5 +23,12 @@ class AppServiceProvider extends ServiceProvider
     {
         // Register model observers
         Pegawai::observe(PegawaiObserver::class);
+
+        // Register custom commands
+        if ($this->app->runningInConsole()) {
+            $this->commands([
+                \App\Console\Commands\DebugAttendanceImages::class,
+            ]);
+        }
     }
 }

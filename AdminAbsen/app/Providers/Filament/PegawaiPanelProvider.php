@@ -50,12 +50,16 @@ class PegawaiPanelProvider extends PanelProvider
             ->discoverPages(in: app_path('Filament/Pegawai/Pages'), for: 'App\\Filament\\Pegawai\\Pages')
             ->pages([
                 \App\Filament\Pegawai\Pages\Dashboard::class,
+                \App\Filament\Pegawai\Pages\WfoAttendance::class,
             ])
             ->discoverWidgets(in: app_path('Filament/Pegawai/Widgets'), for: 'App\\Filament\\Pegawai\\Widgets')
             ->widgets([
                 Widgets\AccountWidget::class,
+                \App\Filament\Pegawai\Widgets\WfoAttendanceStatusWidget::class,
                 \App\Filament\Pegawai\Widgets\MyAttendanceWidget::class,
-                // \App\Filament\Pegawai\Widgets\MyIzinWidget::class,
+                \App\Filament\Pegawai\Widgets\MyOvertimeStatsWidget::class,
+                \App\Filament\Pegawai\Widgets\MyIzinStatsWidget::class,
+                \App\Filament\Pegawai\Widgets\RecentRequestsWidget::class,
                 \App\Filament\Pegawai\Widgets\AttendanceStatsWidget::class,
             ])
             ->middleware([
@@ -85,6 +89,7 @@ class PegawaiPanelProvider extends PanelProvider
             ->navigationGroups([
                 'Absensi',
                 'Izin',
+                'Lembur',
                 'Profil',
             ])
             ->maxContentWidth('full');

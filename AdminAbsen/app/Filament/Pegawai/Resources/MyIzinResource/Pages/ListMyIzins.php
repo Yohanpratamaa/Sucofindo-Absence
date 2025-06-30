@@ -17,7 +17,10 @@ class ListMyIzins extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            // Actions\CreateAction::make(),
+            \Filament\Actions\CreateAction::make()
+                ->label('Ajukan Izin')
+                ->icon('heroicon-o-plus')
+                ->color('success'),
         ];
     }
 }

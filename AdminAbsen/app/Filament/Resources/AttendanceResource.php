@@ -36,6 +36,24 @@ class AttendanceResource extends Resource
 
     protected static ?int $navigationSort = 7;
 
+    /**
+     * Override to prevent null record evaluation
+     */
+    public static function canCreate(): bool
+    {
+        return false; // Admin tidak bisa create absensi
+    }
+
+    public static function canEdit($record): bool
+    {
+        return false; // Admin tidak bisa edit absensi
+    }
+
+    public static function canDelete($record): bool
+    {
+        return false; // Admin tidak bisa delete absensi
+    }
+
     public static function form(Form $form): Form
     {
         return $form
@@ -267,14 +285,14 @@ class AttendanceResource extends Resource
 
                 Tables\Columns\TextColumn::make('absen_siang_formatted')
                     ->label('Absen Siang')
-                    ->getStateUsing(function (Attendance $record): string {
-                        if ($record->attendance_type === 'WFO') {
+                    ->getStateUsing(function (?Attendance $record): string {
+                        if (!$record || $record->attendance_type === 'WFO') {
                             return 'Tidak Perlu';
                         }
                         return $record->absen_siang_formatted;
                     })
-                    ->color(fn (Attendance $record): string =>
-                        $record->attendance_type === 'WFO' ? 'gray' : 'primary'
+                    ->color(fn (?Attendance $record): string =>
+                        !$record || $record->attendance_type === 'WFO' ? 'gray' : 'primary'
                     )
                     ->toggleable(isToggledHiddenByDefault: true),
 
@@ -311,15 +329,16 @@ class AttendanceResource extends Resource
 
                 Tables\Columns\BadgeColumn::make('kelengkapan_status')
                     ->label('Kelengkapan')
-                    ->getStateUsing(function (Attendance $record): string {
+                    ->getStateUsing(function (?Attendance $record): string {
+                        if (!$record) return '-';
                         $kelengkapan = $record->kelengkapan_absensi;
                         return "{$kelengkapan['completed']}/{$kelengkapan['total']}";
                     })
                     ->colors([
-                        'success' => fn (Attendance $record): bool =>
-                            $record->kelengkapan_absensi['status'] === 'Lengkap',
-                        'warning' => fn (Attendance $record): bool =>
-                            $record->kelengkapan_absensi['status'] === 'Belum Lengkap',
+                        'success' => fn (?Attendance $record): bool =>
+                            $record && $record->kelengkapan_absensi['status'] === 'Lengkap',
+                        'warning' => fn (?Attendance $record): bool =>
+                            $record && $record->kelengkapan_absensi['status'] === 'Belum Lengkap',
                     ])
                     ->toggleable(isToggledHiddenByDefault: true),
 
@@ -337,9 +356,36 @@ class AttendanceResource extends Resource
                         default => 'gray'
                     }),
 
+                Tables\Columns\ImageColumn::make('picture_absen_masuk_url')
+                    ->label('Foto Masuk')
+                    ->height(40)
+                    ->width(40)
+                    ->circular()
+                    ->toggleable()
+                    ->tooltip('Foto Check In'),
+
+                Tables\Columns\ImageColumn::make('picture_absen_siang_url')
+                    ->label('Foto Siang')
+                    ->height(40)
+                    ->width(40)
+                    ->circular()
+                    ->toggleable()
+                    ->tooltip('Foto Absen Siang')
+                    ->visible(fn (?Attendance $record): bool => $record && $record->attendance_type === 'Dinas Luar'),
+
+                Tables\Columns\ImageColumn::make('picture_absen_pulang_url')
+                    ->label('Foto Pulang')
+                    ->height(40)
+                    ->width(40)
+                    ->circular()
+                    ->toggleable()
+                    ->tooltip('Foto Check Out'),
+
                 Tables\Columns\TextColumn::make('lokasi_info')
                     ->label('Info Lokasi')
-                    ->getStateUsing(function (Attendance $record): string {
+                    ->getStateUsing(function (?Attendance $record): string {
+                        if (!$record) return '-';
+
                         if ($record->attendance_type === 'WFO') {
                             $office = $record->officeSchedule?->office;
                             if ($office && $record->latitude_absen_masuk && $record->longitude_absen_masuk) {
@@ -361,8 +407,8 @@ class AttendanceResource extends Resource
                             return 'Dinas Luar (' . implode(', ', $locations) . ')';
                         }
                     })
-                    ->color(fn (Attendance $record): string =>
-                        $record->attendance_type === 'WFO' ? 'primary' : 'warning'
+                    ->color(fn (?Attendance $record): string =>
+                        !$record ? 'gray' : ($record->attendance_type === 'WFO' ? 'primary' : 'warning')
                     )
                     ->toggleable(isToggledHiddenByDefault: true),
 
@@ -478,8 +524,11 @@ class AttendanceResource extends Resource
                     ->toggle(),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(),
-                // Export actions sudah dipindahkan ke header actions di ListAttendances
+                // Hanya menampilkan action Detail untuk admin
+                Tables\Actions\ViewAction::make()
+                    ->label('Detail')
+                    ->icon('heroicon-o-eye')
+                    ->color('info'),
             ])
             ->bulkActions([
                 // Tidak ada bulk actions untuk absensi
@@ -505,9 +554,17 @@ class AttendanceResource extends Resource
     }
 
     /**
+     * Safe helper to check if record is available and valid
+     */
+    protected static function isValidRecord($record): bool
+    {
+        return $record instanceof Attendance && $record->exists;
+    }
+
+    /**
      * Calculate distance between two coordinates in meters
      */
-    private static function calculateDistance($lat1, $lon1, $lat2, $lon2)
+    public static function calculateDistance($lat1, $lon1, $lat2, $lon2)
     {
         if (!$lat1 || !$lon1 || !$lat2 || !$lon2) {
             return 0;

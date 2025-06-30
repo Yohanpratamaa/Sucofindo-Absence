@@ -3,6 +3,7 @@
 namespace App\Filament\Pegawai\Resources;
 
 use App\Filament\Pegawai\Resources\MyAttendanceResource\Pages;
+use App\Filament\Components\AttendanceImageColumn;
 use App\Models\Attendance;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -52,6 +53,15 @@ class MyAttendanceResource extends Resource
                     ->date('d M Y')
                     ->sortable(),
 
+                Tables\Columns\TextColumn::make('attendance_type')
+                    ->label('Tipe')
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'WFO' => 'primary',
+                        'Dinas Luar' => 'warning',
+                        default => 'gray',
+                    }),
+
                 Tables\Columns\TextColumn::make('check_in')
                     ->label('Jam Masuk')
                     ->time('H:i')
@@ -60,11 +70,13 @@ class MyAttendanceResource extends Resource
                 Tables\Columns\TextColumn::make('check_out')
                     ->label('Jam Pulang')
                     ->time('H:i')
+                    ->placeholder('Belum check out')
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('durasi_kerja')
                     ->label('Durasi Kerja')
-                    ->badge(),
+                    ->badge()
+                    ->color('info'),
 
                 Tables\Columns\TextColumn::make('status_kehadiran')
                     ->label('Status')
@@ -76,23 +88,49 @@ class MyAttendanceResource extends Resource
                         default => 'gray',
                     }),
 
-                Tables\Columns\TextColumn::make('lokasi_absen_masuk')
-                    ->label('Lokasi Masuk')
-                    ->limit(30)
-                    ->toggleable(),
+                Tables\Columns\ImageColumn::make('picture_absen_masuk_url')
+                    ->label('Foto Masuk')
+                    ->height(60)
+                    ->width(60)
+                    ->circular()
+                    ->toggleable()
+                    ->tooltip('Klik untuk memperbesar')
+                    ->extraAttributes(['style' => 'object-fit: cover;']),
 
-                Tables\Columns\TextColumn::make('lokasi_absen_pulang')
-                    ->label('Lokasi Pulang')
-                    ->limit(30)
-                    ->toggleable(),
+                Tables\Columns\ImageColumn::make('picture_absen_pulang_url')
+                    ->label('Foto Pulang')
+                    ->height(60)
+                    ->width(60)
+                    ->circular()
+                    ->placeholder('Belum check out')
+                    ->toggleable()
+                    ->tooltip('Klik untuk memperbesar')
+                    ->extraAttributes(['style' => 'object-fit: cover;']),
             ])
             ->filters([
+                Tables\Filters\SelectFilter::make('attendance_type')
+                    ->label('Tipe Absensi')
+                    ->options([
+                        'WFO' => 'Work From Office',
+                        'Dinas Luar' => 'Dinas Luar',
+                    ]),
+
                 Tables\Filters\SelectFilter::make('status_kehadiran')
+                    ->label('Status Kehadiran')
                     ->options([
                         'Tepat Waktu' => 'Tepat Waktu',
                         'Terlambat' => 'Terlambat',
                         'Tidak Hadir' => 'Tidak Hadir',
                     ]),
+
+                Tables\Filters\Filter::make('bulan_ini')
+                    ->label('Bulan Ini')
+                    ->query(fn ($query) => $query->whereMonth('created_at', now()->month)
+                                                  ->whereYear('created_at', now()->year)),
+
+                Tables\Filters\Filter::make('belum_checkout')
+                    ->label('Belum Check Out')
+                    ->query(fn ($query) => $query->whereNull('check_out')),
             ])
             ->actions([
                 Tables\Actions\ViewAction::make(),
@@ -105,7 +143,7 @@ class MyAttendanceResource extends Resource
     {
         return [
             'index' => Pages\ListMyAttendances::route('/'),
-            // 'view' => Pages\ViewMyAttendance::route('/{record}'),
+            'view' => Pages\ViewMyAttendance::route('/{record}'),
         ];
     }
 

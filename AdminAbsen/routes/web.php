@@ -23,6 +23,29 @@ Route::middleware('guest')->group(function () {
 Route::post('/logout', [UnifiedLoginController::class, 'logout'])->name('unified.logout')->middleware('auth');
 Route::get('/logout', [UnifiedLoginController::class, 'logout'])->name('unified.logout.get')->middleware('auth');
 
+// Test route untuk checking photo size
+Route::post('/test-photo-size', [App\Http\Controllers\PhotoSizeTestController::class, 'checkPhotoSize'])->name('test.photo.size');
+
+// Test route untuk debugging photo storage
+Route::get('/test-photo', [App\Http\Controllers\PhotoTestController::class, 'testPhoto'])->name('test.photo');
+
+// Test route untuk checking dinas luar data
+Route::get('/test-dinas-luar', function () {
+    $dinasLuarAttendances = App\Models\Attendance::where('attendance_type', 'Dinas Luar')
+        ->orderBy('created_at', 'desc')
+        ->take(5)
+        ->get();
+
+    $data = [
+        'total' => App\Models\Attendance::count(),
+        'dinas_luar_count' => App\Models\Attendance::where('attendance_type', 'Dinas Luar')->count(),
+        'wfo_count' => App\Models\Attendance::where('attendance_type', 'WFO')->count(),
+        'attendances' => $dinasLuarAttendances
+    ];
+
+    return response()->json($data, 200, [], JSON_PRETTY_PRINT);
+})->name('test.dinas.luar');
+
 // Redirect root URL to appropriate panel based on authentication and setup status
 Route::get('/', function () {
     try {

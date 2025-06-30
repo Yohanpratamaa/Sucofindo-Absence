@@ -20,6 +20,7 @@ class OvertimeAssignment extends Model
         'approved_at',
         'assign_by',
         'status',
+        'keterangan',
     ];
 
     protected $casts = [
@@ -121,7 +122,7 @@ class OvertimeAssignment extends Model
             'approved_by' => $approvedBy,
             'approved_at' => now(),
         ]);
-        
+
         // Log acceptance action
         Log::info("Lembur ID {$this->id} diterima oleh {$approver->nama} (ID: {$approvedBy}) pada " . now());
     }
@@ -135,7 +136,7 @@ class OvertimeAssignment extends Model
             'approved_by' => $approvedBy,
             'approved_at' => now(),
         ]);
-        
+
         // Log rejection action
         Log::info("Lembur ID {$this->id} ditolak oleh {$approver->nama} (ID: {$approvedBy}) pada " . now());
     }
@@ -145,7 +146,7 @@ class OvertimeAssignment extends Model
     {
         $reassigner = Pegawai::find($assignBy);
         $newUser = Pegawai::find($newUserId);
-        
+
         $this->update([
             'user_id' => $newUserId,
             'assign_by' => $assignBy,
@@ -153,7 +154,7 @@ class OvertimeAssignment extends Model
             'approved_by' => null,
             'approved_at' => null,
         ]);
-        
+
         // Log reassignment action
         Log::info("Lembur ID {$this->id} di-assign ulang ke {$newUser->nama} oleh {$reassigner->nama} (ID: {$assignBy}) pada " . now());
     }
@@ -174,7 +175,7 @@ class OvertimeAssignment extends Model
         $approver = $this->approvedBy;
         $approverName = $approver ? $approver->nama : 'Unknown';
         $approvalDate = $this->approved_at ? $this->approved_at->format('d M Y H:i') : '-';
-        
+
         if ($this->status === 'Accepted') {
             return "Diterima oleh {$approverName} pada {$approvalDate}";
         } else {
