@@ -36,16 +36,35 @@ class ListAttendanceReports extends ListRecords
                         ->required(),
                 ])
                 ->action(function (array $data) {
-                    $filename = 'rekap_absensi_' .
-                               Carbon::parse($data['start_date'])->format('Y-m-d') . '_to_' .
-                               Carbon::parse($data['end_date'])->format('Y-m-d') . '.xlsx';
+                    try {
+                        $startDate = Carbon::parse($data['start_date'])->format('Y-m-d');
+                        $endDate = Carbon::parse($data['end_date'])->format('Y-m-d');
 
-                    return response()->streamDownload(function () use ($data) {
-                        return Excel::raw(
+                        $filename = 'rekap_absensi_' . $startDate . '_to_' . $endDate . '.xlsx';
+
+                        \Filament\Notifications\Notification::make()
+                            ->title('Export Sedang Diproses')
+                            ->body('File Excel sedang digenerate, mohon tunggu...')
+                            ->info()
+                            ->send();
+
+                        // Gunakan Excel::download langsung daripada streamDownload
+                        return Excel::download(
                             new AttendanceReportExport($data['start_date'], $data['end_date']),
-                            \Maatwebsite\Excel\Excel::XLSX
+                            $filename
                         );
-                    }, $filename);
+
+                    } catch (\Exception $e) {
+                        \Log::error('Excel export error: ' . $e->getMessage());
+
+                        \Filament\Notifications\Notification::make()
+                            ->title('Export Error')
+                            ->body('Terjadi kesalahan saat export Excel: ' . $e->getMessage())
+                            ->danger()
+                            ->send();
+
+                        return null;
+                    }
                 }),
 
             // Export Rekap Absensi ke PDF
@@ -109,10 +128,10 @@ class ListAttendanceReports extends ListRecords
 
                         $data_rows = [];
                         $workDays = $this->getWorkDaysInPeriod($data['start_date'], $data['end_date']);
-                        
+
                         foreach ($pegawais as $pegawai) {
                             $tingkatKehadiran = $workDays > 0 ? round(($pegawai->total_hadir / $workDays) * 100, 1) : 0;
-                            $totalOvertimeHours = $pegawai->total_overtime_minutes ? 
+                            $totalOvertimeHours = $pegawai->total_overtime_minutes ?
                                                 round($pegawai->total_overtime_minutes / 60, 1) : 0;
 
                             $data_rows[] = [
@@ -138,7 +157,7 @@ class ListAttendanceReports extends ListRecords
 
                         $pdf = Pdf::loadView('exports.attendance-report-pdf', [
                             'title' => 'Rekap Absensi Karyawan',
-                            'period' => Carbon::parse($data['start_date'])->format('d/m/Y') . ' - ' . 
+                            'period' => Carbon::parse($data['start_date'])->format('d/m/Y') . ' - ' .
                                        Carbon::parse($data['end_date'])->format('d/m/Y'),
                             'headers' => $headers,
                             'data' => $data_rows,
@@ -211,10 +230,10 @@ class ListAttendanceReports extends ListRecords
 
                         $data_rows = [];
                         $workDays = $this->getWorkDaysInPeriod($startDate, $endDate);
-                        
+
                         foreach ($pegawais as $pegawai) {
                             $tingkatKehadiran = $workDays > 0 ? round(($pegawai->total_hadir / $workDays) * 100, 1) : 0;
-                            $totalOvertimeHours = $pegawai->total_overtime_minutes ? 
+                            $totalOvertimeHours = $pegawai->total_overtime_minutes ?
                                                 round($pegawai->total_overtime_minutes / 60, 1) : 0;
 
                             $data_rows[] = [

@@ -13,6 +13,8 @@ class PegawaiSeeder extends Seeder
      */
     public function run(): void
     {
+        // Truncate tabel untuk menghindari duplikasi
+        Pegawai::truncate();
         $pegawaiData = [
             [
                 // Tab Users
