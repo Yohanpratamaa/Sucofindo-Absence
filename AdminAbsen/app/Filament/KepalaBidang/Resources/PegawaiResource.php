@@ -3,15 +3,17 @@
 namespace App\Filament\KepalaBidang\Resources;
 
 use App\Filament\KepalaBidang\Resources\PegawaiResource\Pages;
+use App\Filament\KepalaBidang\Resources\PegawaiResource\RelationManagers;
 use App\Models\Pegawai;
+use App\Models\Jabatan;
+use App\Models\Posisi;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Filament\Notifications\Notification;
-use Illuminate\Support\Facades\Hash;
+use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class PegawaiResource extends Resource
 {
@@ -23,7 +25,7 @@ class PegawaiResource extends Resource
 
     protected static ?string $modelLabel = 'Pegawai';
 
-    protected static ?string $pluralModelLabel = 'Pegawai';
+    protected static ?string $pluralModelLabel = 'Data Pegawai';
 
     protected static ?string $navigationGroup = 'Manajemen Data';
 
@@ -39,96 +41,427 @@ class PegawaiResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Data Personal')
-                    ->schema([
-                        Forms\Components\TextInput::make('nama')
-                            ->label('Nama Lengkap')
-                            ->required()
-                            ->maxLength(255),
+                Forms\Components\Tabs::make('Tabs')
+                    ->id('pegawai-tabs') // Add ID for JavaScript targeting
+                    ->tabs([
+                        Forms\Components\Tabs\Tab::make('Users')
+                            ->id('users-tab') // Add ID for each tab
+                            ->icon('heroicon-o-user')
+                            ->schema([
+                                Forms\Components\Grid::make(2)
+                                    ->schema([
+                                        Forms\Components\TextInput::make('nama')
+                                            ->required()
+                                            ->maxLength(255)
+                                            ->placeholder('Masukkan nama lengkap'),
 
-                        Forms\Components\TextInput::make('npp')
-                            ->label('NPP (Nomor Pokok Pegawai)')
-                            ->required()
-                            ->unique(ignoreRecord: true)
-                            ->maxLength(20),
+                                        Forms\Components\TextInput::make('npp')
+                                            ->label('NPP')
+                                            ->required()
+                                            ->unique(ignoreRecord: true)
+                                            ->maxLength(255)
+                                            ->placeholder('Masukkan NPP'),
 
-                        Forms\Components\TextInput::make('email')
-                            ->label('Email')
-                            ->email()
-                            ->required()
-                            ->unique(ignoreRecord: true)
-                            ->maxLength(255),
+                                        Forms\Components\TextInput::make('email')
+                                            ->email()
+                                            ->required()
+                                            ->unique(ignoreRecord: true)
+                                            ->maxLength(255)
+                                            ->placeholder('email@example.com'),
 
-                        Forms\Components\TextInput::make('no_hp')
-                            ->label('Nomor HP')
-                            ->tel()
-                            ->maxLength(15),
+                                        Forms\Components\TextInput::make('password')
+                                            ->password()
+                                            ->required(fn (string $context): bool => $context === 'create')
+                                            ->minLength(8)
+                                            ->placeholder('Default: password123 (minimum 8 karakter)')
+                                            ->helperText('Jika kosong, akan diset otomatis: password123')
+                                            ->hint('Password dapat diubah setelah akun dibuat'),
 
-                        Forms\Components\DatePicker::make('tanggal_lahir')
-                            ->label('Tanggal Lahir'),
+                                        Forms\Components\TextInput::make('nik')
+                                            ->label('NIK')
+                                            ->required()
+                                            ->unique(ignoreRecord: true)
+                                            ->maxLength(255)
+                                            ->placeholder('Masukkan NIK'),
 
-                        Forms\Components\Select::make('jenis_kelamin')
-                            ->label('Jenis Kelamin')
-                            ->options([
-                                'L' => 'Laki-laki',
-                                'P' => 'Perempuan',
+                                        Forms\Components\Select::make('status_pegawai')
+                                            ->label('Status Pegawai')
+                                            ->options([
+                                                'PTT' => 'PTT',
+                                                'LS' => 'LS',
+                                            ])
+                                            ->required(),
+
+                                        Forms\Components\TextInput::make('nomor_handphone')
+                                            ->numeric()
+                                            ->label('Nomor Handphone')
+                                            ->required()
+                                            ->maxLength(15)
+                                            ->placeholder('Masukkan nomor handphone'),
+
+                                        Forms\Components\Select::make('status')
+                                            ->options([
+                                                'active' => 'Active',
+                                                'non-active' => 'Non-Active',
+                                            ])
+                                            ->default('active')
+                                            ->required(),
+
+                                        Forms\Components\Select::make('role_user')
+                                            ->label('Role User')
+                                            ->options([
+                                                'super admin' => 'Super Admin ',
+                                                'employee' => 'Employee ',
+                                                'Kepala Bidang' => 'Kepala Bidang',
+                                            ])
+                                            ->required()
+                                            ->helperText('Role menentukan panel mana yang dapat diakses setelah login'),
+
+                                        Forms\Components\Textarea::make('alamat')
+                                            ->rows(3)
+                                            ->columnSpanFull()
+                                            ->placeholder('Alamat lengkap'),
+                                    ]),
                             ]),
 
-                        Forms\Components\Textarea::make('alamat')
-                            ->label('Alamat')
-                            ->rows(3)
-                            ->maxLength(500),
+                        // Tab Jabatan - Dropdown dari Master Data
+                        Forms\Components\Tabs\Tab::make('Jabatan')
+                            ->id('jabatan-tab')
+                            ->icon('heroicon-o-briefcase')
+                            ->schema([
+                                Forms\Components\Section::make('Data Jabatan')
+                                    ->description('Pilih jabatan dari data master')
+                                    ->schema([
+                                        Forms\Components\Grid::make(2)
+                                            ->schema([
+                                                Forms\Components\Select::make('jabatan_nama')
+                                                    ->label('Nama Jabatan')
+                                                    ->required()
+                                                    ->searchable()
+                                                    ->preload()
+                                                    ->options(fn () => Jabatan::where('status', 'active')->pluck('nama', 'nama'))
+                                                    ->live()
+                                                    ->afterStateUpdated(function (Forms\Set $set, $state) {
+                                                        if ($state) {
+                                                            $jabatan = Jabatan::where('nama', $state)->first();
+                                                            $tunjangan = $jabatan?->tunjangan ?? 0;
+                                                            // Set nilai yang sudah diformat langsung
+                                                            $formatted = $tunjangan > 0 ? number_format($tunjangan, 0, ',', '.') : '0';
+                                                            $set('jabatan_tunjangan', $formatted);
+                                                        } else {
+                                                            $set('jabatan_tunjangan', '0');
+                                                        }
+                                                    }),
+
+                                                Forms\Components\TextInput::make('jabatan_tunjangan')
+                                                    ->label('Tunjangan Jabatan')
+                                                    ->prefix('Rp')
+                                                    ->placeholder('0')
+                                                    ->readOnly()
+                                                    ->live()
+                                                    ->extraInputAttributes([
+                                                        'id' => 'jabatan_tunjangan_field'
+                                                    ])
+                                                    ->extraAttributes([
+                                                        'x-data' => '{
+                                                            formatNumber(value) {
+                                                                if (!value || value == 0) return "0";
+                                                                return parseInt(value).toLocaleString("id-ID");
+                                                            }
+                                                        }',
+                                                        'x-effect' => '$el.querySelector("input").addEventListener("input", function() {
+                                                            if (this.value && this.value !== "0" && !this.value.includes(".")) {
+                                                                this.value = parseInt(this.value).toLocaleString("id-ID");
+                                                            }
+                                                        })'
+                                                    ])
+                                                    ->dehydrateStateUsing(function ($state) {
+                                                        // Simpan sebagai numeric untuk database
+                                                        return is_string($state) ? (int) str_replace(['.', ','], '', $state) : $state;
+                                                    })
+                                                    ->formatStateUsing(function ($state) {
+                                                        if (!$state || $state == 0) {
+                                                            return '0';
+                                                        }
+                                                        // Force format dengan titik pemisah ribuan
+                                                        $formatted = number_format((float) $state, 0, ',', '.');
+                                                        return $formatted;
+                                                    })
+                                                    ->helperText('Otomatis terisi berdasarkan jabatan yang dipilih'),
+                                            ]),
+                                    ]),
+                            ]),
+
+                        // Tab Posisi - Dropdown dari Master Data
+                        Forms\Components\Tabs\Tab::make('Posisi')
+                            ->id('posisi-tab')
+                            ->icon('heroicon-o-users')
+                            ->schema([
+                                Forms\Components\Section::make('Data Posisi')
+                                    ->description('Pilih posisi dari data master')
+                                    ->schema([
+                                        Forms\Components\Grid::make(2)
+                                            ->schema([
+                                                Forms\Components\Select::make('posisi_nama')
+                                                    ->label('Nama Posisi')
+                                                    ->required()
+                                                    ->searchable()
+                                                    ->preload()
+                                                    ->options(fn () => Posisi::where('status', 'active')->pluck('nama', 'nama'))
+                                                    ->live()
+                                                    ->afterStateUpdated(function (Forms\Set $set, $state) {
+                                                        if ($state) {
+                                                            $posisi = Posisi::where('nama', $state)->first();
+                                                            $tunjangan = $posisi?->tunjangan ?? 0;
+                                                            // Set nilai yang sudah diformat langsung
+                                                            $formatted = $tunjangan > 0 ? number_format($tunjangan, 0, ',', '.') : '0';
+                                                            $set('posisi_tunjangan', $formatted);
+                                                        } else {
+                                                            $set('posisi_tunjangan', '0');
+                                                        }
+                                                    }),
+
+                                                Forms\Components\TextInput::make('posisi_tunjangan')
+                                                    ->label('Tunjangan Posisi')
+                                                    ->prefix('Rp')
+                                                    ->placeholder('0')
+                                                    ->readOnly()
+                                                    ->live()
+                                                    ->dehydrateStateUsing(function ($state) {
+                                                        // Simpan sebagai numeric untuk database
+                                                        return is_string($state) ? (int) str_replace(['.', ','], '', $state) : $state;
+                                                    })
+                                                    ->formatStateUsing(function ($state) {
+                                                        if (!$state || $state == 0) {
+                                                            return '0';
+                                                        }
+                                                        // Force format dengan titik pemisah ribuan
+                                                        $formatted = number_format((float) $state, 0, ',', '.');
+                                                        return $formatted;
+                                                    })
+                                                    ->helperText('Otomatis terisi berdasarkan posisi yang dipilih'),
+                                            ]),
+                                    ]),
+                            ]),
+
+                        // Tab Pendidikan - Sesuai dengan gambar
+                        Forms\Components\Tabs\Tab::make('Pendidikan')
+                            ->id('pendidikan-tab')
+                            ->icon('heroicon-o-academic-cap')
+                            ->schema([
+                                Forms\Components\Repeater::make('pendidikan_list')
+                                    ->label('Data Pendidikan')
+                                    ->schema([
+                                        Forms\Components\Grid::make(2)
+                                            ->schema([
+                                                Forms\Components\Select::make('jenjang')
+                                                    ->label('Jenjang')
+                                                    ->options([
+                                                        'SD' => 'SD',
+                                                        'SMP' => 'SMP',
+                                                        'SMA' => 'SMA',
+                                                        'SMK' => 'SMK',
+                                                        'D3' => 'D3',
+                                                        'S1' => 'S1',
+                                                        'S2' => 'S2',
+                                                        'S3' => 'S3',
+                                                    ])
+                                                    ->required()
+                                                    ->placeholder('Pilih jenjang'),
+
+                                                Forms\Components\TextInput::make('sekolah_univ')
+                                                    ->label('Sekolah / Universitas')
+                                                    ->required()
+                                                    ->placeholder('Nama sekolah/universitas'),
+                                                Forms\Components\TextInput::make('fakultas_program_studi')
+                                                    ->label('Fakultas')
+                                                    ->placeholder('Nama fakultas '),
+
+                                                Forms\Components\TextInput::make('jurusan')
+                                                    ->label('Jurusan')
+                                                    ->placeholder('Nama jurusan'),
+
+                                                Forms\Components\DatePicker::make('thn_masuk')
+                                                    ->label('Thn Masuk')
+                                                    ->displayFormat('Y')
+                                                    ->format('Y-m-d'),
+
+                                                Forms\Components\DatePicker::make('thn_lulus')
+                                                    ->label('Thn Lulus')
+                                                    ->displayFormat('Y')
+                                                    ->format('Y-m-d'),
+
+                                                Forms\Components\TextInput::make('ipk_nilai')
+                                                    ->label('IPK / Nilai')
+                                                    ->placeholder('Contoh: 3.50 atau 85'),
+
+                                                Forms\Components\FileUpload::make('ijazah')
+                                                    ->label('Ijazah')
+                                                    ->acceptedFileTypes(['application/pdf'])
+                                                    ->maxSize(5120) // 5MB
+                                                    ->helperText('File dengan format PDF')
+                                                    ->directory('ijazah')
+                                                    ->visibility('private'),
+                                            ]),
+                                    ])
+                                    ->addActionLabel('Tambah Pendidikan')
+                                    ->defaultItems(1)
+                                    ->collapsible()
+                                    ->itemLabel(fn (array $state): ?string =>
+                                        isset($state['jenjang']) && isset($state['sekolah_univ'])
+                                            ? "{$state['jenjang']} - {$state['sekolah_univ']}"
+                                            : 'Pendidikan Baru'
+                                    ),
+                            ]),
+
+                        // Tab Nomor Emergency - Sesuai dengan gambar
+                        Forms\Components\Tabs\Tab::make('Nomor Emergency')
+                            ->id('emergency-tab')
+                            ->icon('heroicon-o-phone')
+                            ->schema([
+                                Forms\Components\Repeater::make('emergency_contacts')
+                                    ->label('Kontak Darurat')
+                                    ->schema([
+                                        Forms\Components\Grid::make(1)
+                                            ->schema([
+                                                Forms\Components\Select::make('relationship')
+                                                    ->label('Hubungan')
+                                                    ->options([
+                                                        'Ayah' => 'Ayah',
+                                                        'Ibu' => 'Ibu',
+                                                        'Suami' => 'Suami',
+                                                        'Istri' => 'Istri',
+                                                        'Anak' => 'Anak',
+                                                        'Saudara Kandung' => 'Saudara Kandung',
+                                                        'Saudara' => 'Saudara',
+                                                        'Teman' => 'Teman',
+                                                        'Lainnya' => 'Lainnya',
+                                                    ])
+                                                    ->required()
+                                                    ->placeholder('Pilih hubungan'),
+
+                                                Forms\Components\TextInput::make('nama_kontak')
+                                                    ->label('Nama')
+                                                    ->required()
+                                                    ->placeholder('Nama lengkap kontak darurat'),
+
+                                                Forms\Components\TextInput::make('no_emergency')
+                                                    ->label('No Emergency')
+                                                    ->tel()
+                                                    ->required()
+                                                    ->placeholder('Contoh: 081234567890')
+                                                    ->maxLength(15),
+                                            ]),
+                                    ])
+                                    ->addActionLabel('Tambah Kontak Darurat')
+                                    ->defaultItems(1)
+                                    ->collapsible()
+                                    ->itemLabel(fn (array $state): ?string =>
+                                        isset($state['nama_kontak']) && isset($state['relationship'])
+                                            ? "{$state['nama_kontak']} ({$state['relationship']})"
+                                            : 'Kontak Darurat Baru'
+                                    ),
+                            ]),
+
+                        // Tab Fasilitas - Dengan Repeater seperti Pendidikan
+                        Forms\Components\Tabs\Tab::make('Fasilitas')
+                            ->id('fasilitas-tab')
+                            ->icon('heroicon-o-gift')
+                            ->schema([
+                                Forms\Components\Repeater::make('fasilitas_list')
+                                    ->label('Data Fasilitas')
+                                    ->schema([
+                                        Forms\Components\Grid::make(2)
+                                            ->schema([
+                                                Forms\Components\TextInput::make('nama_jaminan')
+                                                    ->label('Nama Jaminan')
+                                                    ->placeholder('Contoh: BPJS Kesehatan, BPJS Ketenagakerjaan, Asuransi Jiwa'),
+
+                                                Forms\Components\TextInput::make('no_jaminan')
+                                                    ->label('No Jaminan')
+                                                    ->placeholder('Nomor kartu jaminan')
+                                                    ->maxLength(50),
+
+                                                Forms\Components\Select::make('jenis_fasilitas')
+                                                    ->label('Jenis Fasilitas')
+                                                    ->options([
+                                                        'BPJS Kesehatan' => 'BPJS Kesehatan',
+                                                        'BPJS Ketenagakerjaan' => 'BPJS Ketenagakerjaan',
+                                                        'Asuransi Jiwa' => 'Asuransi Jiwa',
+                                                        'Asuransi Kesehatan' => 'Asuransi Kesehatan',
+                                                        'Tunjangan Transport' => 'Tunjangan Transport',
+                                                        'Tunjangan Makan' => 'Tunjangan Makan',
+                                                        'Tunjangan Komunikasi' => 'Tunjangan Komunikasi',
+                                                        'Lainnya' => 'Lainnya',
+                                                    ])
+                                                    ->searchable()
+                                                    ->placeholder('Pilih jenis fasilitas')
+                                                    ->live() // Enable real-time updates
+                                                    ->afterStateUpdated(function ($state, callable $set) {
+                                                        // Reset nominal if BPJS is selected
+                                                        if (in_array($state, ['BPJS Kesehatan', 'BPJS Ketenagakerjaan'])) {
+                                                            $set('nilai_fasilitas', 0);
+                                                        }
+                                                    }),
+
+                                                Forms\Components\TextInput::make('provider')
+                                                    ->label('Provider/Penyedia')
+                                                    ->placeholder('Contoh: BPJS, Prudential, Allianz, dll'),
+
+                                                Forms\Components\TextInput::make('nilai_fasilitas')
+                                                    ->label('Nominal')
+                                                    ->prefix('Rp')
+                                                    ->placeholder('1.500.000')
+                                                    ->formatStateUsing(function ($state) {
+                                                        return $state ? number_format($state, 0, ',', '.') : '';
+                                                    })
+                                                    ->dehydrateStateUsing(function ($state, callable $get) {
+                                                        // For BPJS, always return 0
+                                                        $jenisFasilitas = $get('jenis_fasilitas');
+                                                        if (in_array($jenisFasilitas, ['BPJS Kesehatan', 'BPJS Ketenagakerjaan'])) {
+                                                            return 0;
+                                                        }
+                                                        // Remove dots and convert to integer for other facilities
+                                                        return $state ? (int) str_replace('.', '', $state) : 0;
+                                                    })
+                                                    ->live(debounce: 300)
+                                                    ->extraInputAttributes([
+                                                        'oninput' => 'this.value = this.value.replace(/\D/g, "").replace(/\B(?=(\d{3})+(?!\d))/g, ".")',
+                                                        'onkeypress' => 'return event.charCode >= 48 && event.charCode <= 57'
+                                                    ])
+                                                    ->helperText(function (callable $get): string {
+                                                        $jenisFasilitas = $get('jenis_fasilitas');
+                                                        if (in_array($jenisFasilitas, ['BPJS Kesehatan', 'BPJS Ketenagakerjaan'])) {
+                                                            return '❌ BPJS tidak perlu nominal (otomatis Rp 0)';
+                                                        }
+                                                        return '✅ Nilai dalam rupiah per bulan (wajib diisi)';
+                                                    })
+                                                    ->disabled(function (callable $get): bool {
+                                                        $jenisFasilitas = $get('jenis_fasilitas');
+                                                        return in_array($jenisFasilitas, ['BPJS Kesehatan', 'BPJS Ketenagakerjaan']);
+                                                    })
+                                                    ->required(function (callable $get): bool {
+                                                        $jenisFasilitas = $get('jenis_fasilitas');
+                                                        // Required for non-BPJS facilities
+                                                        return !in_array($jenisFasilitas, ['BPJS Kesehatan', 'BPJS Ketenagakerjaan']);
+                                                    }),
+
+                                            ]),
+                                    ])
+                                    ->addActionLabel('Tambah Fasilitas')
+                                    ->defaultItems(1)
+                                    ->collapsible()
+                                    ->itemLabel(fn (array $state): ?string =>
+                                        isset($state['nama_jaminan']) && isset($state['jenis_fasilitas'])
+                                            ? "{$state['jenis_fasilitas']} - {$state['nama_jaminan']}"
+                                            : 'Fasilitas Baru'
+                                    )
+                                    ->reorderable()
+                                    ->cloneable(),
+                            ]),
                     ])
-                    ->columns(2),
-
-                Forms\Components\Section::make('Data Kepegawaian')
-                    ->schema([
-                        Forms\Components\TextInput::make('jabatan')
-                            ->label('Jabatan')
-                            ->maxLength(255),
-
-                        Forms\Components\TextInput::make('divisi')
-                            ->label('Divisi/Departemen')
-                            ->maxLength(255),
-
-                        Forms\Components\DatePicker::make('tanggal_masuk')
-                            ->label('Tanggal Masuk')
-                            ->required(),
-
-                        Forms\Components\Select::make('status')
-                            ->label('Status Pegawai')
-                            ->options([
-                                'active' => 'Aktif',
-                                'inactive' => 'Non-Aktif',
-                                'resigned' => 'Mengundurkan Diri',
-                            ])
-                            ->required()
-                            ->default('active'),
-
-                        Forms\Components\Hidden::make('role_user')
-                            ->default('employee'),
-                    ])
-                    ->columns(2),
-
-                Forms\Components\Section::make('Akun Login')
-                    ->schema([
-                        Forms\Components\TextInput::make('password')
-                            ->label('Password')
-                            ->password()
-                            ->dehydrateStateUsing(fn ($state) => Hash::make($state))
-                            ->dehydrated(fn ($state) => filled($state))
-                            ->required(fn (string $context): bool => $context === 'create')
-                            ->helperText('Kosongkan jika tidak ingin mengubah password'),
-
-                        Forms\Components\TextInput::make('password_confirmation')
-                            ->label('Konfirmasi Password')
-                            ->password()
-                            ->same('password')
-                            ->dehydrated(false)
-                            ->required(fn (string $context): bool => $context === 'create'),
-                    ])
-                    ->columns(2)
-                    ->visible(fn (string $context): bool => $context === 'create'),
+                    ->columnSpanFull()
+                    ->persistTabInQueryString(),
             ]);
     }
 
@@ -139,202 +472,115 @@ class PegawaiResource extends Resource
                 Tables\Columns\TextColumn::make('npp')
                     ->label('NPP')
                     ->searchable()
-                    ->sortable()
-                    ->copyable()
-                    ->weight('semibold'),
+                    ->sortable(),
 
                 Tables\Columns\TextColumn::make('nama')
-                    ->label('Nama Lengkap')
                     ->searchable()
-                    ->sortable()
-                    ->weight('medium'),
+                    ->sortable(),
 
                 Tables\Columns\TextColumn::make('email')
-                    ->label('Email')
                     ->searchable()
-                    ->copyable()
-                    ->toggleable(),
+                    ->sortable(),
 
-                Tables\Columns\TextColumn::make('no_hp')
-                    ->label('No. HP')
+                Tables\Columns\TextColumn::make('nik')
+                    ->label('NIK')
+                    ->searchable(),
+
+                Tables\Columns\TextColumn::make('nomor_handphone')
+                    ->label('No HP')
                     ->searchable()
-                    ->copyable()
-                    ->toggleable(),
+                    ->toggleable(isToggledHiddenByDefault: true),
 
-                Tables\Columns\TextColumn::make('jabatan')
-                    ->label('Jabatan')
-                    ->searchable()
-                    ->toggleable(),
-
-                Tables\Columns\TextColumn::make('divisi')
-                    ->label('Divisi')
-                    ->searchable()
-                    ->toggleable(),
-
-                Tables\Columns\TextColumn::make('tanggal_masuk')
-                    ->label('Tanggal Masuk')
-                    ->date('d M Y')
-                    ->sortable()
-                    ->toggleable(),
+                Tables\Columns\BadgeColumn::make('status_pegawai')
+                    ->label('Status Pegawai')
+                    ->colors([
+                        'primary' => 'PTT',
+                        'success' => 'LS',
+                    ]),
 
                 Tables\Columns\BadgeColumn::make('status')
-                    ->label('Status')
                     ->colors([
                         'success' => 'active',
-                        'warning' => 'inactive',
-                        'danger' => 'resigned',
-                    ])
-                    ->formatStateUsing(fn (string $state): string => match ($state) {
-                        'active' => 'Aktif',
-                        'inactive' => 'Non-Aktif',
-                        'resigned' => 'Mengundurkan Diri',
-                        default => $state,
+                        'danger' => 'non-active',
+                    ]),
+
+                Tables\Columns\TextColumn::make('role_user')
+                    ->label('Role')
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'super admin' => 'danger',
+                        'Kepala Bidang' => 'warning',
+                        'employee' => 'primary',
                     }),
 
+                Tables\Columns\TextColumn::make('jabatan_nama')
+                    ->label('Jabatan')
+                    ->placeholder('Belum diset'),
+
+                Tables\Columns\TextColumn::make('posisi_nama')
+                    ->label('Posisi')
+                    ->placeholder('Belum diset'),
+
+                // Kolom untuk fasilitas dari JSON
+                Tables\Columns\TextColumn::make('total_nilai_fasilitas')
+                    ->label('Total Fasilitas')
+                    ->money('IDR')
+                    ->getStateUsing(function ($record) {
+                        return $record->total_nilai_fasilitas ?? 0;
+                    })
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                Tables\Columns\TextColumn::make('jumlah_fasilitas')
+                    ->label('Jml Fasilitas')
+                    ->getStateUsing(function ($record) {
+                        return $record->jumlah_fasilitas;
+                    })
+                    ->badge()
+                    ->color('success')
+                    ->toggleable(isToggledHiddenByDefault: true),
+
                 Tables\Columns\TextColumn::make('created_at')
-                    ->label('Dibuat')
-                    ->dateTime('d M Y H:i')
+                    ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                Tables\Filters\SelectFilter::make('status')
+                Tables\Filters\SelectFilter::make('status_pegawai')
                     ->options([
-                        'active' => 'Aktif',
-                        'inactive' => 'Non-Aktif',
-                        'resigned' => 'Mengundurkan Diri',
+                        'PTT' => 'PTT',
+                        'LS' => 'LS',
                     ]),
 
-                Tables\Filters\Filter::make('tanggal_masuk')
-                    ->form([
-                        Forms\Components\DatePicker::make('tanggal_dari')
-                            ->label('Tanggal Masuk Dari'),
-                        Forms\Components\DatePicker::make('tanggal_sampai')
-                            ->label('Tanggal Masuk Sampai'),
-                    ])
-                    ->query(function (Builder $query, array $data): Builder {
-                        return $query
-                            ->when(
-                                $data['tanggal_dari'],
-                                fn (Builder $query, $date): Builder => $query->whereDate('tanggal_masuk', '>=', $date),
-                            )
-                            ->when(
-                                $data['tanggal_sampai'],
-                                fn (Builder $query, $date): Builder => $query->whereDate('tanggal_masuk', '<=', $date),
-                            );
-                    }),
+                Tables\Filters\SelectFilter::make('status')
+                    ->options([
+                        'active' => 'Active',
+                        'non-active' => 'Non-Active',
+                    ]),
 
-                Tables\Filters\Filter::make('jenis_kelamin')
-                    ->form([
-                        Forms\Components\Select::make('jenis_kelamin')
-                            ->label('Jenis Kelamin')
-                            ->options([
-                                'L' => 'Laki-laki',
-                                'P' => 'Perempuan',
-                            ]),
-                    ])
-                    ->query(function (Builder $query, array $data): Builder {
-                        return $query->when(
-                            $data['jenis_kelamin'],
-                            fn (Builder $query, $gender): Builder => $query->where('jenis_kelamin', $gender),
-                        );
-                    }),
+                Tables\Filters\SelectFilter::make('role_user')
+                    ->options([
+                        'super admin' => 'Super Admin',
+                        'employee' => 'Employee',
+                        'Kepala Bidang' => 'Kepala Bidang',
+                    ]),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make()
-                    ->label('Lihat'),
-
-                Tables\Actions\EditAction::make()
-                    ->label('Edit'),
-
-                Tables\Actions\Action::make('reset_password')
-                    ->label('Reset Password')
-                    ->icon('heroicon-o-key')
-                    ->color('warning')
-                    ->requiresConfirmation()
-                    ->modalHeading('Reset Password Pegawai')
-                    ->modalDescription(fn ($record) => "Apakah Anda yakin ingin mereset password untuk {$record->nama}? Password baru akan sama dengan NPP.")
-                    ->action(function ($record) {
-                        $record->update([
-                            'password' => Hash::make($record->npp)
-                        ]);
-
-                        Notification::make()
-                            ->success()
-                            ->title('Password Berhasil Direset')
-                            ->body("Password {$record->nama} telah direset menjadi NPP: {$record->npp}")
-                            ->send();
-                    }),
-
-                Tables\Actions\Action::make('toggle_status')
-                    ->label(fn ($record) => $record->status === 'active' ? 'Non-Aktifkan' : 'Aktifkan')
-                    ->icon(fn ($record) => $record->status === 'active' ? 'heroicon-o-x-circle' : 'heroicon-o-check-circle')
-                    ->color(fn ($record) => $record->status === 'active' ? 'danger' : 'success')
-                    ->requiresConfirmation()
-                    ->modalHeading(fn ($record) => $record->status === 'active' ? 'Non-Aktifkan Pegawai' : 'Aktifkan Pegawai')
-                    ->modalDescription(fn ($record) => "Apakah Anda yakin ingin " . ($record->status === 'active' ? 'menonaktifkan' : 'mengaktifkan') . " {$record->nama}?")
-                    ->action(function ($record) {
-                        $newStatus = $record->status === 'active' ? 'inactive' : 'active';
-                        $record->update(['status' => $newStatus]);
-
-                        Notification::make()
-                            ->success()
-                            ->title('Status Berhasil Diubah')
-                            ->body("{$record->nama} telah " . ($newStatus === 'active' ? 'diaktifkan' : 'dinonaktifkan'))
-                            ->send();
-                    })
-                    ->visible(fn ($record) => in_array($record->status, ['active', 'inactive'])),
+                Tables\Actions\ViewAction::make(),
+                Tables\Actions\EditAction::make(),
+                Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
-                Tables\Actions\BulkAction::make('bulk_activate')
-                    ->label('Aktifkan yang Dipilih')
-                    ->icon('heroicon-o-check-circle')
-                    ->color('success')
-                    ->requiresConfirmation()
-                    ->modalHeading('Aktifkan Pegawai Terpilih')
-                    ->modalDescription('Apakah Anda yakin ingin mengaktifkan semua pegawai yang dipilih?')
-                    ->action(function ($records) {
-                        $count = 0;
-                        foreach ($records as $record) {
-                            if ($record->status !== 'active') {
-                                $record->update(['status' => 'active']);
-                                $count++;
-                            }
-                        }
+                Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\DeleteBulkAction::make(),
+                ]),
+            ]);
+    }
 
-                        Notification::make()
-                            ->success()
-                            ->title('Pegawai Berhasil Diaktifkan')
-                            ->body("{$count} pegawai telah diaktifkan.")
-                            ->send();
-                    }),
-
-                Tables\Actions\BulkAction::make('bulk_deactivate')
-                    ->label('Non-Aktifkan yang Dipilih')
-                    ->icon('heroicon-o-x-circle')
-                    ->color('danger')
-                    ->requiresConfirmation()
-                    ->modalHeading('Non-Aktifkan Pegawai Terpilih')
-                    ->modalDescription('Apakah Anda yakin ingin menonaktifkan semua pegawai yang dipilih?')
-                    ->action(function ($records) {
-                        $count = 0;
-                        foreach ($records as $record) {
-                            if ($record->status === 'active') {
-                                $record->update(['status' => 'inactive']);
-                                $count++;
-                            }
-                        }
-
-                        Notification::make()
-                            ->success()
-                            ->title('Pegawai Berhasil Dinonaktifkan')
-                            ->body("{$count} pegawai telah dinonaktifkan.")
-                            ->send();
-                    }),
-            ])
-            ->defaultSort('created_at', 'desc')
-            ->striped()
-            ->paginated([10, 25, 50, 100]);
+    public static function getRelations(): array
+    {
+        return [
+            //
+        ];
     }
 
     public static function getPages(): array

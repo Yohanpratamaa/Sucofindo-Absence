@@ -44,7 +44,7 @@ class EditPegawai extends EditRecord
     {
         // Pastikan role_user tetap employee
         $data['role_user'] = 'employee';
-        
+
         return $data;
     }
 }
