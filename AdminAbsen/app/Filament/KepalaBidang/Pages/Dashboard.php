@@ -25,7 +25,6 @@ class Dashboard extends BaseDashboard
     public function getWidgets(): array
     {
         return [
-            AccountWidget::class,
             \App\Filament\KepalaBidang\Widgets\TeamAttendanceWidget::class,
             \App\Filament\KepalaBidang\Widgets\ApprovalStatsWidget::class,
             \App\Filament\KepalaBidang\Widgets\TeamPerformanceWidget::class,

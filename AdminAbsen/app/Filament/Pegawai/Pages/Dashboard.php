@@ -25,7 +25,6 @@ class Dashboard extends BaseDashboard
     public function getWidgets(): array
     {
         return [
-            AccountWidget::class,
             \App\Filament\Pegawai\Widgets\MyAttendanceWidget::class,
             // \App\Filament\Pegawai\Widgets\MyIzinWidget::class,
             \App\Filament\Pegawai\Widgets\AttendanceStatsWidget::class,
