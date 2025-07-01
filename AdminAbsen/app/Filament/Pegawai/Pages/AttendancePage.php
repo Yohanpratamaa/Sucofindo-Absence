@@ -22,7 +22,7 @@ class AttendancePage extends Page implements HasForms
     protected static ?string $navigationIcon = 'heroicon-o-clock';
     protected static ?string $navigationLabel = 'Absensi';
     protected static ?string $title = 'Absensi Pegawai';
-    protected static string $view = 'filament.pegawai.pages.attendance-page-improved';
+    protected static string $view = 'filament.pegawai.pages.attendance-simple';
 
     public static function getNavigationGroup(): ?string
     {
@@ -191,12 +191,59 @@ class AttendancePage extends Page implements HasForms
         return $currentTime->greaterThanOrEqualTo($startTime);
     }
 
-    public function getTimeWindowInfo(): array
+    /**
+     * Get current action based on attendance state
+     */
+    public function getCurrentAction()
     {
-        $currentTime = Carbon::now();
+        if ($this->attendanceType === 'WFO') {
+            if ($this->canCheckIn) {
+                return 'check_in';
+            } elseif ($this->canCheckOut) {
+                return 'check_out';
+            }
+        } else { // Dinas Luar
+            if ($this->canCheckInPagi) {
+                return 'check_in_pagi';
+            } elseif ($this->canCheckInSiang) {
+                return 'check_in_siang';
+            } elseif ($this->canCheckOut) {
+                return 'check_out';
+            }
+        }
+        return null;
+    }
 
+    /**
+     * Get action title for UI
+     */
+    public function getActionTitle()
+    {
+        $action = $this->getCurrentAction();
+        
+        switch ($action) {
+            case 'check_in':
+                return 'Check In WFO';
+            case 'check_out':
+                return 'Check Out';
+            case 'check_in_pagi':
+                return 'Absensi Pagi (Dinas Luar)';
+            case 'check_in_siang':
+                return 'Absensi Siang (Dinas Luar)';
+            default:
+                return 'Absensi Selesai';
+        }
+    }
+
+    /**
+     * Get time window information
+     */
+    public function getTimeWindowInfo()
+    {
+        $now = Carbon::now();
+        
         return [
-            'current_time' => $currentTime->format('H:i:s'),
+            'current_time' => $now->format('H:i'),
             'siang_window' => [
                 'start' => '12:00',
                 'end' => '14:59',
@@ -204,100 +251,58 @@ class AttendancePage extends Page implements HasForms
             ],
             'sore_window' => [
                 'start' => '15:00',
-                'is_active' => $this->isWithinSoreTimeWindow(),
-                'applicable_to' => 'WFO Check-Out & Dinas Luar Check-Out'
+                'end' => '23:59',
+                'is_active' => $this->isWithinSoreTimeWindow()
             ]
         ];
     }
 
     /**
-     * Get current action for Dinas Luar
+     * Get attendance progress information
      */
-    public function getCurrentAction(): ?string
-    {
-        if ($this->attendanceType !== 'Dinas Luar') {
-            return null;
-        }
-
-        if ($this->canCheckInPagi) {
-            return 'pagi';
-        } elseif ($this->canCheckInSiang) {
-            return 'siang';
-        } elseif ($this->canCheckOut) {
-            return 'sore';
-        }
-
-        return null;
-    }
-
-    public function getActionTitle(): string
-    {
-        if ($this->attendanceType === 'WFO') {
-            if ($this->canCheckIn) {
-                return 'Check In WFO';
-            } elseif ($this->canCheckOut) {
-                return 'Check Out WFO';
-            } else {
-                return 'Absensi WFO';
-            }
-        } else {
-            $currentAction = $this->getCurrentAction();
-            return match($currentAction) {
-                'pagi' => 'Absensi Pagi - Dinas Luar',
-                'siang' => 'Absensi Siang - Dinas Luar',
-                'sore' => 'Absensi Sore - Dinas Luar',
-                default => 'Absensi Dinas Luar'
-            };
-        }
-    }
-
-    /**
-     * Get offices for WFO location checking
-     */
-    public function getOffices(): array
-    {
-        return Office::all(['id', 'name', 'latitude', 'longitude', 'radius'])->toArray();
-    }
-
     public function getAttendanceProgress()
     {
-        if (!$this->todayAttendance) {
-            return [
-                'pagi' => false,
-                'siang' => false,
-                'sore' => false,
-                'percentage' => 0
-            ];
+        $progress = [
+            'completed' => 0,
+            'total' => 0,
+            'check_in' => false,
+            'check_in_siang' => false,
+            'check_out' => false
+        ];
+
+        if ($this->attendanceType === 'WFO') {
+            $progress['total'] = 2; // Check in and check out
+            
+            if ($this->todayAttendance) {
+                if ($this->todayAttendance->check_in) {
+                    $progress['completed']++;
+                    $progress['check_in'] = true;
+                }
+                if ($this->todayAttendance->check_out) {
+                    $progress['completed']++;
+                    $progress['check_out'] = true;
+                }
+            }
+        } else { // Dinas Luar
+            $progress['total'] = 3; // Pagi, siang, sore
+            
+            if ($this->todayAttendance) {
+                if ($this->todayAttendance->check_in) {
+                    $progress['completed']++;
+                    $progress['check_in'] = true;
+                }
+                if ($this->todayAttendance->absen_siang) {
+                    $progress['completed']++;
+                    $progress['check_in_siang'] = true;
+                }
+                if ($this->todayAttendance->check_out) {
+                    $progress['completed']++;
+                    $progress['check_out'] = true;
+                }
+            }
         }
 
-        if ($this->attendanceType === 'Dinas Luar') {
-            $pagi = !is_null($this->todayAttendance->check_in);
-            $siang = !is_null($this->todayAttendance->absen_siang);
-            $sore = !is_null($this->todayAttendance->check_out);
-
-            $completed = ($pagi ? 1 : 0) + ($siang ? 1 : 0) + ($sore ? 1 : 0);
-            $percentage = round(($completed / 3) * 100);
-
-            return [
-                'pagi' => $pagi,
-                'siang' => $siang,
-                'sore' => $sore,
-                'percentage' => $percentage
-            ];
-        } else {
-            // WFO progress
-            $checkIn = !is_null($this->todayAttendance->check_in);
-            $checkOut = !is_null($this->todayAttendance->check_out);
-
-            $completed = ($checkIn ? 1 : 0) + ($checkOut ? 1 : 0);
-            $percentage = round(($completed / 2) * 100);
-
-            return [
-                'check_in' => $checkIn,
-                'check_out' => $checkOut,
-                'percentage' => $percentage
-            ];
-        }
+        return $progress;
     }
 
     /**
@@ -557,6 +562,22 @@ class AttendancePage extends Page implements HasForms
     /**
      * Helper Methods
      */
+    protected function getOffices(): array
+    {
+        return Office::select('id', 'nama_kantor', 'latitude', 'longitude', 'radius_meter')
+            ->get()
+            ->map(function ($office) {
+                return [
+                    'id' => $office->id,
+                    'name' => $office->nama_kantor,
+                    'latitude' => (float) $office->latitude,
+                    'longitude' => (float) $office->longitude,
+                    'radius' => (float) $office->radius_meter,
+                ];
+            })
+            ->toArray();
+    }
+
     protected function isWithinOfficeRadius($latitude, $longitude): bool
     {
         $offices = $this->getOffices();
