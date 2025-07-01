@@ -21,6 +21,7 @@ use Maatwebsite\Excel\Facades\Excel;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Filament\Notifications\Notification;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
 
 class AttendanceResource extends Resource
 {
@@ -44,12 +45,12 @@ class AttendanceResource extends Resource
         return false; // Admin tidak bisa create absensi
     }
 
-    public static function canEdit($record): bool
+    public static function canEdit(\Illuminate\Database\Eloquent\Model $record): bool
     {
         return false; // Admin tidak bisa edit absensi
     }
 
-    public static function canDelete($record): bool
+    public static function canDelete(\Illuminate\Database\Eloquent\Model $record): bool
     {
         return false; // Admin tidak bisa delete absensi
     }
@@ -327,19 +328,19 @@ class AttendanceResource extends Resource
                     ->label('Jam Masuk Std')
                     ->toggleable(isToggledHiddenByDefault: true),
 
-                Tables\Columns\BadgeColumn::make('kelengkapan_status')
+                Tables\Columns\TextColumn::make('kelengkapan_status')
                     ->label('Kelengkapan')
                     ->getStateUsing(function (?Attendance $record): string {
                         if (!$record) return '-';
                         $kelengkapan = $record->kelengkapan_absensi;
                         return "{$kelengkapan['completed']}/{$kelengkapan['total']}";
                     })
-                    ->colors([
-                        'success' => fn (?Attendance $record): bool =>
-                            $record && $record->kelengkapan_absensi['status'] === 'Lengkap',
-                        'warning' => fn (?Attendance $record): bool =>
-                            $record && $record->kelengkapan_absensi['status'] === 'Belum Lengkap',
-                    ])
+                    ->badge()
+                    ->color(function (?Attendance $record): string {
+                        if (!$record) return 'gray';
+                        $kelengkapan = $record->kelengkapan_absensi;
+                        return $kelengkapan['status'] === 'Lengkap' ? 'success' : 'warning';
+                    })
                     ->toggleable(isToggledHiddenByDefault: true),
 
                 Tables\Columns\TextColumn::make('absensi_requirement')
@@ -386,25 +387,30 @@ class AttendanceResource extends Resource
                     ->getStateUsing(function (?Attendance $record): string {
                         if (!$record) return '-';
 
-                        if ($record->attendance_type === 'WFO') {
-                            $office = $record->officeSchedule?->office;
-                            if ($office && $record->latitude_absen_masuk && $record->longitude_absen_masuk) {
-                                $distance = self::calculateDistance(
-                                    $office->latitude,
-                                    $office->longitude,
-                                    $record->latitude_absen_masuk,
-                                    $record->longitude_absen_masuk
-                                );
-                                return "Kantor ({$distance}m dari pusat)";
-                            }
-                            return 'Kantor (lokasi tersedia)';
-                        } else {
-                            $locations = [];
-                            if ($record->latitude_absen_masuk) $locations[] = 'Check In';
-                            if ($record->latitude_absen_siang) $locations[] = 'Siang';
-                            if ($record->latitude_absen_pulang) $locations[] = 'Check Out';
+                        try {
+                            if ($record->attendance_type === 'WFO') {
+                                $office = $record->officeSchedule?->office;
+                                if ($office && $record->latitude_absen_masuk && $record->longitude_absen_masuk) {
+                                    $distance = self::calculateDistance(
+                                        $office->latitude,
+                                        $office->longitude,
+                                        $record->latitude_absen_masuk,
+                                        $record->longitude_absen_masuk
+                                    );
+                                    return "Kantor ({$distance}m dari pusat)";
+                                }
+                                return 'Kantor (lokasi tersedia)';
+                            } else {
+                                $locations = [];
+                                if ($record->latitude_absen_masuk) $locations[] = 'Check In';
+                                if ($record->latitude_absen_siang) $locations[] = 'Siang';
+                                if ($record->latitude_absen_pulang) $locations[] = 'Check Out';
 
-                            return 'Dinas Luar (' . implode(', ', $locations) . ')';
+                                return 'Dinas Luar (' . implode(', ', $locations) . ')';
+                            }
+                        } catch (\Exception $e) {
+                            Log::error('Error calculating location info: ' . $e->getMessage());
+                            return 'Error lokasi';
                         }
                     })
                     ->color(fn (?Attendance $record): string =>
@@ -564,9 +570,13 @@ class AttendanceResource extends Resource
     /**
      * Calculate distance between two coordinates in meters
      */
-    public static function calculateDistance($lat1, $lon1, $lat2, $lon2)
+    public static function calculateDistance($lat1, $lon1, $lat2, $lon2): int
     {
-        if (!$lat1 || !$lon1 || !$lat2 || !$lon2) {
+        if (!is_numeric($lat1) || !is_numeric($lon1) || !is_numeric($lat2) || !is_numeric($lon2)) {
+            return 0;
+        }
+
+        if (empty($lat1) || empty($lon1) || empty($lat2) || empty($lon2)) {
             return 0;
         }
 
@@ -578,6 +588,6 @@ class AttendanceResource extends Resource
         $a = sin($dLat/2) * sin($dLat/2) + cos(deg2rad($lat1)) * cos(deg2rad($lat2)) * sin($dLon/2) * sin($dLon/2);
         $c = 2 * atan2(sqrt($a), sqrt(1-$a));
 
-        return round($earthRadius * $c);
+        return (int) round($earthRadius * $c);
     }
 }

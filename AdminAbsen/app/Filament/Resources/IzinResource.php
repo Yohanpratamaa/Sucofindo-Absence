@@ -6,6 +6,7 @@ use App\Filament\Resources\IzinResource\Pages;
 use App\Filament\Resources\IzinResource\RelationManagers;
 use App\Models\Izin;
 use App\Models\Pegawai;
+use App\Models\ManajemenIzin;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -48,11 +49,7 @@ class IzinResource extends Resource
 
                                 Forms\Components\Select::make('jenis_izin')
                                     ->label('Jenis Izin')
-                                    ->options([
-                                        'sakit' => 'Sakit',
-                                        'cuti' => 'Cuti',
-                                        'izin' => 'Izin Khusus',
-                                    ])
+                                    ->options(ManajemenIzin::getSelectOptions())
                                     ->disabled(),
 
                                 Forms\Components\DatePicker::make('tanggal_mulai')
@@ -115,12 +112,16 @@ class IzinResource extends Resource
 
                 Tables\Columns\BadgeColumn::make('jenis_izin')
                     ->label('Jenis Izin')
+                    ->getStateUsing(function (Izin $record): string {
+                        $jenisIzinData = ManajemenIzin::where('kode_izin', $record->jenis_izin)->first();
+                        return $jenisIzinData ? $jenisIzinData->nama_izin : ucfirst($record->jenis_izin);
+                    })
                     ->colors([
-                        'primary' => 'cuti',
-                        'warning' => 'sakit',
-                        'info' => 'izin',
-                    ])
-                    ->formatStateUsing(fn (string $state): string => ucfirst($state)),
+                        'primary' => fn (Izin $record) => $record->jenisIzinData?->kategori === 'cuti',
+                        'warning' => fn (Izin $record) => $record->jenisIzinData?->kategori === 'izin_khusus',
+                        'danger' => fn (Izin $record) => $record->jenisIzinData?->kategori === 'sakit',
+                        'info' => fn (Izin $record) => $record->jenisIzinData?->kategori === 'dinas',
+                    ]),
 
                 Tables\Columns\TextColumn::make('periode_izin')
                     ->label('Periode Izin')
@@ -170,11 +171,7 @@ class IzinResource extends Resource
             ->filters([
                 Tables\Filters\SelectFilter::make('jenis_izin')
                     ->label('Jenis Izin')
-                    ->options([
-                        'sakit' => 'Sakit',
-                        'cuti' => 'Cuti',
-                        'izin' => 'Izin Khusus',
-                    ])
+                    ->options(ManajemenIzin::getSelectOptions())
                     ->native(false),
 
                 Tables\Filters\SelectFilter::make('status')

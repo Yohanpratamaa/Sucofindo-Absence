@@ -23,8 +23,8 @@ class DinaslLuarAttendance extends Page implements HasForms
     protected static ?string $navigationLabel = 'Absensi Dinas Luar';
     protected static ?string $title = 'Absensi Dinas Luar';
     protected static string $view = 'filament.pegawai.pages.dinas-luar-attendance';
-    protected static ?string $navigationGroup = 'Absensi';
-    protected static ?int $navigationSort = 2;
+    protected static ?string $navigationGroup = 'Absensi Pegawai';
+    protected static ?int $navigationSort = 1;
 
     public $currentLocation = null;
     public $todayAttendance = null;
@@ -133,7 +133,7 @@ class DinaslLuarAttendance extends Page implements HasForms
         $this->calculateAttendanceStatus();
 
         // Notifikasi dengan status kehadiran
-        $notificationBody = $isLate 
+        $notificationBody = $isLate
             ? 'Absensi pagi berhasil. Status: Terlambat. Jangan lupa absen siang dan sore.'
             : 'Absensi pagi berhasil. Status: Tepat Waktu. Jangan lupa absen siang dan sore.';
 

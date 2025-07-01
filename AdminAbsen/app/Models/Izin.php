@@ -42,6 +42,12 @@ class Izin extends Model
         return $this->belongsTo(Pegawai::class, 'approved_by');
     }
 
+    // Relasi dengan ManajemenIzin (master data jenis izin)
+    public function jenisIzinData()
+    {
+        return $this->belongsTo(ManajemenIzin::class, 'jenis_izin', 'kode_izin');
+    }
+
     // Accessor untuk status izin
     public function getStatusAttribute()
     {
@@ -115,7 +121,7 @@ class Izin extends Model
             'approved_by' => $approvedBy,
             'approved_at' => now(),
         ]);
-        
+
         // Log approval action
         Log::info("Izin ID {$this->id} disetujui oleh {$approver->nama} (ID: {$approvedBy}) pada " . now());
     }
@@ -128,7 +134,7 @@ class Izin extends Model
             'approved_by' => $approvedBy,
             'approved_at' => null,
         ]);
-        
+
         // Log rejection action
         Log::info("Izin ID {$this->id} ditolak oleh {$approver->nama} (ID: {$approvedBy}) pada " . now());
     }
@@ -143,7 +149,7 @@ class Izin extends Model
         $approver = $this->approvedBy;
         $approverName = $approver ? $approver->nama : 'Unknown';
         $approvalDate = $this->approved_at ? $this->approved_at->format('d M Y H:i') : 'Ditolak';
-        
+
         if ($this->approved_at) {
             return "Disetujui oleh {$approverName} pada {$approvalDate}";
         } else {

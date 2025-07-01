@@ -24,8 +24,8 @@ class WfoAttendance extends Page implements HasForms
     protected static ?string $navigationLabel = 'Absensi WFO';
     protected static ?string $title = 'Absensi Work From Office';
     protected static string $view = 'filament.pegawai.pages.wfo-attendance';
-    protected static ?string $navigationGroup = 'Absensi';
-    protected static ?int $navigationSort = 1;
+    protected static ?string $navigationGroup = 'Absensi Pegawai';
+    protected static ?int $navigationSort = 2;
 
     public $currentLocation = null;
     public $nearestOffice = null;

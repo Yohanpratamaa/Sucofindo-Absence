@@ -50,7 +50,6 @@ class PegawaiPanelProvider extends PanelProvider
             ->discoverPages(in: app_path('Filament/Pegawai/Pages'), for: 'App\\Filament\\Pegawai\\Pages')
             ->pages([
                 \App\Filament\Pegawai\Pages\Dashboard::class,
-                \App\Filament\Pegawai\Pages\WfoAttendance::class,
             ])
             ->discoverWidgets(in: app_path('Filament/Pegawai/Widgets'), for: 'App\\Filament\\Pegawai\\Widgets')
             ->widgets([

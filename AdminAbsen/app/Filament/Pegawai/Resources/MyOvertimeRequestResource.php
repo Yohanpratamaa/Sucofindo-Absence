@@ -27,7 +27,7 @@ class MyOvertimeRequestResource extends Resource
 
     protected static ?string $navigationGroup = 'Lembur';
 
-    protected static ?int $navigationSort = 1;
+    protected static ?int $navigationSort = 31;
 
     public static function getEloquentQuery(): Builder
     {
@@ -143,14 +143,14 @@ class MyOvertimeRequestResource extends Resource
 
                 Tables\Filters\Filter::make('bulan_ini')
                     ->label('Bulan Ini')
-                    ->query(fn (Builder $query): Builder => 
+                    ->query(fn (Builder $query): Builder =>
                         $query->whereMonth('assigned_at', now()->month)
                               ->whereYear('assigned_at', now()->year)
                     ),
 
                 Tables\Filters\Filter::make('minggu_ini')
                     ->label('Minggu Ini')
-                    ->query(fn (Builder $query): Builder => 
+                    ->query(fn (Builder $query): Builder =>
                         $query->whereBetween('assigned_at', [
                             now()->startOfWeek(),
                             now()->endOfWeek()
@@ -160,7 +160,7 @@ class MyOvertimeRequestResource extends Resource
             ->actions([
                 Tables\Actions\ViewAction::make()
                     ->label('Detail'),
-                    
+
                 Tables\Actions\EditAction::make()
                     ->label('Ubah')
                     ->visible(fn (OvertimeAssignment $record): bool => $record->status === 'Assigned'),
@@ -174,7 +174,7 @@ class MyOvertimeRequestResource extends Resource
                     ->modalDescription('Apakah Anda yakin ingin membatalkan pengajuan lembur ini?')
                     ->action(function (OvertimeAssignment $record): void {
                         $record->delete();
-                        
+
                         Notification::make()
                             ->success()
                             ->title('Pengajuan Dibatalkan')
@@ -199,7 +199,7 @@ class MyOvertimeRequestResource extends Resource
                                 $cancelled++;
                             }
                         }
-                        
+
                         Notification::make()
                             ->success()
                             ->title('Pengajuan Dibatalkan')

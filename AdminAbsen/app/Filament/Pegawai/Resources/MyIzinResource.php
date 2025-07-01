@@ -4,6 +4,7 @@ namespace App\Filament\Pegawai\Resources;
 
 use App\Filament\Pegawai\Resources\MyIzinResource\Pages;
 use App\Models\Izin;
+use App\Models\ManajemenIzin;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -26,7 +27,7 @@ class MyIzinResource extends Resource
 
     protected static ?string $navigationGroup = 'Izin';
 
-    protected static ?int $navigationSort = 1;
+    protected static ?int $navigationSort = 21;
 
     public static function getEloquentQuery(): Builder
     {
@@ -44,18 +45,35 @@ class MyIzinResource extends Resource
                             ->schema([
                                 Forms\Components\Select::make('jenis_izin')
                                     ->label('Jenis Izin')
-                                    ->options([
-                                        'sakit' => 'Sakit',
-                                        'cuti' => 'Cuti',
-                                        'izin' => 'Izin',
-                                    ])
+                                    ->options(ManajemenIzin::getSelectOptions())
                                     ->required()
+                                    ->reactive()
+                                    ->afterStateUpdated(function ($state, callable $set) {
+                                        if ($state) {
+                                            $jenisIzin = ManajemenIzin::where('kode_izin', $state)->first();
+                                            if ($jenisIzin) {
+                                                // Set helper text with requirements
+                                                $helperText = $jenisIzin->deskripsi;
+                                                if ($jenisIzin->max_hari) {
+                                                    $helperText .= " (Maksimal {$jenisIzin->max_hari} hari)";
+                                                }
+                                                $set('helper_text', $helperText);
+                                            }
+                                        }
+                                    })
                                     ->columnSpan(1),
 
                                 Forms\Components\DatePicker::make('tanggal_mulai')
                                     ->label('Tanggal Mulai')
                                     ->required()
                                     ->default(now())
+                                    ->reactive()
+                                    ->afterStateUpdated(function ($state, callable $get, callable $set) {
+                                        // Auto set tanggal_akhir if not set
+                                        if ($state && !$get('tanggal_akhir')) {
+                                            $set('tanggal_akhir', $state);
+                                        }
+                                    })
                                     ->columnSpan(1),
 
                                 Forms\Components\DatePicker::make('tanggal_akhir')
@@ -63,6 +81,21 @@ class MyIzinResource extends Resource
                                     ->required()
                                     ->default(now())
                                     ->afterOrEqual('tanggal_mulai')
+                                    ->reactive()
+                                    ->afterStateUpdated(function ($state, callable $get, Forms\Set $set) {
+                                        $jenisIzin = $get('jenis_izin');
+                                        $tanggalMulai = $get('tanggal_mulai');
+
+                                        if ($jenisIzin && $tanggalMulai && $state) {
+                                            $jenisIzinData = ManajemenIzin::where('kode_izin', $jenisIzin)->first();
+                                            if ($jenisIzinData && $jenisIzinData->max_hari) {
+                                                $durasi = \Carbon\Carbon::parse($tanggalMulai)->diffInDays(\Carbon\Carbon::parse($state)) + 1;
+                                                if ($durasi > $jenisIzinData->max_hari) {
+                                                    $set('tanggal_akhir', \Carbon\Carbon::parse($tanggalMulai)->addDays($jenisIzinData->max_hari - 1)->format('Y-m-d'));
+                                                }
+                                            }
+                                        }
+                                    })
                                     ->columnSpan(1),
 
                                 Forms\Components\Textarea::make('keterangan')
@@ -77,6 +110,37 @@ class MyIzinResource extends Resource
                                     ->acceptedFileTypes(['application/pdf', 'image/*'])
                                     ->maxSize(2048)
                                     ->helperText('Upload surat dokter, surat keterangan, atau dokumen pendukung lainnya (Max: 2MB)')
+                                    ->required(function (callable $get) {
+                                        $jenisIzin = $get('jenis_izin');
+                                        if ($jenisIzin) {
+                                            $jenisIzinData = ManajemenIzin::where('kode_izin', $jenisIzin)->first();
+                                            return $jenisIzinData ? $jenisIzinData->perlu_dokumen : false;
+                                        }
+                                        return false;
+                                    })
+                                    ->columnSpanFull(),
+
+                                // Display syarat pengajuan
+                                Forms\Components\Placeholder::make('syarat_info')
+                                    ->label('Syarat Pengajuan')
+                                    ->content(function (callable $get) {
+                                        $jenisIzin = $get('jenis_izin');
+                                        if ($jenisIzin) {
+                                            $jenisIzinData = ManajemenIzin::where('kode_izin', $jenisIzin)->first();
+                                            if ($jenisIzinData && !empty($jenisIzinData->syarat_pengajuan)) {
+                                                return implode("\n", array_map(fn($syarat) => "• " . $syarat, $jenisIzinData->syarat_pengajuan));
+                                            }
+                                        }
+                                        return 'Pilih jenis izin untuk melihat syarat pengajuan.';
+                                    })
+                                    ->visible(function (callable $get) {
+                                        $jenisIzin = $get('jenis_izin');
+                                        if ($jenisIzin) {
+                                            $jenisIzinData = ManajemenIzin::where('kode_izin', $jenisIzin)->first();
+                                            return $jenisIzinData && !empty($jenisIzinData->syarat_pengajuan);
+                                        }
+                                        return false;
+                                    })
                                     ->columnSpanFull(),
 
                                 Forms\Components\Hidden::make('user_id')

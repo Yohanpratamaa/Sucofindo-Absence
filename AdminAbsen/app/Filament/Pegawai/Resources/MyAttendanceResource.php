@@ -25,9 +25,9 @@ class MyAttendanceResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Data Absensi';
 
-    protected static ?string $navigationGroup = 'Absensi';
+    protected static ?string $navigationGroup = 'Data Absensi';
 
-    protected static ?int $navigationSort = 1;
+    protected static ?int $navigationSort = 11;
 
     public static function getEloquentQuery(): Builder
     {
@@ -152,12 +152,12 @@ class MyAttendanceResource extends Resource
         return false;
     }
 
-    public static function canEdit($record): bool
+    public static function canEdit(\Illuminate\Database\Eloquent\Model $record): bool
     {
         return false;
     }
 
-    public static function canDelete($record): bool
+    public static function canDelete(\Illuminate\Database\Eloquent\Model $record): bool
     {
         return false;
     }
