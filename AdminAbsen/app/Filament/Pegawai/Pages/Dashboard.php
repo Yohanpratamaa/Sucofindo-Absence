@@ -9,6 +9,8 @@ class Dashboard extends BaseDashboard
 {
     protected static ?string $navigationIcon = 'heroicon-o-home';
 
+    protected static ?string $navigationLabel = 'Dashboard';
+
     // Remove custom view - use default Filament dashboard view
     // protected static string $view = 'filament.pegawai.pages.dashboard';
 
