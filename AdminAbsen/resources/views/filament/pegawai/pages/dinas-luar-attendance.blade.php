@@ -22,7 +22,7 @@
                 {{ Carbon\Carbon::now()->isoFormat('dddd, D MMMM Y') }}
             </x-slot>
 
-            <div class="space-y-6">
+            <div class="space-y-4">
                 @if($todayAttendance)
                     @php
                         $progress = $this->getAttendanceProgress();
@@ -30,42 +30,39 @@
 
                     <!-- Progress Badge -->
                     <div class="flex items-center justify-between">
-                        <div class="text-sm text-gray-500">
-                            Progress Absensi
-                        </div>
+                        <span class="text-sm font-medium">Progress Absensi</span>
                         <x-filament::badge
                             :color="$progress['percentage'] == 100 ? 'success' : 'warning'"
-                            size="lg"
                         >
                             {{ $progress['percentage'] }}% Selesai
                         </x-filament::badge>
                     </div>
 
                     <!-- Waktu Absensi -->
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                         <div class="text-center">
-                            <div class="text-2xl font-bold text-primary-600">
+                            <div class="text-xl font-semibold text-primary-600">
                                 {{ $todayAttendance->check_in ? $todayAttendance->check_in->format('H:i') : '-' }}
                             </div>
-                            <div class="text-sm text-gray-500 mt-1">Absen Pagi</div>
+                            <div class="text-sm text-gray-500">Absen Pagi</div>
                             @if($progress['pagi'])
                                 <x-filament::badge color="success" size="sm" class="mt-1">✓</x-filament::badge>
                             @endif
                         </div>
                         <div class="text-center">
-                            <div class="text-2xl font-bold text-primary-600">
+                            <div class="text-xl font-semibold text-primary-600">
                                 {{ $todayAttendance->absen_siang ? $todayAttendance->absen_siang->format('H:i') : '-' }}
                             </div>
-                            <div class="text-sm text-gray-500 mt-1">Absen Siang</div>
+                            <div class="text-sm text-gray-500">Absen Siang</div>
                             @if($progress['siang'])
                                 <x-filament::badge color="warning" size="sm" class="mt-1">✓</x-filament::badge>
                             @endif
                         </div>
                         <div class="text-center">
-                            <div class="text-2xl font-bold text-primary-600">
+                            <div class="text-xl font-semibold text-primary-600">
                                 {{ $todayAttendance->check_out ? $todayAttendance->check_out->format('H:i') : '-' }}
                             </div>
-                            <div class="text-sm text-gray-500 mt-1">Absen Sore</div>
+                            <div class="text-sm text-gray-500">Absen Sore</div>
                             @if($progress['sore'])
                                 <x-filament::badge color="info" size="sm" class="mt-1">✓</x-filament::badge>
                             @endif
@@ -78,19 +75,18 @@
                                     'Tidak Hadir' => 'danger',
                                     default => 'gray'
                                 }"
-                                size="lg"
                             >
                                 {{ $todayAttendance->status_kehadiran ?? 'Belum Diketahui' }}
                             </x-filament::badge>
-                            <div class="text-sm text-gray-500 mt-1">Status Kehadiran</div>
+                            <div class="text-sm text-gray-500">Status</div>
                         </div>
                     </div>
 
                     <!-- Progress Bar -->
                     <div class="space-y-2">
-                        <div class="w-full bg-gray-200 rounded-full h-3">
+                        <div class="w-full bg-gray-200 rounded-full h-2">
                             <div
-                                class="bg-primary-600 h-3 rounded-full transition-all duration-300"
+                                class="bg-primary-600 h-2 rounded-full transition-all duration-300"
                                 style="width: {{ $progress['percentage'] }}%"
                             ></div>
                         </div>
@@ -101,14 +97,14 @@
                         </div>
                     </div>
                 @else
-                    <div class="rounded-lg bg-info-50 p-4 border border-info-200">
+                    <div class="rounded-lg bg-info-50 border border-info-200 p-4">
                         <div class="flex items-center">
                             <svg class="w-5 h-5 text-info-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                             </svg>
                             <div>
                                 <h4 class="font-medium text-info-800">Belum Ada Absensi</h4>
-                                <p class="text-info-700">Anda belum melakukan absensi dinas luar hari ini. Silakan lakukan absensi pagi terlebih dahulu.</p>
+                                <p class="text-sm text-info-700">Anda belum melakukan absensi dinas luar hari ini. Silakan lakukan absensi pagi terlebih dahulu.</p>
                             </div>
                         </div>
                     </div>
@@ -233,14 +229,14 @@
 
             @if($currentAction)
                 <!-- Information Alert -->
-                <div class="rounded-lg bg-info-50 p-4 border border-info-200 mb-6">
+                <div class="rounded-lg bg-info-50 border border-info-200 p-4 mb-4">
                     <div class="flex items-center">
-                        <svg class="w-5 h-5 text-info-600 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-5 h-5 text-info-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                         </svg>
                         <div>
                             <h4 class="font-medium text-info-800">Informasi Absensi {{ ucfirst($currentAction) }}</h4>
-                            <p class="text-info-700">
+                            <p class="text-sm text-info-700">
                                 @if($currentAction === 'pagi')
                                     Lakukan absensi pagi untuk memulai hari kerja dinas luar. Lokasi Anda akan dicatat secara otomatis.
                                 @elseif($currentAction === 'siang')
@@ -254,9 +250,9 @@
                 </div>
 
                 <!-- Camera Status Alert -->
-                <div id="camera-status" class="rounded-lg bg-info-50 p-4 border border-info-200" style="display: none;">
+                <div id="camera-status" class="rounded-lg bg-info-50 border border-info-200 p-4" style="display: none;">
                     <div class="flex items-center">
-                        <svg class="w-5 h-5 text-info-600 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-5 h-5 text-info-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                         </svg>
                         <div>
@@ -270,33 +266,28 @@
                 <div class="space-y-4">
                     <video
                         id="camera"
-                        class="w-full h-80 object-cover rounded-lg border-2 border-gray-200"
+                        class="w-full h-80 object-cover rounded-lg border"
                         autoplay
                         playsinline
                         muted
                         style="display: none;"
                     ></video>
 
-                    <div id="camera-placeholder" class="flex flex-col items-center justify-center h-80 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50">
-                        <svg class="w-16 h-16 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
-                        </svg>
+                    <div id="camera-placeholder" class="flex flex-col items-center justify-center h-80 border-2 border-dashed border-gray-300 rounded-lg">
+                        <x-filament::icon icon="heroicon-o-camera" class="w-16 h-16 text-gray-400 mb-4" />
                         <h4 class="text-lg font-medium text-gray-900 mb-2">Kamera Belum Aktif</h4>
                         <p class="text-sm text-gray-600 text-center mb-2">
                             Klik tombol "Aktifkan Kamera" untuk memulai proses absensi {{ $currentAction }}
                         </p>
-                        <p class="text-xs text-gray-500">
-                            <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                            </svg>
+                        <p class="text-xs text-gray-500 flex items-center">
+                            <x-filament::icon icon="heroicon-o-information-circle" class="w-4 h-4 mr-1" />
                             Pastikan izin kamera sudah diaktifkan
                         </p>
                     </div>
 
                     <div id="camera-overlay" class="relative" style="display: none;">
                         <div class="absolute inset-0 flex items-center justify-center">
-                            <div class="bg-black bg-opacity-60 text-white px-4 py-2 rounded-lg text-sm">
+                            <div class="bg-black bg-opacity-60 text-white px-3 py-2 rounded text-sm">
                                 Posisikan wajah dalam frame
                             </div>
                         </div>
@@ -327,39 +318,44 @@
                 </div>
 
                 <!-- Photo Preview -->
-                <div id="photo-preview" class="space-y-4" style="display: none;">
-                    <div class="rounded-lg bg-success-50 p-4 border border-success-200">
+                <div id="photo-preview" style="display: none;">
+                    <div class="rounded-lg bg-success-50 border border-success-200 p-4">
                         <div class="flex items-center">
-                            <svg class="w-5 h-5 text-success-600 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg class="w-5 h-5 text-success-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                             </svg>
                             <div>
                                 <h4 class="font-medium text-success-800">Foto Berhasil Diambil</h4>
-                                <p class="text-success-700">Preview foto yang akan digunakan untuk absensi {{ $currentAction }}.</p>
+                                <p class="text-sm text-success-700">Preview foto yang akan digunakan untuk absensi {{ $currentAction }}.</p>
                             </div>
                         </div>
                     </div>
 
-                    <div class="relative">
+                    <div class="relative mt-4">
                         <img
                             id="captured-photo"
-                            class="w-full h-80 object-cover rounded-lg border-2 border-green-200"
+                            class="w-full h-80 object-cover rounded-lg border"
                             alt="Preview foto absensi"
                         >
-                        <div class="absolute top-2 right-2 bg-green-500 text-white px-2 py-1 rounded text-xs font-medium">
+                        <x-filament::badge
+                            color="success"
+                            class="absolute top-2 right-2"
+                        >
                             ✓ Foto Siap
-                        </div>
+                        </x-filament::badge>
                     </div>
 
-                    <x-filament::button
-                        id="retake-photo"
-                        type="button"
-                        outlined
-                        color="gray"
-                        icon="heroicon-m-arrow-path"
-                    >
-                        Ambil Ulang
-                    </x-filament::button>
+                    <div class="mt-4">
+                        <x-filament::button
+                            id="retake-photo"
+                            type="button"
+                            outlined
+                            color="gray"
+                            icon="heroicon-m-arrow-path"
+                        >
+                            Ambil Ulang
+                        </x-filament::button>
+                    </div>
                 </div>
 
                 <!-- Action Buttons -->
@@ -417,42 +413,40 @@
                 </div>
             @else
                 <!-- No Action Available -->
-                <div class="text-center py-12">
-                    <svg class="w-20 h-20 text-gray-400 mx-auto mb-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
+                <div class="text-center py-8">
+                    <x-filament::icon icon="heroicon-o-clock" class="w-16 h-16 text-gray-400 mx-auto mb-4" />
 
-                    <h3 class="text-xl font-semibold text-gray-900 mb-4">Tidak Ada Aksi Tersedia</h3>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Tidak Ada Aksi Tersedia</h3>
 
                     @if($todayAttendance && $todayAttendance->check_out)
-                        <div class="rounded-lg bg-success-50 p-4 border border-success-200 max-w-md mx-auto mb-6">
+                        <div class="rounded-lg bg-success-50 border border-success-200 p-4 max-w-md mx-auto mb-4">
                             <div class="flex items-center">
-                                <svg class="w-5 h-5 text-success-600 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg class="w-5 h-5 text-success-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                                 </svg>
                                 <div>
                                     <h4 class="font-medium text-success-800">Absensi Dinas Luar Selesai</h4>
-                                    <p class="text-success-700">Anda telah menyelesaikan semua absensi dinas luar untuk hari ini.</p>
+                                    <p class="text-sm text-success-700">Anda telah menyelesaikan semua absensi dinas luar untuk hari ini.</p>
                                 </div>
                             </div>
                         </div>
                     @else
-                        <div class="rounded-lg bg-info-50 p-4 border border-info-200 max-w-md mx-auto mb-6">
+                        <div class="rounded-lg bg-info-50 border border-info-200 p-4 max-w-md mx-auto mb-4">
                             <div class="flex items-center">
-                                <svg class="w-5 h-5 text-info-600 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg class="w-5 h-5 text-info-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                 </svg>
                                 <div>
                                     <h4 class="font-medium text-info-800">Menunggu Waktu Absensi</h4>
-                                    <p class="text-info-700">Silakan tunggu hingga waktu yang tepat untuk melakukan absensi.</p>
+                                    <p class="text-sm text-info-700">Silakan tunggu hingga waktu yang tepat untuk melakukan absensi.</p>
                                 </div>
                             </div>
                         </div>
                     @endif
 
-                    <div class="text-gray-600 mb-6">
+                    <p class="text-gray-600 mb-4">
                         Lihat riwayat absensi dinas luar Anda atau hubungi administrator jika ada pertanyaan.
-                    </div>
+                    </p>
 
                     <x-filament::button
                         tag="a"
@@ -676,38 +670,27 @@
         locationStatus.style.display = 'block';
 
         locationInfo.innerHTML = `
-            <div class="rounded-lg border p-4 border-green-200 bg-green-50">
-                <div class="flex items-center justify-between mb-3">
-                    <div class="flex items-center">
-                        <span class="text-2xl mr-3">📍</span>
-                        <div>
-                            <h4 class="font-semibold text-green-800">Lokasi Terdeteksi</h4>
-                            <p class="text-sm text-gray-600">Lokasi untuk absensi dinas luar</p>
-                        </div>
+            <div class="rounded-lg border border-success-200 bg-success-50 p-4">
+                <div class="flex items-center mb-3">
+                    <span class="text-xl mr-3">📍</span>
+                    <div>
+                        <h4 class="font-semibold text-success-900">Lokasi Terdeteksi</h4>
+                        <p class="text-sm text-gray-600">Lokasi untuk absensi dinas luar</p>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                    <div class="flex items-center">
-                        <svg class="w-4 h-4 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-                        </svg>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm mb-3">
+                    <div>
                         <span class="text-gray-700"><strong>Latitude:</strong> ${currentLocation.latitude.toFixed(6)}</span>
                     </div>
-                    <div class="flex items-center">
-                        <svg class="w-4 h-4 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-                        </svg>
+                    <div>
                         <span class="text-gray-700"><strong>Longitude:</strong> ${currentLocation.longitude.toFixed(6)}</span>
                     </div>
                 </div>
 
-                <div class="mt-3 p-3 bg-green-100 border border-green-200 rounded-lg">
+                <div class="bg-success-100 border border-success-200 rounded p-3">
                     <div class="flex items-center">
-                        <svg class="w-4 h-4 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                        </svg>
-                        <span class="text-green-700 font-medium text-sm">Lokasi siap untuk absensi dinas luar</span>
+                        <span class="text-success-700 font-medium text-sm">✓ Lokasi siap untuk absensi dinas luar</span>
                     </div>
                 </div>
             </div>
@@ -978,7 +961,6 @@
 
         // Use Filament's native notification system when available
         if (window.Livewire) {
-            // Try to use Livewire's notification system through the component
             try {
                 window.Livewire.find('{{ $this->getId() }}').dispatch('notify', {
                     message: message,
@@ -990,35 +972,27 @@
             }
         }
 
-        // Fallback: Create a simple toast notification
+        // Simple fallback notification
         const toast = document.createElement('div');
-        const bgColor = {
-            'success': 'bg-green-100 border-green-500 text-green-900',
-            'danger': 'bg-red-100 border-red-500 text-red-900',
-            'warning': 'bg-yellow-100 border-yellow-500 text-yellow-900',
-            'info': 'bg-blue-100 border-blue-500 text-blue-900'
+        const colorClass = {
+            'success': 'bg-success-50 border-success-500 text-success-900',
+            'danger': 'bg-danger-50 border-danger-500 text-danger-900',
+            'warning': 'bg-warning-50 border-warning-500 text-warning-900',
+            'info': 'bg-info-50 border-info-500 text-info-900'
         };
 
-        toast.className = `fixed top-4 right-4 max-w-sm w-full ${bgColor[type] || bgColor.info} border-l-4 p-4 rounded shadow-lg z-50 transform transition-transform duration-300 translate-x-full`;
+        toast.className = `fixed top-4 right-4 max-w-sm w-full ${colorClass[type] || colorClass.info} border-l-4 p-4 rounded shadow-lg z-50 transition-transform duration-300 translate-x-full`;
         toast.innerHTML = `
             <div class="flex justify-between items-start">
-                <div class="mr-3">
-                    <p class="text-sm font-medium">${message}</p>
-                </div>
-                <button onclick="this.parentElement.parentElement.remove()" class="text-gray-400 hover:text-gray-600">
-                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
-                    </svg>
+                <p class="text-sm font-medium">${message}</p>
+                <button onclick="this.parentElement.parentElement.remove()" class="text-gray-400 hover:text-gray-600 ml-2">
+                    ✕
                 </button>
             </div>
         `;
 
         document.body.appendChild(toast);
-
-        // Animate in
         setTimeout(() => toast.classList.remove('translate-x-full'), 100);
-
-        // Auto remove after 5 seconds
         setTimeout(() => {
             toast.classList.add('translate-x-full');
             setTimeout(() => toast.remove(), 300);
