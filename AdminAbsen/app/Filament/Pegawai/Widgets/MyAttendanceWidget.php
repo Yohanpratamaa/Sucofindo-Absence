@@ -41,7 +41,7 @@ class MyAttendanceWidget extends BaseWidget
         return [
             Stat::make('Kehadiran Bulan Ini', $monthlyAttendance)
                 ->description('Total hari hadir')
-                ->descriptionIcon('heroicon-m-calendar')
+                ->descriptionIcon('heroicon-m-calendar-days')
                 ->color('success'),
 
             Stat::make('Kehadiran Minggu Ini', $weeklyAttendance)

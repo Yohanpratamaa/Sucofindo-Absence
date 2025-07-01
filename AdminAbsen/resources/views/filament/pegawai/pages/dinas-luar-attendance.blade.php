@@ -379,7 +379,7 @@
                         type="button"
                         outlined
                         color="gray"
-                        icon="heroicon-m-beaker"
+                        icon="heroicon-m-flask"
                         style="display: none;"
                     >
                         Test Foto

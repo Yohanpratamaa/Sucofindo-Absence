@@ -232,7 +232,7 @@
                         type="button"
                         outlined
                         color="gray"
-                        icon="heroicon-m-beaker"
+                        icon="heroicon-m-flask"
                         style="display: none;"
                     >
                         Test Foto
@@ -243,7 +243,7 @@
                         type="button"
                         outlined
                         color="warning"
-                        icon="heroicon-m-scale"
+                        icon="heroicon-m-adjustments-horizontal"
                         style="display: none;"
                     >
                         Cek Ukuran

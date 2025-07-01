@@ -45,7 +45,7 @@ class ListMyAllAttendances extends ListRecords
                 ->modifyQueryUsing(fn (Builder $query) => $query->whereDate('created_at', today()))
                 ->badge($this->getTabBadgeCount('hari_ini'))
                 ->badgeColor('success')
-                ->icon('heroicon-m-calendar'),
+                ->icon('heroicon-m-calendar-days'),
 
             'bulan_ini' => Tab::make('Bulan Ini')
                 ->modifyQueryUsing(fn (Builder $query) => $query->whereMonth('created_at', now()->month)
@@ -61,7 +61,7 @@ class ListMyAllAttendances extends ListRecords
                 ]))
                 ->badge($this->getTabBadgeCount('minggu_ini'))
                 ->badgeColor('info')
-                ->icon('heroicon-m-calendar'),
+                ->icon('heroicon-m-calendar-days'),
 
             'wfo' => Tab::make('WFO')
                 ->modifyQueryUsing(fn (Builder $query) => $query->where('attendance_type', 'WFO'))

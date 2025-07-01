@@ -22,7 +22,7 @@ class AttendancePage extends Page implements HasForms
     protected static ?string $navigationIcon = 'heroicon-o-clock';
     protected static ?string $navigationLabel = 'Absensi';
     protected static ?string $title = 'Absensi Pegawai';
-    protected static string $view = 'filament.pegawai.pages.attendance-page';
+    protected static string $view = 'filament.pegawai.pages.attendance-page-improved';
 
     public static function getNavigationGroup(): ?string
     {

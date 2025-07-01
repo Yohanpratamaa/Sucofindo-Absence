@@ -25,9 +25,10 @@ class Dashboard extends BaseDashboard
     public function getWidgets(): array
     {
         return [
-            \App\Filament\Pegawai\Widgets\MyAttendanceWidget::class,
+            \App\Filament\Pegawai\Widgets\ModernAttendanceWidget::class,
+            // \App\Filament\Pegawai\Widgets\MyAttendanceWidget::class,
             // \App\Filament\Pegawai\Widgets\MyIzinWidget::class,
-            \App\Filament\Pegawai\Widgets\AttendanceStatsWidget::class,
+            // \App\Filament\Pegawai\Widgets\AttendanceStatsWidget::class,
         ];
     }
 }
