@@ -25,9 +25,15 @@ class MyOvertimeRequestResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Pengajuan Lembur';
 
-    protected static ?string $navigationGroup = 'Lembur';
+    public static function getNavigationGroup(): ?string
+    {
+        return ' Lembur';
+    }
 
-    protected static ?int $navigationSort = 31;
+    public static function getNavigationSort(): ?int
+    {
+        return 4;
+    }
 
     public static function getEloquentQuery(): Builder
     {

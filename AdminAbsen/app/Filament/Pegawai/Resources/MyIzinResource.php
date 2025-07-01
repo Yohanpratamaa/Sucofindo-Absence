@@ -25,9 +25,15 @@ class MyIzinResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Data Izin';
 
-    protected static ?string $navigationGroup = 'Izin';
+    public static function getNavigationGroup(): ?string
+    {
+        return ' Izin';
+    }
 
-    protected static ?int $navigationSort = 21;
+    public static function getNavigationSort(): ?int
+    {
+        return 3;
+    }
 
     public static function getEloquentQuery(): Builder
     {

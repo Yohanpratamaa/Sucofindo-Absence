@@ -25,9 +25,15 @@ class MyAttendanceResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Data Absensi';
 
-    protected static ?string $navigationGroup = 'Data Absensi';
+    public static function getNavigationGroup(): ?string
+    {
+        return 'Data Absensi';
+    }
 
-    protected static ?int $navigationSort = 11;
+    public static function getNavigationSort(): ?int
+    {
+        return 1;
+    }
 
     public static function getEloquentQuery(): Builder
     {

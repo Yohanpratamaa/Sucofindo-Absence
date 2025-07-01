@@ -25,9 +25,15 @@ class MyDinasLuarResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Riwayat Dinas Luar';
 
-    protected static ?string $navigationGroup = 'Data Absensi';
+    public static function getNavigationGroup(): ?string
+    {
+        return 'Data Absensi';
+    }
 
-    protected static ?int $navigationSort = 12;
+    public static function getNavigationSort(): ?int
+    {
+        return 2;
+    }
 
     public static function getEloquentQuery(): Builder
     {

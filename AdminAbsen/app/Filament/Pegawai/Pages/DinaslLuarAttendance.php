@@ -23,8 +23,16 @@ class DinaslLuarAttendance extends Page implements HasForms
     protected static ?string $navigationLabel = 'Absensi Dinas Luar';
     protected static ?string $title = 'Absensi Dinas Luar';
     protected static string $view = 'filament.pegawai.pages.dinas-luar-attendance';
-    protected static ?string $navigationGroup = 'Absensi Pegawai';
-    protected static ?int $navigationSort = 1;
+
+    public static function getNavigationGroup(): ?string
+    {
+        return 'Absensi Pegawai';
+    }
+
+    public static function getNavigationSort(): ?int
+    {
+        return 1;
+    }
 
     public $currentLocation = null;
     public $todayAttendance = null;
