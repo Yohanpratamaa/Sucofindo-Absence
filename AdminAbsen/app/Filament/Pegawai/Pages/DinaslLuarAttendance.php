@@ -34,8 +34,20 @@ class DinaslLuarAttendance extends Page implements HasForms
 
     public function mount()
     {
+        Log::info('DinaslLuarAttendance mounted', [
+            'user_id' => Auth::id(),
+            'user_name' => Auth::user()->name ?? 'Unknown'
+        ]);
+
         $this->loadTodayAttendance();
         $this->calculateAttendanceStatus();
+
+        Log::info('Mount completed', [
+            'canCheckInPagi' => $this->canCheckInPagi,
+            'canCheckInSiang' => $this->canCheckInSiang,
+            'canCheckOut' => $this->canCheckOut,
+            'todayAttendance' => $this->todayAttendance ? $this->todayAttendance->id : null
+        ]);
     }
 
     protected function loadTodayAttendance()
@@ -48,20 +60,36 @@ class DinaslLuarAttendance extends Page implements HasForms
 
     protected function calculateAttendanceStatus()
     {
+        Log::info('calculateAttendanceStatus called', [
+            'user_id' => Auth::id(),
+            'today_attendance' => $this->todayAttendance ? $this->todayAttendance->id : null
+        ]);
+
         if (!$this->todayAttendance) {
             // Belum ada absensi hari ini, bisa check in pagi
             $this->canCheckInPagi = true;
             $this->canCheckInSiang = false;
             $this->canCheckOut = false;
+            Log::info('No attendance today, can check in pagi');
         } else {
             // Sudah ada absensi hari ini
-            $this->canCheckInPagi = false;
+            $this->canCheckInPagi = is_null($this->todayAttendance->check_in);
 
             // Bisa absen siang jika sudah check in pagi tapi belum absen siang
-            $this->canCheckInSiang = $this->todayAttendance->check_in && !$this->todayAttendance->absen_siang;
+            $this->canCheckInSiang = !is_null($this->todayAttendance->check_in) && is_null($this->todayAttendance->absen_siang);
 
             // Bisa check out jika sudah absen siang tapi belum check out
-            $this->canCheckOut = $this->todayAttendance->absen_siang && !$this->todayAttendance->check_out;
+            // ATAU jika sudah check in pagi tapi belum check out (untuk fleksibilitas)
+            $this->canCheckOut = !is_null($this->todayAttendance->check_in) && is_null($this->todayAttendance->check_out);
+
+            Log::info('Attendance status calculated', [
+                'check_in' => $this->todayAttendance->check_in,
+                'absen_siang' => $this->todayAttendance->absen_siang,
+                'check_out' => $this->todayAttendance->check_out,
+                'canCheckInPagi' => $this->canCheckInPagi,
+                'canCheckInSiang' => $this->canCheckInSiang,
+                'canCheckOut' => $this->canCheckOut
+            ]);
         }
     }
 
@@ -133,7 +161,7 @@ class DinaslLuarAttendance extends Page implements HasForms
         $this->calculateAttendanceStatus();
 
         // Notifikasi dengan status kehadiran
-        $notificationBody = $isLate 
+        $notificationBody = $isLate
             ? 'Absensi pagi berhasil. Status: Terlambat. Jangan lupa absen siang dan sore.'
             : 'Absensi pagi berhasil. Status: Tepat Waktu. Jangan lupa absen siang dan sore.';
 
@@ -142,6 +170,9 @@ class DinaslLuarAttendance extends Page implements HasForms
             ->title('Absensi Pagi Berhasil')
             ->body($notificationBody)
             ->send();
+
+        // Dispatch event for auto-refresh
+        $this->dispatch('attendance-submitted');
     }
 
     public function processCheckInSiang($photoData, $latitude, $longitude)
@@ -195,6 +226,9 @@ class DinaslLuarAttendance extends Page implements HasForms
             ->title('Absensi Siang Berhasil')
             ->body('Absensi siang berhasil dilakukan. Jangan lupa absen sore.')
             ->send();
+
+        // Dispatch event for auto-refresh
+        $this->dispatch('attendance-submitted');
     }
 
     public function processCheckOut($photoData, $latitude, $longitude)
@@ -212,7 +246,7 @@ class DinaslLuarAttendance extends Page implements HasForms
             Notification::make()
                 ->danger()
                 ->title('Error')
-                ->body('Anda belum absen pagi dan siang, atau sudah absen sore hari ini.')
+                ->body('Anda belum absen pagi atau sudah absen sore hari ini.')
                 ->send();
             return;
         }
@@ -231,23 +265,40 @@ class DinaslLuarAttendance extends Page implements HasForms
         }
 
         // Update record attendance
-        $this->todayAttendance->update([
+        $updateData = [
             'check_out' => Carbon::now(),
             'latitude_absen_pulang' => $latitude,
             'longitude_absen_pulang' => $longitude,
             'picture_absen_pulang' => $photoPath,
-        ]);
+        ];
+
+        // Jika belum absen siang, isi juga waktu absen siang dengan waktu yang sama
+        if (is_null($this->todayAttendance->absen_siang)) {
+            $updateData['absen_siang'] = Carbon::now();
+            $updateData['latitude_absen_siang'] = $latitude;
+            $updateData['longitude_absen_siang'] = $longitude;
+            $updateData['picture_absen_siang'] = $photoPath; // Use same photo for flexibility
+        }
+
+        $this->todayAttendance->update($updateData);
 
         Log::info('Attendance updated for check out', ['id' => $this->todayAttendance->id]);
 
         $this->loadTodayAttendance();
         $this->calculateAttendanceStatus();
 
+        $message = is_null($this->todayAttendance->absen_siang)
+            ? 'Absensi sore berhasil (otomatis mengisi absen siang). Semua absensi hari ini telah selesai.'
+            : 'Absensi sore berhasil. Semua absensi hari ini telah selesai.';
+
         Notification::make()
             ->success()
             ->title('Absensi Sore Berhasil')
-            ->body('Semua absensi hari ini telah selesai. Terima kasih.')
+            ->body($message)
             ->send();
+
+        // Dispatch event for auto-refresh
+        $this->dispatch('attendance-submitted');
     }
 
     protected function savePhotoFromBase64($base64Data, $type)

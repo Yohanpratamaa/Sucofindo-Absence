@@ -265,7 +265,6 @@ class PegawaiResource extends Resource
                                                     ->label('Sekolah / Universitas')
                                                     ->required()
                                                     ->placeholder('Nama sekolah/universitas'),
-
                                                 Forms\Components\TextInput::make('fakultas_program_studi')
                                                     ->label('Fakultas')
                                                     ->placeholder('Nama fakultas '),
