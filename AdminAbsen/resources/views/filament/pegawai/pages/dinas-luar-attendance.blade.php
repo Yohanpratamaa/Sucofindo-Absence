@@ -1,244 +1,373 @@
 <x-filament-panels::page>
-    <div class="dinas-luar-attendance-container">
-        <!-- Header Status -->
-        <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg mb-6">
-            <div class="px-4 py-5 sm:p-6">
-                <div class="sm:flex sm:items-center sm:justify-between">
-                    <div>
-                        <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-gray-100">
-                            Status Absensi Dinas Luar Hari Ini
-                        </h3>
-                        <p class="mt-1 max-w-2xl text-sm text-gray-500 dark:text-gray-400">
-                            {{ Carbon\Carbon::now()->isoFormat('dddd, D MMMM Y') }}
-                        </p>
-                    </div>
-                    @if($todayAttendance)
-                        <div class="mt-3 sm:mt-0">
-                            @php
-                                $progress = $this->getAttendanceProgress();
-                            @endphp
-                            <x-filament::badge
-                                :color="$progress['percentage'] == 100 ? 'success' : 'warning'"
-                            >
-                                Progress: {{ $progress['percentage'] }}%
-                            </x-filament::badge>
-                        </div>
-                    @endif
-                </div>
+    <div class="space-y-6">
+        <!-- Status Absensi Dinas Luar Hari Ini -->
+        <x-filament::section>
+            <x-slot name="heading">
+                Status Absensi Dinas Luar Hari Ini
+            </x-slot>
 
+            <x-slot name="description">
+                {{ Carbon\Carbon::now()->isoFormat('dddd, D MMMM Y') }}
+            </x-slot>
+
+            <div class="space-y-6">
                 @if($todayAttendance)
-                    <div class="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-4">
-                        <div>
-                            <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Absen Pagi</dt>
-                            <dd class="mt-1 text-lg text-gray-900 dark:text-gray-100">
+                    @php
+                        $progress = $this->getAttendanceProgress();
+                    @endphp
+
+                    <!-- Progress Badge -->
+                    <div class="flex items-center justify-between">
+                        <div class="text-sm text-gray-500">
+                            Progress Absensi
+                        </div>
+                        <x-filament::badge
+                            :color="$progress['percentage'] == 100 ? 'success' : 'warning'"
+                            size="lg"
+                        >
+                            {{ $progress['percentage'] }}% Selesai
+                        </x-filament::badge>
+                    </div>
+
+                    <!-- Waktu Absensi -->
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                        <div class="text-center">
+                            <div class="text-2xl font-bold text-primary-600">
                                 {{ $todayAttendance->check_in ? $todayAttendance->check_in->format('H:i') : '-' }}
-                            </dd>
+                            </div>
+                            <div class="text-sm text-gray-500 mt-1">Absen Pagi</div>
+                            @if($progress['pagi'])
+                                <x-filament::badge color="success" size="sm" class="mt-1">✓</x-filament::badge>
+                            @endif
                         </div>
-                        <div>
-                            <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Absen Siang</dt>
-                            <dd class="mt-1 text-lg text-gray-900 dark:text-gray-100">
+                        <div class="text-center">
+                            <div class="text-2xl font-bold text-primary-600">
                                 {{ $todayAttendance->absen_siang ? $todayAttendance->absen_siang->format('H:i') : '-' }}
-                            </dd>
+                            </div>
+                            <div class="text-sm text-gray-500 mt-1">Absen Siang</div>
+                            @if($progress['siang'])
+                                <x-filament::badge color="warning" size="sm" class="mt-1">✓</x-filament::badge>
+                            @endif
                         </div>
-                        <div>
-                            <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Absen Sore</dt>
-                            <dd class="mt-1 text-lg text-gray-900 dark:text-gray-100">
+                        <div class="text-center">
+                            <div class="text-2xl font-bold text-primary-600">
                                 {{ $todayAttendance->check_out ? $todayAttendance->check_out->format('H:i') : '-' }}
-                            </dd>
+                            </div>
+                            <div class="text-sm text-gray-500 mt-1">Absen Sore</div>
+                            @if($progress['sore'])
+                                <x-filament::badge color="info" size="sm" class="mt-1">✓</x-filament::badge>
+                            @endif
                         </div>
-                        <div>
-                            <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Status</dt>
-                            <dd class="mt-1">
-                                <x-filament::badge
-                                    :color="$todayAttendance->status_color"
-                                >
-                                    {{ $todayAttendance->status_kehadiran }}
-                                </x-filament::badge>
-                            </dd>
+                        <div class="text-center">
+                            <x-filament::badge
+                                :color="match($todayAttendance->status_kehadiran ?? '') {
+                                    'Tepat Waktu' => 'success',
+                                    'Terlambat' => 'warning',
+                                    'Tidak Hadir' => 'danger',
+                                    default => 'gray'
+                                }"
+                                size="lg"
+                            >
+                                {{ $todayAttendance->status_kehadiran ?? 'Belum Diketahui' }}
+                            </x-filament::badge>
+                            <div class="text-sm text-gray-500 mt-1">Status Kehadiran</div>
                         </div>
                     </div>
 
                     <!-- Progress Bar -->
-                    @php
-                        $progress = $this->getAttendanceProgress();
-                    @endphp
-                    <div class="mt-5">
-                        <div class="flex justify-between text-sm text-gray-600 dark:text-gray-400 mb-1">
-                            <span>Progress Absensi</span>
-                            <span>{{ $progress['percentage'] }}%</span>
+                    <div class="space-y-2">
+                        <div class="w-full bg-gray-200 rounded-full h-3">
+                            <div
+                                class="bg-primary-600 h-3 rounded-full transition-all duration-300"
+                                style="width: {{ $progress['percentage'] }}%"
+                            ></div>
                         </div>
-                        <div class="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
-                            <div class="bg-blue-600 h-2.5 rounded-full" style="width: {{ $progress['percentage'] }}%"></div>
+                        <div class="flex justify-between text-xs text-gray-500">
+                            <span class="{{ $progress['pagi'] ? 'text-success-600 font-medium' : '' }}">Pagi</span>
+                            <span class="{{ $progress['siang'] ? 'text-warning-600 font-medium' : '' }}">Siang</span>
+                            <span class="{{ $progress['sore'] ? 'text-info-600 font-medium' : '' }}">Sore</span>
                         </div>
-                        <div class="mt-2 flex justify-between text-xs text-gray-500 dark:text-gray-400">
-                            <span class="{{ $progress['pagi'] ? 'text-green-600' : '' }}">✓ Pagi</span>
-                            <span class="{{ $progress['siang'] ? 'text-green-600' : '' }}">✓ Siang</span>
-                            <span class="{{ $progress['sore'] ? 'text-green-600' : '' }}">✓ Sore</span>
+                    </div>
+                @else
+                    <div class="rounded-lg bg-info-50 p-4 border border-info-200">
+                        <div class="flex items-center">
+                            <svg class="w-5 h-5 text-info-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            <div>
+                                <h4 class="font-medium text-info-800">Belum Ada Absensi</h4>
+                                <p class="text-info-700">Anda belum melakukan absensi dinas luar hari ini. Silakan lakukan absensi pagi terlebih dahulu.</p>
+                            </div>
                         </div>
                     </div>
                 @endif
             </div>
-        </div>
+        </x-filament::section>
 
-        <!-- Location Status -->
-        <div id="location-status" class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg mb-6" style="display: none;">
-            <div class="px-4 py-5 sm:p-6">
-                <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-gray-100 mb-4">
-                    Status Lokasi Saat Ini
-                </h3>
-                <div id="location-info" class="space-y-2">
-                    <!-- Location info will be populated by JavaScript -->
-                </div>
+        <!-- Status Lokasi -->
+        <x-filament::section id="location-status" style="display: none;">
+            <x-slot name="heading">
+                Status Lokasi Saat Ini
+            </x-slot>
+
+            <x-slot name="description">
+                Lokasi Anda akan dicatat secara otomatis untuk absensi dinas luar
+            </x-slot>
+
+            <div id="location-info">
+                <!-- Location info will be populated by JavaScript -->
             </div>
-        </div>
+        </x-filament::section>
 
-        <!-- Camera Section -->
-        <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
-            <div class="px-4 py-5 sm:p-6">
-                @php
-                    $currentAction = null;
-                    $actionTitle = 'Tidak Ada Aksi Tersedia';
+        <!-- Absensi Dinas Luar -->
+        <x-filament::section>
+            @php
+                $currentAction = null;
+                $actionTitle = 'Tidak Ada Aksi Tersedia';
 
-                    if ($canCheckInPagi) {
-                        $currentAction = 'pagi';
-                        $actionTitle = 'Absensi Pagi - Dinas Luar';
-                    } elseif ($canCheckInSiang) {
-                        $currentAction = 'siang';
-                        $actionTitle = 'Absensi Siang - Dinas Luar';
-                    } elseif ($canCheckOut) {
-                        $currentAction = 'sore';
-                        $actionTitle = 'Absensi Sore - Dinas Luar';
-                    }
-                @endphp
+                if ($canCheckInPagi) {
+                    $currentAction = 'pagi';
+                    $actionTitle = 'Absensi Pagi - Dinas Luar';
+                } elseif ($canCheckInSiang) {
+                    $currentAction = 'siang';
+                    $actionTitle = 'Absensi Siang - Dinas Luar';
+                } elseif ($canCheckOut) {
+                    $currentAction = 'sore';
+                    $actionTitle = 'Absensi Sore - Dinas Luar';
+                }
+            @endphp
 
-                <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-gray-100 mb-4">
-                    {{ $actionTitle }}
-                </h3>
+            <x-slot name="heading">
+                {{ $actionTitle }}
+            </x-slot>
 
-                @if($currentAction)
-                    <!-- Action Information -->
-                    <div class="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                        <div class="flex">
-                            <div class="flex-shrink-0">
-                                <svg class="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
-                                </svg>
+            <x-slot name="description">
+                @if($currentAction === 'pagi')
+                    Ambil foto selfie untuk memulai hari kerja dinas luar
+                @elseif($currentAction === 'siang')
+                    Ambil foto selfie untuk absensi siang
+                @elseif($currentAction === 'sore')
+                    Ambil foto selfie untuk mengakhiri hari kerja dinas luar
+                @else
+                    Tidak ada aksi absensi yang tersedia saat ini
+                @endif
+            </x-slot>
+
+            @if($currentAction)
+                <!-- Information Alert -->
+                <div class="rounded-lg bg-info-50 p-4 border border-info-200 mb-6">
+                    <div class="flex items-center">
+                        <svg class="w-5 h-5 text-info-600 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <div>
+                            <h4 class="font-medium text-info-800">Informasi Absensi {{ ucfirst($currentAction) }}</h4>
+                            <p class="text-info-700">
+                                @if($currentAction === 'pagi')
+                                    Lakukan absensi pagi untuk memulai hari kerja dinas luar. Lokasi Anda akan dicatat secara otomatis.
+                                @elseif($currentAction === 'siang')
+                                    Waktu absensi siang. Pastikan Anda berada di lokasi tugas yang tepat.
+                                @else
+                                    Absensi sore untuk mengakhiri hari kerja dinas luar. Terima kasih atas kerja keras Anda.
+                                @endif
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Camera Status Alert -->
+                <div id="camera-status" class="rounded-lg bg-info-50 p-4 border border-info-200" style="display: none;">
+                    <div class="flex items-center">
+                        <svg class="w-5 h-5 text-info-600 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <div>
+                            <h4 class="font-medium text-info-800">Status Kamera</h4>
+                            <span id="camera-status-text" class="text-info-700">Mengakses kamera...</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Camera Preview Area -->
+                <div class="space-y-4">
+                    <video
+                        id="camera"
+                        class="w-full h-80 object-cover rounded-lg border-2 border-gray-200"
+                        autoplay
+                        playsinline
+                        muted
+                        style="display: none;"
+                    ></video>
+
+                    <div id="camera-placeholder" class="flex flex-col items-center justify-center h-80 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50">
+                        <svg class="w-16 h-16 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
+                        </svg>
+                        <h4 class="text-lg font-medium text-gray-900 mb-2">Kamera Belum Aktif</h4>
+                        <p class="text-sm text-gray-600 text-center mb-2">
+                            Klik tombol "Aktifkan Kamera" untuk memulai proses absensi {{ $currentAction }}
+                        </p>
+                        <p class="text-xs text-gray-500">
+                            <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            Pastikan izin kamera sudah diaktifkan
+                        </p>
+                    </div>
+
+                    <div id="camera-overlay" class="relative" style="display: none;">
+                        <div class="absolute inset-0 flex items-center justify-center">
+                            <div class="bg-black bg-opacity-60 text-white px-4 py-2 rounded-lg text-sm">
+                                Posisikan wajah dalam frame
                             </div>
-                            <div class="ml-3">
-                                <h3 class="text-sm font-medium text-blue-800">
-                                    Informasi Absensi {{ ucfirst($currentAction) }}
-                                </h3>
-                                <div class="mt-2 text-sm text-blue-700">
-                                    <p>
-                                        @if($currentAction === 'pagi')
-                                            Lakukan absensi pagi untuk memulai hari kerja dinas luar. Lokasi Anda akan dicatat secara otomatis.
-                                        @elseif($currentAction === 'siang')
-                                            Waktu absensi siang. Pastikan Anda berada di lokasi tugas yang tepat.
-                                        @else
-                                            Absensi sore untuk mengakhiri hari kerja dinas luar. Terima kasih atas kerja keras Anda.
-                                        @endif
-                                    </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Camera Controls -->
+                <div class="flex flex-wrap gap-3">
+                    <x-filament::button
+                        id="start-camera-btn"
+                        type="button"
+                        color="primary"
+                        icon="heroicon-m-camera"
+                    >
+                        Aktifkan Kamera
+                    </x-filament::button>
+
+                    <x-filament::button
+                        id="stop-camera-btn"
+                        type="button"
+                        outlined
+                        color="gray"
+                        icon="heroicon-m-stop"
+                        style="display: none;"
+                    >
+                        Matikan Kamera
+                    </x-filament::button>
+                </div>
+
+                <!-- Photo Preview -->
+                <div id="photo-preview" class="space-y-4" style="display: none;">
+                    <div class="rounded-lg bg-success-50 p-4 border border-success-200">
+                        <div class="flex items-center">
+                            <svg class="w-5 h-5 text-success-600 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                            </svg>
+                            <div>
+                                <h4 class="font-medium text-success-800">Foto Berhasil Diambil</h4>
+                                <p class="text-success-700">Preview foto yang akan digunakan untuk absensi {{ $currentAction }}.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="relative">
+                        <img
+                            id="captured-photo"
+                            class="w-full h-80 object-cover rounded-lg border-2 border-green-200"
+                            alt="Preview foto absensi"
+                        >
+                        <div class="absolute top-2 right-2 bg-green-500 text-white px-2 py-1 rounded text-xs font-medium">
+                            ✓ Foto Siap
+                        </div>
+                    </div>
+
+                    <x-filament::button
+                        id="retake-photo"
+                        type="button"
+                        outlined
+                        color="gray"
+                        icon="heroicon-m-arrow-path"
+                    >
+                        Ambil Ulang
+                    </x-filament::button>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex flex-wrap gap-3">
+                    <x-filament::button
+                        id="capture-btn"
+                        type="button"
+                        color="info"
+                        icon="heroicon-m-camera"
+                        style="display: none;"
+                    >
+                        Ambil Foto
+                    </x-filament::button>
+
+                    <x-filament::button
+                        id="test-photo-btn"
+                        type="button"
+                        outlined
+                        color="gray"
+                        icon="heroicon-m-beaker"
+                        style="display: none;"
+                    >
+                        Test Foto
+                    </x-filament::button>
+
+                    <x-filament::button
+                        id="submit-btn"
+                        type="button"
+                        color="success"
+                        icon="heroicon-m-check-circle"
+                        style="display: none;"
+                    >
+                        Absen {{ ucfirst($currentAction) }} Sekarang
+                    </x-filament::button>
+                </div>
+            @else
+                <!-- No Action Available -->
+                <div class="text-center py-12">
+                    <svg class="w-20 h-20 text-gray-400 mx-auto mb-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+
+                    <h3 class="text-xl font-semibold text-gray-900 mb-4">Tidak Ada Aksi Tersedia</h3>
+
+                    @if($todayAttendance && $todayAttendance->check_out)
+                        <div class="rounded-lg bg-success-50 p-4 border border-success-200 max-w-md mx-auto mb-6">
+                            <div class="flex items-center">
+                                <svg class="w-5 h-5 text-success-600 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                </svg>
+                                <div>
+                                    <h4 class="font-medium text-success-800">Absensi Dinas Luar Selesai</h4>
+                                    <p class="text-success-700">Anda telah menyelesaikan semua absensi dinas luar untuk hari ini.</p>
                                 </div>
                             </div>
                         </div>
-                    </div>
-
-                    <!-- Camera Status -->
-                    <div id="camera-status" class="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg" style="display: none;">
-                        <div class="flex items-center">
-                            <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
-                            <span class="text-blue-700">Mengakses kamera...</span>
-                        </div>
-                    </div>
-
-                    <!-- Camera Preview -->
-                    <div class="mb-4">
-                        <video id="camera" width="100%" height="300" autoplay playsinline muted class="rounded-lg border bg-gray-100" style="display: none;"></video>
-                        <div id="camera-placeholder" class="w-full h-72 bg-gray-100 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center">
-                            <div class="text-center">
-                                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                    @else
+                        <div class="rounded-lg bg-info-50 p-4 border border-info-200 max-w-md mx-auto mb-6">
+                            <div class="flex items-center">
+                                <svg class="w-5 h-5 text-info-600 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                 </svg>
-                                <h3 class="mt-2 text-sm font-medium text-gray-900">Kamera belum aktif</h3>
-                                <p class="mt-1 text-sm text-gray-500">Klik tombol di bawah untuk mengaktifkan kamera</p>
+                                <div>
+                                    <h4 class="font-medium text-info-800">Menunggu Waktu Absensi</h4>
+                                    <p class="text-info-700">Silakan tunggu hingga waktu yang tepat untuk melakukan absensi.</p>
+                                </div>
                             </div>
                         </div>
+                    @endif
+
+                    <div class="text-gray-600 mb-6">
+                        Lihat riwayat absensi dinas luar Anda atau hubungi administrator jika ada pertanyaan.
                     </div>
 
-                    <!-- Camera Controls -->
-                    <div class="mb-4">
-                        <button id="start-camera-btn" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
-                            </svg>
-                            Aktifkan Kamera
-                        </button>
-
-                        <button id="stop-camera-btn" style="display: none;" class="ml-2 inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z"></path>
-                            </svg>
-                            Matikan Kamera
-                        </button>
-                    </div>
-
-                    <!-- Captured Photo Preview -->
-                    <div id="photo-preview" style="display: none;" class="mb-4">
-                        <img id="captured-photo" class="rounded-lg border w-full max-h-80 object-cover">
-                        <div class="mt-2 flex gap-2">
-                            <button id="retake-photo" class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-                                Ambil Ulang
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Action Buttons -->
-                    <div class="flex gap-4">
-                        <button id="capture-btn" style="display: none;" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                            </svg>
-                            Ambil Foto
-                        </button>
-
-                        <button id="test-photo-btn" style="display: none;" class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
-                            Test Foto
-                        </button>
-
-                        <button id="submit-btn" style="display: none;" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
-                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                            </svg>
-                            Absen {{ ucfirst($currentAction) }}
-                        </button>
-                    </div>
-                @else
-                    <div class="text-center py-8">
-                        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">Tidak Ada Aksi Tersedia</h3>
-                        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                            @if($todayAttendance && $todayAttendance->check_out)
-                                Semua absensi hari ini telah selesai.
-                            @else
-                                Silakan tunggu hingga waktu yang tepat untuk melakukan absensi.
-                            @endif
-                        </p>
-                    </div>
-                @endif
-            </div>
-        </div>
-
+                    <x-filament::button
+                        tag="a"
+                        :href="url('/pegawai/my-dinas-luar-attendances')"
+                        outlined
+                        color="primary"
+                        icon="heroicon-m-clock"
+                    >
+                        Lihat Riwayat Dinas Luar
+                    </x-filament::button>
+                </div>
+            @endif
+        </x-filament::section>
     </div>
 </x-filament-panels::page>
 
@@ -271,17 +400,13 @@
 
     function showCameraStatus(message, isLoading = false) {
         const cameraStatus = document.getElementById('camera-status');
+        const statusText = document.getElementById('camera-status-text');
+
         if (cameraStatus) {
             cameraStatus.style.display = 'block';
-            const spinner = cameraStatus.querySelector('.animate-spin');
-            const text = cameraStatus.querySelector('span');
-
-            if (spinner) {
-                spinner.style.display = isLoading ? 'block' : 'none';
-            }
-            if (text) {
-                text.textContent = message;
-            }
+        }
+        if (statusText) {
+            statusText.textContent = message;
         }
     }
 
@@ -334,6 +459,7 @@
         // Hide camera and show placeholder
         document.getElementById('camera').style.display = 'none';
         document.getElementById('camera-placeholder').style.display = 'flex';
+        document.getElementById('camera-overlay').style.display = 'none';
 
         // Hide buttons
         document.getElementById('stop-camera-btn').style.display = 'none';
@@ -380,6 +506,7 @@
                     // Show camera and hide placeholder
                     videoElement.style.display = 'block';
                     document.getElementById('camera-placeholder').style.display = 'none';
+                    document.getElementById('camera-overlay').style.display = 'block';
 
                     // Show camera controls
                     document.getElementById('start-camera-btn').style.display = 'none';
@@ -388,7 +515,7 @@
                     document.getElementById('test-photo-btn').style.display = 'inline-flex';
 
                     hideCameraStatus();
-                    showNotification('Kamera berhasil diaktifkan', 'success');
+                    showNotification('Kamera berhasil diaktifkan! Posisikan wajah dalam frame dan ambil foto.', 'success');
                 };
 
                 videoElement.onerror = function(error) {
@@ -413,8 +540,6 @@
             }
 
             showNotification(errorMessage, 'danger');
-
-            // Show troubleshooting info
             showCameraStatus('❌ ' + errorMessage);
         }
     }
@@ -453,14 +578,40 @@
         locationStatus.style.display = 'block';
 
         locationInfo.innerHTML = `
-            <div class="flex items-center">
-                <span class="text-green-600 text-lg font-bold mr-2">📍</span>
-                <span class="text-green-600 font-medium">Lokasi berhasil terdeteksi</span>
-            </div>
-            <div class="text-sm text-gray-600 dark:text-gray-400">
-                <p>Latitude: ${currentLocation.latitude.toFixed(6)}</p>
-                <p>Longitude: ${currentLocation.longitude.toFixed(6)}</p>
-                <p class="text-xs text-gray-500 mt-1">Lokasi ini akan disimpan sebagai bukti kehadiran dinas luar</p>
+            <div class="rounded-lg border p-4 border-green-200 bg-green-50">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="flex items-center">
+                        <span class="text-2xl mr-3">📍</span>
+                        <div>
+                            <h4 class="font-semibold text-green-800">Lokasi Terdeteksi</h4>
+                            <p class="text-sm text-gray-600">Lokasi untuk absensi dinas luar</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    <div class="flex items-center">
+                        <svg class="w-4 h-4 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                        </svg>
+                        <span class="text-gray-700"><strong>Latitude:</strong> ${currentLocation.latitude.toFixed(6)}</span>
+                    </div>
+                    <div class="flex items-center">
+                        <svg class="w-4 h-4 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                        </svg>
+                        <span class="text-gray-700"><strong>Longitude:</strong> ${currentLocation.longitude.toFixed(6)}</span>
+                    </div>
+                </div>
+
+                <div class="mt-3 p-3 bg-green-100 border border-green-200 rounded-lg">
+                    <div class="flex items-center">
+                        <svg class="w-4 h-4 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                        </svg>
+                        <span class="text-green-700 font-medium text-sm">Lokasi siap untuk absensi dinas luar</span>
+                    </div>
+                </div>
             </div>
         `;
     }
@@ -550,18 +701,18 @@
         console.log('Testing photo save...');
         const testBtn = document.getElementById('test-photo-btn');
         testBtn.disabled = true;
-        testBtn.innerHTML = 'Testing...';
+        testBtn.textContent = 'Testing...';
 
         @this.call('testPhotoSave', capturedPhoto)
             .then((result) => {
                 console.log('Test photo result:', result);
                 testBtn.disabled = false;
-                testBtn.innerHTML = '<svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>Test Foto';
+                testBtn.textContent = 'Test Foto';
             })
             .catch((error) => {
                 console.error('Test photo error:', error);
                 testBtn.disabled = false;
-                testBtn.innerHTML = '<svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>Test Foto';
+                testBtn.textContent = 'Test Foto';
                 showNotification('Error testing photo: ' + error.message, 'danger');
             });
     }
@@ -584,51 +735,89 @@
 
         const submitBtn = document.getElementById('submit-btn');
         submitBtn.disabled = true;
-        submitBtn.innerHTML = '<svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>Memproses...';
+        submitBtn.textContent = 'Memproses...';
 
         // Call appropriate Livewire method based on current action
-        let methodName = '';
-        switch(currentAction) {
-            case 'pagi':
-                methodName = 'processCheckInPagi';
-                break;
-            case 'siang':
-                methodName = 'processCheckInSiang';
-                break;
-            case 'sore':
-                methodName = 'processCheckOut';
-                break;
+        let livewireMethod = '';
+        if (currentAction === 'pagi') {
+            livewireMethod = 'processCheckInPagi';
+        } else if (currentAction === 'siang') {
+            livewireMethod = 'processCheckInSiang';
+        } else if (currentAction === 'sore') {
+            livewireMethod = 'processCheckOut';
         }
 
-        if (methodName) {
-            console.log('Calling method:', methodName);
-            @this.call(methodName, capturedPhoto, currentLocation.latitude, currentLocation.longitude)
+        if (livewireMethod) {
+            console.log('Calling ' + livewireMethod + '...');
+            @this.call(livewireMethod, capturedPhoto, currentLocation.latitude, currentLocation.longitude)
                 .then((result) => {
-                    console.log('Method success:', result);
-                    location.reload();
+                    console.log(livewireMethod + ' success:', result);
+                    showNotification('Absensi ' + currentAction + ' berhasil! Halaman akan dimuat ulang...', 'success');
+                    setTimeout(() => location.reload(), 2000);
                 })
                 .catch((error) => {
-                    console.error('Method error:', error);
+                    console.error(livewireMethod + ' error:', error);
                     submitBtn.disabled = false;
-                    submitBtn.innerHTML = 'Absen ' + currentAction.charAt(0).toUpperCase() + currentAction.slice(1);
+                    submitBtn.textContent = 'Absen ' + currentAction.charAt(0).toUpperCase() + currentAction.slice(1) + ' Sekarang';
                     showNotification('Error: ' + error.message, 'danger');
                 });
+        } else {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Absen Sekarang';
+            showNotification('Error: Aksi tidak dikenali', 'danger');
         }
     }
 
     function showNotification(message, type = 'info') {
-        // Create notification using Filament's notification system if available
-        if (window.FilamentData && window.FilamentData.notifications) {
-            window.FilamentData.notifications.push({
-                id: Date.now(),
-                title: type === 'danger' ? 'Error' : 'Info',
-                body: message,
-                color: type === 'danger' ? 'danger' : 'info',
-                duration: 5000
-            });
-        } else {
-            alert(message);
+        console.log(`[${type.toUpperCase()}] ${message}`);
+
+        // Use Filament's native notification system when available
+        if (window.Livewire) {
+            // Try to use Livewire's notification system through the component
+            try {
+                window.Livewire.find('{{ $this->getId() }}').dispatch('notify', {
+                    message: message,
+                    type: type
+                });
+                return;
+            } catch (e) {
+                console.log('Livewire notification not available, using fallback');
+            }
         }
+
+        // Fallback: Create a simple toast notification
+        const toast = document.createElement('div');
+        const bgColor = {
+            'success': 'bg-green-100 border-green-500 text-green-900',
+            'danger': 'bg-red-100 border-red-500 text-red-900',
+            'warning': 'bg-yellow-100 border-yellow-500 text-yellow-900',
+            'info': 'bg-blue-100 border-blue-500 text-blue-900'
+        };
+
+        toast.className = `fixed top-4 right-4 max-w-sm w-full ${bgColor[type] || bgColor.info} border-l-4 p-4 rounded shadow-lg z-50 transform transition-transform duration-300 translate-x-full`;
+        toast.innerHTML = `
+            <div class="flex justify-between items-start">
+                <div class="mr-3">
+                    <p class="text-sm font-medium">${message}</p>
+                </div>
+                <button onclick="this.parentElement.parentElement.remove()" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                    </svg>
+                </button>
+            </div>
+        `;
+
+        document.body.appendChild(toast);
+
+        // Animate in
+        setTimeout(() => toast.classList.remove('translate-x-full'), 100);
+
+        // Auto remove after 5 seconds
+        setTimeout(() => {
+            toast.classList.add('translate-x-full');
+            setTimeout(() => toast.remove(), 300);
+        }, 5000);
     }
 
     // Cleanup camera stream when page unloads
@@ -647,18 +836,4 @@
         }
     });
 </script>
-@endpush
-
-@push('styles')
-<style>
-    #camera {
-        max-height: 400px;
-        object-fit: cover;
-    }
-
-    #captured-photo {
-        max-height: 400px;
-        object-fit: cover;
-    }
-</style>
 @endpush
