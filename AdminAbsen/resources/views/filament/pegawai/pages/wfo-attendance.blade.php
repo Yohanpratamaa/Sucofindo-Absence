@@ -132,9 +132,13 @@
                         <h3 class="text-lg font-medium text-gray-900 mb-2">Ambil Foto Selfie</h3>
                         <p class="text-gray-600 mb-4">Klik tombol untuk mengaktifkan kamera dan ambil foto</p>
 
-                        <button type="button" id="start-camera-btn" class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700 active:bg-blue-900 focus:outline-none focus:border-blue-900 focus:ring ring-blue-300 disabled:opacity-25 transition ease-in-out duration-150">
+                        <button type="button" id="start-camera-btn" onclick="startCamera()" class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700 active:bg-blue-900 focus:outline-none focus:border-blue-900 focus:ring ring-blue-300 disabled:opacity-25 transition ease-in-out duration-150">
                             <x-heroicon-o-camera class="w-4 h-4 mr-2" />
                             Mulai Kamera
+                        </button>
+
+                        <button type="button" onclick="testFunction()" class="ml-2 inline-flex items-center px-4 py-2 bg-purple-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-purple-700 active:bg-purple-900 focus:outline-none disabled:opacity-25 transition ease-in-out duration-150">
+                            Test JS
                         </button>
                     </div>
 
@@ -143,12 +147,12 @@
                         <video id="camera" class="w-full max-w-md mx-auto h-64 object-cover rounded-lg mb-4" autoplay playsinline muted></video>
 
                         <div class="flex justify-center space-x-3">
-                            <button type="button" id="capture-btn" class="inline-flex items-center px-4 py-2 bg-green-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-green-700 active:bg-green-900 focus:outline-none focus:border-green-900 focus:ring ring-green-300 disabled:opacity-25 transition ease-in-out duration-150">
+                            <button type="button" id="capture-btn" onclick="capturePhoto()" class="inline-flex items-center px-4 py-2 bg-green-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-green-700 active:bg-green-900 focus:outline-none focus:border-green-900 focus:ring ring-green-300 disabled:opacity-25 transition ease-in-out duration-150">
                                 <x-heroicon-o-photo class="w-4 h-4 mr-2" />
                                 Ambil Foto
                             </button>
 
-                            <button type="button" id="stop-camera-btn" class="inline-flex items-center px-4 py-2 bg-gray-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700 active:bg-gray-900 focus:outline-none focus:border-gray-900 focus:ring ring-gray-300 disabled:opacity-25 transition ease-in-out duration-150">
+                            <button type="button" id="stop-camera-btn" onclick="stopCamera()" class="inline-flex items-center px-4 py-2 bg-gray-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700 active:bg-gray-900 focus:outline-none focus:border-gray-900 focus:ring ring-gray-300 disabled:opacity-25 transition ease-in-out duration-150">
                                 <x-heroicon-o-x-mark class="w-4 h-4 mr-2" />
                                 Matikan
                             </button>
@@ -159,7 +163,7 @@
                     <div id="photo-container" class="hidden text-center">
                         <img id="photo-preview" class="w-full max-w-md mx-auto h-64 object-cover rounded-lg mb-4" />
 
-                        <button type="button" id="retake-btn" class="inline-flex items-center px-4 py-2 bg-gray-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700 active:bg-gray-900 focus:outline-none focus:border-gray-900 focus:ring ring-gray-300 disabled:opacity-25 transition ease-in-out duration-150">
+                        <button type="button" id="retake-btn" onclick="retakePhoto()" class="inline-flex items-center px-4 py-2 bg-gray-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700 active:bg-gray-900 focus:outline-none focus:border-gray-900 focus:ring ring-gray-300 disabled:opacity-25 transition ease-in-out duration-150">
                             <x-heroicon-o-arrow-path class="w-4 h-4 mr-2" />
                             Ambil Ulang
                         </button>
@@ -173,14 +177,14 @@
                 <div id="submit-container" class="hidden">
                     <div class="flex flex-col sm:flex-row gap-4 justify-center">
                     @if($canCheckIn)
-                        <button type="button" id="submit-checkin" class="inline-flex items-center px-6 py-3 bg-green-600 border border-transparent rounded-md font-semibold text-sm text-white uppercase tracking-widest hover:bg-green-700 active:bg-green-900 focus:outline-none focus:border-green-900 focus:ring ring-green-300 disabled:opacity-25 transition ease-in-out duration-150">
+                        <button type="button" id="submit-checkin" onclick="submitAttendance('checkin')" class="inline-flex items-center px-6 py-3 bg-green-600 border border-transparent rounded-md font-semibold text-sm text-white uppercase tracking-widest hover:bg-green-700 active:bg-green-900 focus:outline-none focus:border-green-900 focus:ring ring-green-300 disabled:opacity-25 transition ease-in-out duration-150">
                             <x-heroicon-o-clock class="w-5 h-5 mr-2" />
                             Check In Sekarang
                         </button>
                     @endif
 
                     @if($canCheckOut)
-                        <button type="button" id="submit-checkout" class="inline-flex items-center px-6 py-3 bg-orange-600 border border-transparent rounded-md font-semibold text-sm text-white uppercase tracking-widest hover:bg-orange-700 active:bg-orange-900 focus:outline-none focus:border-orange-900 focus:ring ring-orange-300 disabled:opacity-25 transition ease-in-out duration-150">
+                        <button type="button" id="submit-checkout" onclick="submitAttendance('checkout')" class="inline-flex items-center px-6 py-3 bg-orange-600 border border-transparent rounded-md font-semibold text-sm text-white uppercase tracking-widest hover:bg-orange-700 active:bg-orange-900 focus:outline-none focus:border-orange-900 focus:ring ring-orange-300 disabled:opacity-25 transition ease-in-out duration-150">
                             <x-heroicon-o-arrow-right-on-rectangle class="w-5 h-5 mr-2" />
                             Check Out Sekarang
                         </button>
@@ -191,106 +195,103 @@
         </div>
     </x-filament::section>
 
-    @script
-    <script>
-        // Update current time every second
-        function updateTime() {
-            const now = new Date();
-            const timeString = now.toLocaleTimeString('id-ID', {
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit'
-            });
-            const timeElement = document.getElementById('current-time');
-            if (timeElement) {
-                timeElement.textContent = timeString;
-            }
+<script>
+    // Update current time every second
+    function updateTime() {
+        const now = new Date();
+        const timeString = now.toLocaleTimeString('id-ID', {
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+        });
+        const timeElement = document.getElementById('current-time');
+        if (timeElement) {
+            timeElement.textContent = timeString;
         }
-        setInterval(updateTime, 1000);
+    }
+
+<<<<<<< Updated upstream
+    // Global variables for camera functionality
+    let currentStream = null;
+    let photoBlob = null;
+    let userLocation = null;
+=======
+    // Start time updates
+    updateTime();
+    setInterval(updateTime, 1000);
+>>>>>>> Stashed changes
 
     // Global variables for camera functionality
     let currentStream = null;
     let photoBlob = null;
     let userLocation = null;
 
-        // Get user location
-        function getUserLocation() {
-            if ('geolocation' in navigator) {
-                navigator.geolocation.getCurrentPosition(
-                    function(position) {
-                        userLocation = {
-                            latitude: position.coords.latitude,
-                            longitude: position.coords.longitude
-                        };
+    // Test function to verify JavaScript is working
+    function testFunction() {
+        console.log('Test function called - JavaScript is working!');
+        alert('JavaScript is working! Test function called successfully.');
+    }
 
-                        // Show location status
-                        const locationStatus = document.getElementById('location-status');
-                        const locationBadge = document.getElementById('location-badge');
-                        if (locationStatus && locationBadge) {
-                            locationStatus.classList.remove('hidden');
-                            locationBadge.textContent = `Lokasi terdeteksi: ${userLocation.latitude.toFixed(6)}, ${userLocation.longitude.toFixed(6)}`;
-                            locationBadge.setAttribute('color', 'success');
-                        }
-                    },
-                    function(error) {
-                        console.error('Error getting location:', error);
-                        const locationStatus = document.getElementById('location-status');
-                        const locationBadge = document.getElementById('location-badge');
-                        if (locationStatus && locationBadge) {
-                            locationStatus.classList.remove('hidden');
-                            locationBadge.textContent = 'Error mendapatkan lokasi';
-                            locationBadge.setAttribute('color', 'danger');
-                        }
+    // Get user location
+    function getUserLocation() {
+        if ('geolocation' in navigator) {
+            navigator.geolocation.getCurrentPosition(
+                function(position) {
+                    userLocation = {
+                        latitude: position.coords.latitude,
+                        longitude: position.coords.longitude
+                    };
+
+                    // Show location status
+                    const locationStatus = document.getElementById('location-status');
+                    const locationBadge = document.getElementById('location-badge');
+                    if (locationStatus && locationBadge) {
+                        locationStatus.classList.remove('hidden');
+                        locationBadge.textContent = `Lokasi terdeteksi: ${userLocation.latitude.toFixed(6)}, ${userLocation.longitude.toFixed(6)}`;
+                        locationBadge.setAttribute('color', 'success');
                     }
-                );
-            }
+                },
+                function(error) {
+                    console.error('Error getting location:', error);
+                    const locationStatus = document.getElementById('location-status');
+                    const locationBadge = document.getElementById('location-badge');
+                    if (locationStatus && locationBadge) {
+                        locationStatus.classList.remove('hidden');
+                        locationBadge.textContent = 'Error mendapatkan lokasi';
+                        locationBadge.setAttribute('color', 'danger');
+                    }
+                }
+            );
         }
+    }
 
-        // Camera functions
-        async function startCamera() {
-            console.log('startCamera function called');
+    // Function to start camera
+    async function startCamera() {
+        console.log('startCamera function called');
+        try {
+            console.log('Requesting camera access...');
+            
+            // Show loading state
+            const startBtn = document.getElementById('start-camera-btn');
+            if (startBtn) {
+                startBtn.disabled = true;
+                startBtn.innerHTML = '<svg class="animate-spin w-4 h-4 mr-2" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle></svg>Mengakses kamera...';
+            }
 
-            try {
-                const constraints = {
-                    video: {
-                        facingMode: 'user',
-                        width: { ideal: 640 },
-                        height: { ideal: 480 }
-                    }
-                };
+            // Check if camera permission is supported
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                throw new Error('Browser tidak mendukung akses kamera');
+            }
 
-                console.log('Requesting camera access...');
-                currentStream = await navigator.mediaDevices.getUserMedia(constraints);
-                console.log('Camera access granted');
-
-                const video = document.getElementById('camera');
-                const placeholder = document.getElementById('camera-placeholder');
-                const cameraContainer = document.getElementById('camera-container');
-
-                if (video && placeholder && cameraContainer) {
-                    console.log('Setting up video stream...');
-                    video.srcObject = currentStream;
-
-                    // Hide placeholder, show camera
-                    placeholder.classList.add('hidden');
-                    cameraContainer.classList.remove('hidden');
-
-                    console.log('Camera started successfully');
-                } else {
-                    console.error('Required elements not found');
+            const constraints = {
+                video: {
+                    facingMode: 'user',
+                    width: { ideal: 640 },
+                    height: { ideal: 480 }
                 }
-            } catch (error) {
-                console.error('Error accessing camera:', error);
+            };
 
-                let errorMessage = 'Tidak dapat mengakses kamera. ';
-                if (error.name === 'NotAllowedError') {
-                    errorMessage += 'Akses kamera ditolak. Silakan izinkan akses kamera di browser.';
-                } else if (error.name === 'NotFoundError') {
-                    errorMessage += 'Kamera tidak ditemukan di perangkat ini.';
-                } else {
-                    errorMessage += error.message;
-                }
-
+<<<<<<< Updated upstream
                 alert(errorMessage);
             }
         }
@@ -454,17 +455,232 @@
                     submitBtn.innerHTML = `<x-heroicon-o-${iconClass} class="w-5 h-5 mr-2" />${text}`;
                     submitBtn.disabled = false;
                 }
+=======
+            currentStream = await navigator.mediaDevices.getUserMedia(constraints);
+            console.log('Camera access granted');
+            
+            const video = document.getElementById('camera');
+            const cameraPlaceholder = document.getElementById('camera-placeholder');
+            const cameraContainer = document.getElementById('camera-container');
+            
+            if (video && cameraContainer && cameraPlaceholder) {
+                console.log('Setting up video stream...');
+                video.srcObject = currentStream;
+
+                // Wait for video to load metadata
+                video.addEventListener('loadedmetadata', function() {
+                    console.log('Video metadata loaded');
+                    video.play();
+                });
+
+                cameraPlaceholder.classList.add('hidden');
+                cameraContainer.classList.remove('hidden');
+                console.log('Camera started successfully');
+            } else {
+                console.error('Required elements not found');
+                throw new Error('Elemen video tidak ditemukan');
             }
+            
+        } catch (error) {
+            console.error('Error accessing camera:', error);
+            
+            // Reset button state
+            const startBtn = document.getElementById('start-camera-btn');
+            if (startBtn) {
+                startBtn.disabled = false;
+                startBtn.innerHTML = '<x-heroicon-o-camera class="w-4 h-4 mr-2" />Mulai Kamera';
+            }
+
+            let errorMessage = 'Tidak dapat mengakses kamera. ';
+            if (error.name === 'NotAllowedError') {
+                errorMessage += 'Akses kamera ditolak. Silakan izinkan akses kamera di browser dan muat ulang halaman.';
+            } else if (error.name === 'NotFoundError') {
+                errorMessage += 'Kamera tidak ditemukan di perangkat ini.';
+            } else if (error.name === 'NotReadableError') {
+                errorMessage += 'Kamera sedang digunakan oleh aplikasi lain.';
+            } else {
+                errorMessage += error.message;
+            }
+
+            alert(errorMessage);
+        }
+    }
+
+    // Function to stop camera
+    function stopCamera() {
+        console.log('stopCamera function called');
+        if (currentStream) {
+            currentStream.getTracks().forEach(track => {
+                track.stop();
+                console.log('Camera track stopped');
+            });
+            currentStream = null;
+        }
+        
+        const cameraPlaceholder = document.getElementById('camera-placeholder');
+        const cameraContainer = document.getElementById('camera-container');
+        const photoContainer = document.getElementById('photo-container');
+        const submitContainer = document.getElementById('submit-container');
+        
+        if (cameraPlaceholder && cameraContainer) {
+            cameraContainer.classList.add('hidden');
+            photoContainer?.classList.add('hidden');
+            submitContainer?.classList.add('hidden');
+            cameraPlaceholder.classList.remove('hidden');
+            console.log('Camera UI reset to initial state');
+        }
+        
+        photoBlob = null;
+    }
+
+    // Function to capture photo
+    function capturePhoto() {
+        console.log('capturePhoto function called');
+        const video = document.getElementById('camera');
+        const canvas = document.getElementById('canvas');
+        const photoPreview = document.getElementById('photo-preview');
+        const cameraContainer = document.getElementById('camera-container');
+        const photoContainer = document.getElementById('photo-container');
+        const submitContainer = document.getElementById('submit-container');
+        
+        if (video && canvas && photoPreview) {
+            console.log('Capturing photo...');
+            const context = canvas.getContext('2d');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            
+            // Draw the video frame to canvas
+            context.drawImage(video, 0, 0);
+            
+            // Convert to blob
+            canvas.toBlob(function(blob) {
+                photoBlob = blob;
+                const url = URL.createObjectURL(blob);
+                photoPreview.src = url;
+                
+                // Update UI
+                cameraContainer.classList.add('hidden');
+                photoContainer.classList.remove('hidden');
+                submitContainer.classList.remove('hidden');
+                
+                // Stop camera stream
+                if (currentStream) {
+                    currentStream.getTracks().forEach(track => track.stop());
+                    currentStream = null;
+                }
+                
+                console.log('Photo captured and displayed successfully');
+            }, 'image/jpeg', 0.8);
+        } else {
+            console.error('Required elements not found for photo capture');
+        }
+    }
+
+    // Function to retake photo
+    function retakePhoto() {
+        console.log('retakePhoto function called');
+        const photoContainer = document.getElementById('photo-container');
+        const cameraPlaceholder = document.getElementById('camera-placeholder');
+        const submitContainer = document.getElementById('submit-container');
+        
+        if (photoContainer && cameraPlaceholder) {
+            photoContainer.classList.add('hidden');
+            submitContainer?.classList.add('hidden');
+            cameraPlaceholder.classList.remove('hidden');
+            photoBlob = null;
+            console.log('Ready to retake photo');
+        }
+    }
+
+    // Function to submit attendance with CSRF and proper error handling
+    async function submitAttendance(type) {
+        console.log(`submitAttendance function called with type: ${type}`);
+        
+        if (!photoBlob) {
+            alert('Silakan ambil foto terlebih dahulu');
+            return;
         }
 
-        // Event listeners
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('DOM loaded, setting up event listeners...');
+        if (!userLocation) {
+            alert('Lokasi belum terdeteksi. Silakan tunggu sebentar dan coba lagi.');
+            return;
+        }
 
-            // Get location first
-            getUserLocation();
+        try {
+            // Show loading state
+            const submitBtn = document.getElementById(`submit-${type}`);
+            if (submitBtn) {
+                const originalText = submitBtn.innerHTML;
+                submitBtn.innerHTML = '<svg class="animate-spin w-4 h-4 mr-2" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>Memproses...';
+                submitBtn.disabled = true;
+            }
 
-            // Camera controls - with detailed logging
+            // Prepare form data
+            const formData = new FormData();
+            formData.append('photo', photoBlob, 'selfie.jpg');
+            formData.append('type', type);
+            formData.append('latitude', userLocation.latitude);
+            formData.append('longitude', userLocation.longitude);
+            
+            // Get CSRF token
+            const csrfToken = document.querySelector('meta[name="csrf-token"]');
+            if (csrfToken) {
+                formData.append('_token', csrfToken.getAttribute('content'));
+            }
+
+            console.log('Submitting attendance with form data');
+
+            // Submit to server
+            const response = await fetch(window.location.href, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                console.log('Server response:', result);
+
+                if (result.success) {
+                    alert(`${type === 'checkin' ? 'Check In' : 'Check Out'} berhasil!`);
+                    location.reload();
+                } else {
+                    throw new Error(result.message || 'Terjadi kesalahan');
+                }
+            } else {
+                throw new Error(`HTTP Error: ${response.status}`);
+            }
+
+        } catch (error) {
+            console.error('Error submitting attendance:', error);
+            alert(error.message || 'Terjadi kesalahan saat menyimpan absensi');
+            
+            // Reset button state
+            const submitBtn = document.getElementById(`submit-${type}`);
+            if (submitBtn) {
+                const iconClass = type === 'checkin' ? 'clock' : 'arrow-right-on-rectangle';
+                const text = type === 'checkin' ? 'Check In Sekarang' : 'Check Out Sekarang';
+                submitBtn.innerHTML = `<x-heroicon-o-${iconClass} class="w-5 h-5 mr-2" />${text}`;
+                submitBtn.disabled = false;
+>>>>>>> Stashed changes
+            }
+        }
+    }
+
+    // Initialize everything when DOM is loaded
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('DOM Content Loaded - Setting up everything...');
+        
+        // Get location first
+        getUserLocation();
+        
+        // Small delay to ensure all elements are rendered
+        setTimeout(function() {
+            console.log('Setting up camera button event listeners...');
+            
+            // Get all button elements
             const startCameraBtn = document.getElementById('start-camera-btn');
             const captureBtn = document.getElementById('capture-btn');
             const stopCameraBtn = document.getElementById('stop-camera-btn');
@@ -472,10 +688,20 @@
             const submitCheckinBtn = document.getElementById('submit-checkin');
             const submitCheckoutBtn = document.getElementById('submit-checkout');
 
+            console.log('Button elements found:', {
+                startCamera: !!startCameraBtn,
+                capture: !!captureBtn,
+                stopCamera: !!stopCameraBtn,
+                retake: !!retakeBtn,
+                submitCheckin: !!submitCheckinBtn,
+                submitCheckout: !!submitCheckoutBtn
+            });
+
+            // Add event listeners as backup to onclick attributes
             if (startCameraBtn) {
                 console.log('Found start camera button, adding event listener');
                 startCameraBtn.addEventListener('click', function(e) {
-                    console.log('Start camera button clicked');
+                    console.log('Start camera button clicked via event listener');
                     e.preventDefault();
                     startCamera();
                 });
@@ -486,7 +712,7 @@
             if (captureBtn) {
                 console.log('Found capture button, adding event listener');
                 captureBtn.addEventListener('click', function(e) {
-                    console.log('Capture button clicked');
+                    console.log('Capture button clicked via event listener');
                     e.preventDefault();
                     capturePhoto();
                 });
@@ -495,7 +721,7 @@
             if (stopCameraBtn) {
                 console.log('Found stop camera button, adding event listener');
                 stopCameraBtn.addEventListener('click', function(e) {
-                    console.log('Stop camera button clicked');
+                    console.log('Stop camera button clicked via event listener');
                     e.preventDefault();
                     stopCamera();
                 });
@@ -504,17 +730,16 @@
             if (retakeBtn) {
                 console.log('Found retake button, adding event listener');
                 retakeBtn.addEventListener('click', function(e) {
-                    console.log('Retake button clicked');
+                    console.log('Retake button clicked via event listener');
                     e.preventDefault();
                     retakePhoto();
                 });
             }
 
-            // Submit buttons
             if (submitCheckinBtn) {
                 console.log('Found check-in button, adding event listener');
                 submitCheckinBtn.addEventListener('click', function(e) {
-                    console.log('Check-in button clicked');
+                    console.log('Check-in button clicked via event listener');
                     e.preventDefault();
                     submitAttendance('checkin');
                 });
@@ -523,29 +748,21 @@
             if (submitCheckoutBtn) {
                 console.log('Found check-out button, adding event listener');
                 submitCheckoutBtn.addEventListener('click', function(e) {
-                    console.log('Check-out button clicked');
+                    console.log('Check-out button clicked via event listener');
                     e.preventDefault();
                     submitAttendance('checkout');
                 });
             }
 
             console.log('All event listeners set up');
-        });
+        }, 100);
+    });
 
-        // Clean up camera stream when page unloads
-        window.addEventListener('beforeunload', function() {
-            if (currentStream) {
-                currentStream.getTracks().forEach(track => track.stop());
-            }
-        });
-
-        // Listen for Livewire events to refresh page after attendance
-        Livewire.on('attendance-submitted', () => {
-            if (currentStream) {
-                currentStream.getTracks().forEach(track => track.stop());
-            }
-            location.reload();
-        });
-    </script>
-    @endscript
+    // Clean up camera stream when page unloads
+    window.addEventListener('beforeunload', function() {
+        if (currentStream) {
+            currentStream.getTracks().forEach(track => track.stop());
+        }
+    });
+</script>
 </x-filament-panels::page>

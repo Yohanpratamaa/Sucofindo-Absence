@@ -434,4 +434,186 @@ class WfoAttendance extends Page implements HasForms
 
         return $photoPath;
     }
+
+    // Handle HTTP POST requests for attendance submission
+    public function handlePost(Request $request)
+    {
+        try {
+            Log::info('handlePost called', [
+                'user_id' => Auth::id(),
+                'request_data' => $request->all(),
+                'has_photo' => $request->hasFile('photo'),
+                'type' => $request->input('type')
+            ]);
+
+            $type = $request->input('type');
+            $latitude = $request->input('latitude');
+            $longitude = $request->input('longitude');
+            $photo = $request->file('photo');
+
+            if (!$photo) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Foto tidak ditemukan'
+                ], 400);
+            }
+
+            if (!$latitude || !$longitude) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Lokasi tidak ditemukan'
+                ], 400);
+            }
+
+            // Save photo and process attendance
+            if ($type === 'checkin') {
+                $result = $this->processCheckInFromHttp($photo, $latitude, $longitude);
+            } elseif ($type === 'checkout') {
+                $result = $this->processCheckOutFromHttp($photo, $latitude, $longitude);
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Tipe absensi tidak valid'
+                ], 400);
+            }
+
+            return response()->json($result);
+
+        } catch (\Exception $e) {
+            Log::error('Error in handlePost', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan server: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    protected function processCheckInFromHttp($photo, $latitude, $longitude)
+    {
+        $this->loadTodayAttendance();
+        $this->calculateAttendanceStatus();
+
+        if (!$this->canCheckIn) {
+            return [
+                'success' => false,
+                'message' => 'Anda sudah melakukan check in hari ini.'
+            ];
+        }
+
+        // Validasi lokasi
+        $locationCheck = $this->checkLocation($latitude, $longitude);
+        
+        if (!$locationCheck['isWithinRadius']) {
+            return [
+                'success' => false,
+                'message' => 'Anda berada di luar radius kantor yang diizinkan.'
+            ];
+        }
+
+        // Simpan foto
+        $photoPath = $this->savePhotoFromFile($photo, 'check_in');
+        
+        if (!$photoPath) {
+            return [
+                'success' => false,
+                'message' => 'Gagal menyimpan foto selfie.'
+            ];
+        }
+
+        // Buat record attendance
+        $currentTime = Carbon::now();
+        $currentDay = strtolower($currentTime->format('l'));
+        $officeSchedule = OfficeSchedule::getScheduleForDay($this->nearestOffice->id, $currentDay);
+
+        $attendance = Attendance::create([
+            'user_id' => Auth::id(),
+            'office_working_hours_id' => $officeSchedule ? $officeSchedule->id : null,
+            'check_in' => $currentTime,
+            'latitude_absen_masuk' => $latitude,
+            'longitude_absen_masuk' => $longitude,
+            'picture_absen_masuk' => $photoPath,
+            'attendance_type' => 'WFO',
+        ]);
+
+        Log::info('Check in successful', ['attendance_id' => $attendance->id]);
+
+        return [
+            'success' => true,
+            'message' => 'Check in berhasil!'
+        ];
+    }
+
+    protected function processCheckOutFromHttp($photo, $latitude, $longitude)
+    {
+        $this->loadTodayAttendance();
+        $this->calculateAttendanceStatus();
+
+        if (!$this->canCheckOut) {
+            return [
+                'success' => false,
+                'message' => 'Anda belum check in atau sudah check out hari ini.'
+            ];
+        }
+
+        // Validasi lokasi
+        $locationCheck = $this->checkLocation($latitude, $longitude);
+        
+        if (!$locationCheck['isWithinRadius']) {
+            return [
+                'success' => false,
+                'message' => 'Anda berada di luar radius kantor yang diizinkan.'
+            ];
+        }
+
+        // Simpan foto
+        $photoPath = $this->savePhotoFromFile($photo, 'check_out');
+        
+        if (!$photoPath) {
+            return [
+                'success' => false,
+                'message' => 'Gagal menyimpan foto selfie.'
+            ];
+        }
+
+        // Update record attendance
+        $this->todayAttendance->update([
+            'check_out' => Carbon::now(),
+            'latitude_absen_keluar' => $latitude,
+            'longitude_absen_keluar' => $longitude,
+            'picture_absen_keluar' => $photoPath,
+        ]);
+
+        Log::info('Check out successful', ['attendance_id' => $this->todayAttendance->id]);
+
+        return [
+            'success' => true,
+            'message' => 'Check out berhasil!'
+        ];
+    }
+
+    protected function savePhotoFromFile($photo, $type)
+    {
+        try {
+            $filename = Auth::id() . '_' . $type . '_' . time() . '.jpg';
+            $path = $photo->storeAs('attendance-photos', $filename, 'public');
+            
+            Log::info('Photo saved from file', [
+                'path' => $path,
+                'filename' => $filename,
+                'size' => $photo->getSize()
+            ]);
+            
+            return $path;
+        } catch (\Exception $e) {
+            Log::error('Error saving photo from file', [
+                'error' => $e->getMessage(),
+                'type' => $type
+            ]);
+            return null;
+        }
+    }
 }
