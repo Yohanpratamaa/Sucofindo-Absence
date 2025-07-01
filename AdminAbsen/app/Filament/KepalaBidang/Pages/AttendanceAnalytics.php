@@ -3,6 +3,9 @@
 namespace App\Filament\KepalaBidang\Pages;
 
 use Filament\Pages\Page;
+use App\Filament\KepalaBidang\Widgets\AttendanceStatsWidget;
+use App\Filament\KepalaBidang\Widgets\AttendanceChartWidget;
+use App\Filament\KepalaBidang\Widgets\AttendanceTypeChartWidget;
 
 class AttendanceAnalytics extends Page
 {
@@ -24,5 +27,24 @@ class AttendanceAnalytics extends Page
     public function getSubheading(): string
     {
         return 'Dashboard analisis dan insights absensi tim';
+    }
+
+    protected function getHeaderWidgets(): array
+    {
+        return [
+            AttendanceStatsWidget::class,
+            AttendanceChartWidget::class,
+            AttendanceTypeChartWidget::class,
+        ];
+    }
+
+    public function getHeaderWidgetsColumns(): int | array
+    {
+        return [
+            'sm' => 1,
+            'md' => 2,
+            'lg' => 2,
+            'xl' => 3,
+        ];
     }
 }

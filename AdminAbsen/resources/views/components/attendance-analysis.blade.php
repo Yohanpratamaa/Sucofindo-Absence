@@ -51,7 +51,7 @@ use Carbon\Carbon;
         <!-- Working Hours Analysis -->
         <div class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
             <h3 class="text-lg font-semibold text-gray-800 mb-4">⏰ Analisis Waktu</h3>
-            
+
             <div class="space-y-4">
                 @php
                     $jamMasukStandar = $record->jam_masuk_standar ?? '08:00:00';
@@ -124,7 +124,7 @@ use Carbon\Carbon;
         <!-- Status & Compliance -->
         <div class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
             <h3 class="text-lg font-semibold text-gray-800 mb-4">📊 Status & Kelengkapan</h3>
-            
+
             <div class="space-y-4">
                 <!-- Attendance Status -->
                 <div class="p-3 rounded-lg border">
@@ -168,31 +168,31 @@ use Carbon\Carbon;
                             <span class="w-4 h-4 mr-2">{{ $record->check_in ? '✅' : '❌' }}</span>
                             <span>Check In {{ $record->check_in ? '(' . \Carbon\Carbon::parse($record->check_in)->format('H:i:s') . ')' : '(Belum)' }}</span>
                         </div>
-                        
+
                         @if($record->attendance_type === 'Dinas Luar')
                         <div class="flex items-center">
                             <span class="w-4 h-4 mr-2">{{ $record->absen_siang ? '✅' : '❌' }}</span>
                             <span>Absen Siang {{ $record->absen_siang ? '(' . \Carbon\Carbon::parse($record->absen_siang)->format('H:i:s') . ')' : '(Belum)' }}</span>
                         </div>
                         @endif
-                        
+
                         <div class="flex items-center">
                             <span class="w-4 h-4 mr-2">{{ $record->check_out ? '✅' : '❌' }}</span>
                             <span>Check Out {{ $record->check_out ? '(' . \Carbon\Carbon::parse($record->check_out)->format('H:i:s') . ')' : '(Belum)' }}</span>
                         </div>
-                        
+
                         <div class="flex items-center">
                             <span class="w-4 h-4 mr-2">{{ $record->picture_absen_masuk ? '✅' : '❌' }}</span>
                             <span>Foto Check In</span>
                         </div>
-                        
+
                         @if($record->attendance_type === 'Dinas Luar')
                         <div class="flex items-center">
                             <span class="w-4 h-4 mr-2">{{ $record->picture_absen_siang ? '✅' : '❌' }}</span>
                             <span>Foto Absen Siang</span>
                         </div>
                         @endif
-                        
+
                         <div class="flex items-center">
                             <span class="w-4 h-4 mr-2">{{ $record->picture_absen_pulang ? '✅' : '❌' }}</span>
                             <span>Foto Check Out</span>
@@ -207,7 +207,7 @@ use Carbon\Carbon;
     @if($record->latitude_absen_masuk || $record->latitude_absen_siang || $record->latitude_absen_pulang)
     <div class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
         <h3 class="text-lg font-semibold text-gray-800 mb-4">📍 Analisis Lokasi</h3>
-        
+
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             @if($record->latitude_absen_masuk)
             <div class="p-3 rounded-lg bg-green-50 border border-green-200">
@@ -259,7 +259,7 @@ use Carbon\Carbon;
     <!-- Performance Metrics -->
     <div class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
         <h3 class="text-lg font-semibold text-gray-800 mb-4">📈 Metrik Performa</h3>
-        
+
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div class="text-center p-3 rounded-lg bg-blue-50">
                 <div class="text-2xl font-bold text-blue-600">
@@ -267,21 +267,21 @@ use Carbon\Carbon;
                 </div>
                 <div class="text-xs text-gray-600">Absensi Required</div>
             </div>
-            
+
             <div class="text-center p-3 rounded-lg bg-green-50">
                 <div class="text-2xl font-bold text-green-600">
                     {{ $kelengkapan['completed'] }}
                 </div>
                 <div class="text-xs text-gray-600">Absensi Completed</div>
             </div>
-            
+
             <div class="text-center p-3 rounded-lg bg-yellow-50">
                 <div class="text-2xl font-bold text-yellow-600">
                     {{ number_format(($kelengkapan['completed'] / $kelengkapan['total']) * 100, 0) }}%
                 </div>
                 <div class="text-xs text-gray-600">Completion Rate</div>
             </div>
-            
+
             <div class="text-center p-3 rounded-lg bg-purple-50">
                 <div class="text-2xl font-bold text-purple-600">
                     {{ $record->overtime ?? 0 }}
