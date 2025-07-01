@@ -87,3 +87,9 @@ Route::prefix('api/realtime')->group(function () {
     Route::get('/recent-attendance', [RealTimeController::class, 'getRecentAttendance']);
     Route::get('/dashboard-data', [RealTimeController::class, 'getDashboardData']);
 });
+
+// Custom attendance routes for handling HTTP POST from camera functionality
+Route::middleware(['auth', \App\Http\Middleware\EnsurePegawaiRole::class])->group(function () {
+    Route::post('/pegawai/wfo-attendance', [\App\Filament\Pegawai\Pages\WfoAttendance::class, 'handlePost'])
+        ->name('pegawai.wfo-attendance.post');
+});

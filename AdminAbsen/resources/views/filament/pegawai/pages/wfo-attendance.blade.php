@@ -1,3 +1,7 @@
+@push('head')
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+@endpush
+
 <x-filament-panels::page>
     <!-- Current Status Section -->
     <x-filament::section>
@@ -204,10 +208,10 @@
         }
         setInterval(updateTime, 1000);
 
-        // Global variables
-        let userLocation = null;
-        let currentStream = null;
-        let capturedPhoto = null;
+    // Global variables for camera functionality
+    let currentStream = null;
+    let photoBlob = null;
+    let userLocation = null;
 
         // Get user location
         function getUserLocation() {
@@ -291,92 +295,97 @@
             }
         }
 
+        // Function to stop camera
         function stopCamera() {
             console.log('stopCamera function called');
-
             if (currentStream) {
-                currentStream.getTracks().forEach(track => track.stop());
+                currentStream.getTracks().forEach(track => {
+                    track.stop();
+                    console.log('Camera track stopped');
+                });
                 currentStream = null;
             }
 
-            const placeholder = document.getElementById('camera-placeholder');
+            const cameraPlaceholder = document.getElementById('camera-placeholder');
             const cameraContainer = document.getElementById('camera-container');
             const photoContainer = document.getElementById('photo-container');
+            const submitContainer = document.getElementById('submit-container');
 
-            if (placeholder && cameraContainer && photoContainer) {
-                placeholder.classList.remove('hidden');
+            if (cameraPlaceholder && cameraContainer) {
                 cameraContainer.classList.add('hidden');
-                photoContainer.classList.add('hidden');
+                photoContainer?.classList.add('hidden');
+                submitContainer?.classList.add('hidden');
+                cameraPlaceholder.classList.remove('hidden');
+                console.log('Camera UI reset to initial state');
             }
 
-            capturedPhoto = null;
-            hideSubmitButtons();
+            photoBlob = null;
         }
 
+        // Function to capture photo
         function capturePhoto() {
             console.log('capturePhoto function called');
-
             const video = document.getElementById('camera');
             const canvas = document.getElementById('canvas');
-            const preview = document.getElementById('photo-preview');
+            const photoPreview = document.getElementById('photo-preview');
             const cameraContainer = document.getElementById('camera-container');
             const photoContainer = document.getElementById('photo-container');
+            const submitContainer = document.getElementById('submit-container');
 
-            if (video && canvas && preview && cameraContainer && photoContainer) {
+            if (video && canvas && photoPreview) {
                 console.log('Capturing photo...');
-
+                const context = canvas.getContext('2d');
                 canvas.width = video.videoWidth;
                 canvas.height = video.videoHeight;
-                const context = canvas.getContext('2d');
+
+                // Draw the video frame to canvas
                 context.drawImage(video, 0, 0);
 
-                capturedPhoto = canvas.toDataURL('image/jpeg', 0.8);
-                preview.src = capturedPhoto;
+                // Convert to blob
+                canvas.toBlob(function(blob) {
+                    photoBlob = blob;
+                    const url = URL.createObjectURL(blob);
+                    photoPreview.src = url;
 
-                // Switch from camera to photo preview
-                cameraContainer.classList.add('hidden');
-                photoContainer.classList.remove('hidden');
+                    // Update UI
+                    cameraContainer.classList.add('hidden');
+                    photoContainer.classList.remove('hidden');
+                    submitContainer.classList.remove('hidden');
 
-                // Show submit buttons
-                showSubmitButtons();
+                    // Stop camera stream
+                    if (currentStream) {
+                        currentStream.getTracks().forEach(track => track.stop());
+                        currentStream = null;
+                    }
 
-                console.log('Photo captured successfully');
+                    console.log('Photo captured and displayed successfully');
+                }, 'image/jpeg', 0.8);
             } else {
                 console.error('Required elements not found for photo capture');
             }
         }
 
+        // Function to retake photo
         function retakePhoto() {
             console.log('retakePhoto function called');
-
-            const cameraContainer = document.getElementById('camera-container');
             const photoContainer = document.getElementById('photo-container');
+            const cameraPlaceholder = document.getElementById('camera-placeholder');
+            const submitContainer = document.getElementById('submit-container');
 
-            if (cameraContainer && photoContainer) {
+            if (photoContainer && cameraPlaceholder) {
                 photoContainer.classList.add('hidden');
-                cameraContainer.classList.remove('hidden');
-
-                capturedPhoto = null;
-                hideSubmitButtons();
+                submitContainer?.classList.add('hidden');
+                cameraPlaceholder.classList.remove('hidden');
+                photoBlob = null;
+                console.log('Ready to retake photo');
             }
         }
 
-        function showSubmitButtons() {
-            const submitContainer = document.getElementById('submit-container');
-            if (submitContainer) {
-                submitContainer.classList.remove('hidden');
-            }
-        }
+        // Function to submit attendance with CSRF and proper error handling
+        async function submitAttendance(type) {
+            console.log(`submitAttendance function called with type: ${type}`);
 
-        function hideSubmitButtons() {
-            const submitContainer = document.getElementById('submit-container');
-            if (submitContainer) {
-                submitContainer.classList.add('hidden');
-            }
-        }
-
-        function submitAttendance(type) {
-            if (!capturedPhoto) {
+            if (!photoBlob) {
                 alert('Silakan ambil foto terlebih dahulu');
                 return;
             }
@@ -386,18 +395,65 @@
                 return;
             }
 
-            // Show loading state
-            const btn = document.getElementById(`submit-${type}`);
-            if (btn) {
-                btn.disabled = true;
-                btn.innerHTML = '<svg class="animate-spin w-4 h-4 mr-2" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>Memproses...';
-            }
+            try {
+                // Show loading state
+                const submitBtn = document.getElementById(`submit-${type}`);
+                if (submitBtn) {
+                    const originalText = submitBtn.innerHTML;
+                    submitBtn.innerHTML = '<svg class="animate-spin w-4 h-4 mr-2" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>Memproses...';
+                    submitBtn.disabled = true;
+                }
 
-            // Call Livewire method
-            if (type === 'checkin') {
-                $wire.processCheckIn(capturedPhoto, userLocation.latitude, userLocation.longitude);
-            } else if (type === 'checkout') {
-                $wire.processCheckOut(capturedPhoto, userLocation.latitude, userLocation.longitude);
+                // Prepare form data
+                const formData = new FormData();
+                formData.append('photo', photoBlob, 'selfie.jpg');
+                formData.append('type', type);
+                formData.append('latitude', userLocation.latitude);
+                formData.append('longitude', userLocation.longitude);
+
+                // Get CSRF token
+                const csrfToken = document.querySelector('meta[name="csrf-token"]');
+                if (csrfToken) {
+                    formData.append('_token', csrfToken.getAttribute('content'));
+                }
+
+                console.log('Submitting attendance with form data');
+
+                // Submit to server
+                const response = await fetch('/pegawai/wfo-attendance', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    console.log('Server response:', result);
+
+                    if (result.success) {
+                        alert(`${type === 'checkin' ? 'Check In' : 'Check Out'} berhasil!`);
+                        location.reload();
+                    } else {
+                        throw new Error(result.message || 'Terjadi kesalahan');
+                    }
+                } else {
+                    throw new Error(`HTTP Error: ${response.status}`);
+                }
+
+            } catch (error) {
+                console.error('Error submitting attendance:', error);
+                alert(error.message || 'Terjadi kesalahan saat menyimpan absensi');
+
+                // Reset button state
+                const submitBtn = document.getElementById(`submit-${type}`);
+                if (submitBtn) {
+                    const iconClass = type === 'checkin' ? 'clock' : 'arrow-right-on-rectangle';
+                    const text = type === 'checkin' ? 'Check In Sekarang' : 'Check Out Sekarang';
+                    submitBtn.innerHTML = `<x-heroicon-o-${iconClass} class="w-5 h-5 mr-2" />${text}`;
+                    submitBtn.disabled = false;
+                }
             }
         }
 
