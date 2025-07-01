@@ -25,6 +25,9 @@ class MyAttendanceResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Data Absensi';
 
+    // Hide from navigation - using combined resource instead
+    protected static bool $shouldRegisterNavigation = false;
+
     public static function getNavigationGroup(): ?string
     {
         return 'Data Absensi';

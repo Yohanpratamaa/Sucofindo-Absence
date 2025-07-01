@@ -31,7 +31,13 @@ class DinaslLuarAttendance extends Page implements HasForms
 
     public static function getNavigationSort(): ?int
     {
-        return 1;
+        return 3;
+    }
+
+    // Hide from navigation (replaced by combined AttendancePage)
+    public static function shouldRegisterNavigation(): bool
+    {
+        return false;
     }
 
     public $currentLocation = null;
@@ -65,12 +71,61 @@ class DinaslLuarAttendance extends Page implements HasForms
             // Sudah ada absensi hari ini
             $this->canCheckInPagi = false;
 
-            // Bisa absen siang jika sudah check in pagi tapi belum absen siang
-            $this->canCheckInSiang = $this->todayAttendance->check_in && !$this->todayAttendance->absen_siang;
+            // Bisa absen siang jika sudah check in pagi tapi belum absen siang DAN dalam waktu yang diizinkan
+            $this->canCheckInSiang = $this->todayAttendance->check_in &&
+                                   !$this->todayAttendance->absen_siang &&
+                                   $this->isWithinSiangTimeWindow();
 
-            // Bisa check out jika sudah absen siang tapi belum check out
-            $this->canCheckOut = $this->todayAttendance->absen_siang && !$this->todayAttendance->check_out;
+            // Bisa check out jika sudah absen siang tapi belum check out DAN dalam waktu yang diizinkan
+            $this->canCheckOut = $this->todayAttendance->absen_siang &&
+                               !$this->todayAttendance->check_out &&
+                               $this->isWithinSoreTimeWindow();
         }
+    }
+
+    /**
+     * Check if current time is within allowed Absensi Siang window (12:00-14:59)
+     */
+    protected function isWithinSiangTimeWindow(): bool
+    {
+        $currentTime = Carbon::now();
+        $startTime = Carbon::today()->setTime(12, 0, 0); // 12:00
+        $endTime = Carbon::today()->setTime(14, 59, 59); // 14:59:59
+
+        return $currentTime->between($startTime, $endTime);
+    }
+
+    /**
+     * Check if current time is within allowed Check Out window (>= 15:00)
+     */
+    protected function isWithinSoreTimeWindow(): bool
+    {
+        $currentTime = Carbon::now();
+        $startTime = Carbon::today()->setTime(15, 0, 0); // 15:00
+
+        return $currentTime->greaterThanOrEqualTo($startTime);
+    }
+
+    /**
+     * Get time window information for frontend display
+     */
+    public function getTimeWindowInfo(): array
+    {
+        $currentTime = Carbon::now();
+
+        return [
+            'current_time' => $currentTime->format('H:i:s'),
+            'siang_window' => [
+                'start' => '12:00',
+                'end' => '14:59',
+                'is_active' => $this->isWithinSiangTimeWindow()
+            ],
+            'sore_window' => [
+                'start' => '15:00',
+                'end' => null,
+                'is_active' => $this->isWithinSoreTimeWindow()
+            ]
+        ];
     }
 
     public function processCheckInPagi($photoData, $latitude, $longitude)
@@ -162,12 +217,29 @@ class DinaslLuarAttendance extends Page implements HasForms
             'can_check_in_siang' => $this->canCheckInSiang
         ]);
 
-        if (!$this->canCheckInSiang) {
-            Log::warning('Check in siang not allowed', ['user_id' => Auth::id()]);
+        // Check if user can perform absensi siang (has checked in pagi and hasn't checked in siang)
+        if (!$this->todayAttendance || !$this->todayAttendance->check_in || $this->todayAttendance->absen_siang) {
+            Log::warning('Check in siang not allowed - prerequisites not met', ['user_id' => Auth::id()]);
             Notification::make()
                 ->danger()
                 ->title('Error')
                 ->body('Anda belum absen pagi atau sudah absen siang hari ini.')
+                ->send();
+            return;
+        }
+
+        // Check time window (12:00 - 14:59)
+        if (!$this->isWithinSiangTimeWindow()) {
+            $currentTime = Carbon::now()->format('H:i');
+            Log::warning('Check in siang attempted outside time window', [
+                'user_id' => Auth::id(),
+                'current_time' => $currentTime
+            ]);
+
+            Notification::make()
+                ->danger()
+                ->title('Waktu Absensi Siang Tidak Tepat')
+                ->body("Absensi siang hanya dapat dilakukan antara 12:00 - 14:59. Waktu sekarang: {$currentTime}")
                 ->send();
             return;
         }
@@ -201,7 +273,7 @@ class DinaslLuarAttendance extends Page implements HasForms
         Notification::make()
             ->success()
             ->title('Absensi Siang Berhasil')
-            ->body('Absensi siang berhasil dilakukan. Jangan lupa absen sore.')
+            ->body('Absensi siang berhasil dilakukan. Jangan lupa absen sore setelah jam 15:00.')
             ->send();
     }
 
@@ -215,12 +287,29 @@ class DinaslLuarAttendance extends Page implements HasForms
             'can_check_out' => $this->canCheckOut
         ]);
 
-        if (!$this->canCheckOut) {
-            Log::warning('Check out not allowed', ['user_id' => Auth::id()]);
+        // Check if user can perform check out (has checked in siang and hasn't checked out)
+        if (!$this->todayAttendance || !$this->todayAttendance->absen_siang || $this->todayAttendance->check_out) {
+            Log::warning('Check out not allowed - prerequisites not met', ['user_id' => Auth::id()]);
             Notification::make()
                 ->danger()
                 ->title('Error')
                 ->body('Anda belum absen pagi dan siang, atau sudah absen sore hari ini.')
+                ->send();
+            return;
+        }
+
+        // Check time window (>= 15:00)
+        if (!$this->isWithinSoreTimeWindow()) {
+            $currentTime = Carbon::now()->format('H:i');
+            Log::warning('Check out attempted outside time window', [
+                'user_id' => Auth::id(),
+                'current_time' => $currentTime
+            ]);
+
+            Notification::make()
+                ->danger()
+                ->title('Waktu Absensi Sore Belum Tepat')
+                ->body("Absensi sore hanya dapat dilakukan mulai jam 15:00. Waktu sekarang: {$currentTime}")
                 ->send();
             return;
         }
@@ -360,31 +449,90 @@ class DinaslLuarAttendance extends Page implements HasForms
         ];
     }
 
-    // Test method untuk debugging foto
-    public function testPhotoSave($photoData)
+    public function getViewData(): array
     {
-        Log::info('testPhotoSave called', [
-            'user_id' => Auth::id(),
-            'photo_data_length' => strlen($photoData),
-            'photo_starts_with' => substr($photoData, 0, 50)
+        return [
+            'canCheckInPagi' => $this->canCheckInPagi,
+            'canCheckInSiang' => $this->canCheckInSiang,
+            'canCheckOut' => $this->canCheckOut,
+            'todayAttendance' => $this->todayAttendance,
+        ];
+    }
+
+    /**
+     * Get the current action for the UI
+     */
+    public function getCurrentAction(): ?string
+    {
+        if ($this->canCheckInPagi) {
+            return 'pagi';
+        } elseif ($this->canCheckInSiang) {
+            return 'siang';
+        } elseif ($this->canCheckOut) {
+            return 'sore';
+        }
+        
+        return null;
+    }
+
+    /**
+     * Get the action title for the UI
+     */
+    public function getActionTitle(): string
+    {
+        $currentAction = $this->getCurrentAction();
+        
+        return match($currentAction) {
+            'pagi' => 'Absensi Pagi - Dinas Luar',
+            'siang' => 'Absensi Siang - Dinas Luar',
+            'sore' => 'Absensi Sore - Dinas Luar',
+            default => 'Tidak Ada Aksi Tersedia'
+        };
+    }
+
+    /**
+     * Debug method to check current state
+     */
+    public function debugCurrentState(): array
+    {
+        $this->loadTodayAttendance();
+        $this->calculateAttendanceStatus();
+        
+        return [
+            'canCheckInPagi' => $this->canCheckInPagi,
+            'canCheckInSiang' => $this->canCheckInSiang,
+            'canCheckOut' => $this->canCheckOut,
+            'currentAction' => $this->getCurrentAction(),
+            'actionTitle' => $this->getActionTitle(),
+            'todayAttendance' => $this->todayAttendance ? 'exists' : 'null',
+            'timeWindowInfo' => $this->getTimeWindowInfo(),
+        ];
+    }
+
+    // Test method untuk debugging time windows
+    public function testTimeWindows()
+    {
+        $currentTime = Carbon::now();
+        $timeInfo = $this->getTimeWindowInfo();
+
+        Log::info('Time window test', [
+            'current_time' => $currentTime->format('H:i:s'),
+            'siang_window_active' => $timeInfo['siang_window']['is_active'],
+            'sore_window_active' => $timeInfo['sore_window']['is_active'],
+            'is_within_siang' => $this->isWithinSiangTimeWindow(),
+            'is_within_sore' => $this->isWithinSoreTimeWindow(),
         ]);
 
-        $photoPath = $this->savePhotoFromBase64($photoData, 'test_dinas_luar');
+        $message = "Waktu saat ini: {$currentTime->format('H:i:s')}\n";
+        $message .= "Siang window (12:00-14:59): " . ($timeInfo['siang_window']['is_active'] ? 'AKTIF' : 'TIDAK AKTIF') . "\n";
+        $message .= "Sore window (>=15:00): " . ($timeInfo['sore_window']['is_active'] ? 'AKTIF' : 'TIDAK AKTIF');
 
-        if ($photoPath) {
-            Notification::make()
-                ->success()
-                ->title('Test Foto Berhasil')
-                ->body('Foto berhasil disimpan di: ' . $photoPath)
-                ->send();
-        } else {
-            Notification::make()
-                ->danger()
-                ->title('Test Foto Gagal')
-                ->body('Gagal menyimpan foto test.')
-                ->send();
-        }
+        Notification::make()
+            ->info()
+            ->title('Test Time Windows')
+            ->body($message)
+            ->send();
 
-        return $photoPath;
+        return $timeInfo;
     }
 }

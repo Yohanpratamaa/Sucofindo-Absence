@@ -25,6 +25,9 @@ class MyDinasLuarResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Riwayat Dinas Luar';
 
+    // Hide from navigation - using combined resource instead
+    protected static bool $shouldRegisterNavigation = false;
+
     public static function getNavigationGroup(): ?string
     {
         return 'Data Absensi';

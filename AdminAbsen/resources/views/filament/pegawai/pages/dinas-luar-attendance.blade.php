@@ -1,4 +1,16 @@
 <x-filament-panels::page>
+    @php
+        // Define currentAction at the top level using component methods
+        $currentAction = $this->getCurrentAction();
+        $actionTitle = $this->getActionTitle();
+
+        // Get properties from the Livewire component
+        $canCheckInPagi = $this->canCheckInPagi;
+        $canCheckInSiang = $this->canCheckInSiang;
+        $canCheckOut = $this->canCheckOut;
+        $todayAttendance = $this->todayAttendance;
+    @endphp
+
     <div class="space-y-6">
         <!-- Status Absensi Dinas Luar Hari Ini -->
         <x-filament::section>
@@ -104,6 +116,88 @@
             </div>
         </x-filament::section>
 
+        <!-- Waktu Absensi -->
+        @if($currentAction)
+        <x-filament::section>
+            <x-slot name="heading">
+                Jadwal Waktu Absensi
+            </x-slot>
+
+            <x-slot name="description">
+                Informasi waktu yang diperbolehkan untuk melakukan absensi dinas luar
+            </x-slot>
+
+            @php
+                $timeInfo = $this->getTimeWindowInfo();
+            @endphp
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <!-- Current Time -->
+                <div class="text-center p-4 rounded-lg bg-primary-50 border border-primary-200">
+                    <div class="text-2xl font-bold text-primary-600" id="current-time">
+                        {{ $timeInfo['current_time'] }}
+                    </div>
+                    <div class="text-sm text-primary-800 font-medium">Waktu Sekarang</div>
+                </div>
+
+                <!-- Absensi Siang Window -->
+                <div class="text-center p-4 rounded-lg {{ $timeInfo['siang_window']['is_active'] ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-200' }}">
+                    <div class="text-lg font-bold {{ $timeInfo['siang_window']['is_active'] ? 'text-green-600' : 'text-gray-600' }}">
+                        {{ $timeInfo['siang_window']['start'] }} - {{ $timeInfo['siang_window']['end'] }}
+                    </div>
+                    <div class="text-sm {{ $timeInfo['siang_window']['is_active'] ? 'text-green-800' : 'text-gray-600' }} font-medium">
+                        Absensi Siang
+                        @if($timeInfo['siang_window']['is_active'])
+                            <x-filament::badge color="success" size="sm" class="ml-1">Aktif</x-filament::badge>
+                        @endif
+                    </div>
+                </div>
+
+                <!-- Absensi Sore Window -->
+                <div class="text-center p-4 rounded-lg {{ $timeInfo['sore_window']['is_active'] ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-200' }}">
+                    <div class="text-lg font-bold {{ $timeInfo['sore_window']['is_active'] ? 'text-green-600' : 'text-gray-600' }}">
+                        {{ $timeInfo['sore_window']['start'] }} - Selesai
+                    </div>
+                    <div class="text-sm {{ $timeInfo['sore_window']['is_active'] ? 'text-green-800' : 'text-gray-600' }} font-medium">
+                        Absensi Sore
+                        @if($timeInfo['sore_window']['is_active'])
+                            <x-filament::badge color="success" size="sm" class="ml-1">Aktif</x-filament::badge>
+                        @endif
+                    </div>
+                </div>
+            </div>
+
+            <!-- Time Window Alerts -->
+            @if($currentAction === 'siang' && !$timeInfo['siang_window']['is_active'])
+                <div class="rounded-lg bg-warning-50 p-4 border border-warning-200 mt-4">
+                    <div class="flex items-center">
+                        <svg class="w-5 h-5 text-warning-600 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.464 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+                        </svg>
+                        <div>
+                            <h4 class="font-medium text-warning-800">Belum Waktu Absensi Siang</h4>
+                            <p class="text-warning-700">Absensi siang hanya dapat dilakukan antara {{ $timeInfo['siang_window']['start'] }} - {{ $timeInfo['siang_window']['end'] }}. Silakan tunggu hingga waktu yang tepat.</p>
+                        </div>
+                    </div>
+                </div>
+            @endif
+
+            @if($currentAction === 'sore' && !$timeInfo['sore_window']['is_active'])
+                <div class="rounded-lg bg-warning-50 p-4 border border-warning-200 mt-4">
+                    <div class="flex items-center">
+                        <svg class="w-5 h-5 text-warning-600 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.464 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+                        </svg>
+                        <div>
+                            <h4 class="font-medium text-warning-800">Belum Waktu Absensi Sore</h4>
+                            <p class="text-warning-700">Absensi sore hanya dapat dilakukan mulai pukul {{ $timeInfo['sore_window']['start'] }}. Silakan tunggu hingga waktu yang tepat.</p>
+                        </div>
+                    </div>
+                </div>
+            @endif
+        </x-filament::section>
+        @endif
+
         <!-- Status Lokasi -->
         <x-filament::section id="location-status" style="display: none;">
             <x-slot name="heading">
@@ -121,22 +215,6 @@
 
         <!-- Absensi Dinas Luar -->
         <x-filament::section>
-            @php
-                $currentAction = null;
-                $actionTitle = 'Tidak Ada Aksi Tersedia';
-
-                if ($canCheckInPagi) {
-                    $currentAction = 'pagi';
-                    $actionTitle = 'Absensi Pagi - Dinas Luar';
-                } elseif ($canCheckInSiang) {
-                    $currentAction = 'siang';
-                    $actionTitle = 'Absensi Siang - Dinas Luar';
-                } elseif ($canCheckOut) {
-                    $currentAction = 'sore';
-                    $actionTitle = 'Absensi Sore - Dinas Luar';
-                }
-            @endphp
-
             <x-slot name="heading">
                 {{ $actionTitle }}
             </x-slot>
@@ -307,14 +385,34 @@
                         Test Foto
                     </x-filament::button>
 
+                    @php
+                        $timeInfo = $this->getTimeWindowInfo();
+                        $isTimeAllowed = true;
+                        $timeMessage = '';
+
+                        if ($currentAction === 'siang' && !$timeInfo['siang_window']['is_active']) {
+                            $isTimeAllowed = false;
+                            $timeMessage = 'Absensi siang hanya dapat dilakukan antara 12:00 - 14:59';
+                        } elseif ($currentAction === 'sore' && !$timeInfo['sore_window']['is_active']) {
+                            $isTimeAllowed = false;
+                            $timeMessage = 'Absensi sore hanya dapat dilakukan mulai pukul 15:00';
+                        }
+                    @endphp
+
                     <x-filament::button
                         id="submit-btn"
                         type="button"
-                        color="success"
+                        :color="$isTimeAllowed ? 'success' : 'gray'"
                         icon="heroicon-m-check-circle"
+                        :disabled="!$isTimeAllowed"
                         style="display: none;"
+                        :tooltip="!$isTimeAllowed ? $timeMessage : null"
                     >
-                        Absen {{ ucfirst($currentAction) }} Sekarang
+                        @if($isTimeAllowed)
+                            Absen {{ ucfirst($currentAction) }} Sekarang
+                        @else
+                            Waktu Belum Tepat
+                        @endif
                     </x-filament::button>
                 </div>
             @else
@@ -377,7 +475,7 @@
     let currentLocation = null;
     let capturedPhoto = null;
 
-    const currentAction = @json($currentAction);
+    const currentAction = @json($currentAction ?? null);
 
     document.addEventListener('DOMContentLoaded', function() {
         setupEventListeners();
@@ -717,6 +815,84 @@
             });
     }
 
+    // Update current time every second
+    function updateCurrentTime() {
+        const now = new Date();
+        const timeString = now.toLocaleTimeString('id-ID', {
+            hour12: false,
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+        });
+
+        const timeElement = document.getElementById('current-time');
+        if (timeElement) {
+            timeElement.textContent = timeString;
+        }
+
+        // Check time windows for enable/disable buttons
+        checkTimeWindows(now);
+    }
+
+    function checkTimeWindows(now) {
+        // Only check time windows if currentAction exists
+        if (!currentAction) {
+            return;
+        }
+
+        const currentHour = now.getHours();
+        const currentMinute = now.getMinutes();
+        const currentTimeMinutes = currentHour * 60 + currentMinute;
+
+        // Siang window: 12:00 - 14:59 (720 - 899 minutes)
+        const siangStart = 12 * 60; // 720 minutes
+        const siangEnd = 15 * 60 - 1; // 899 minutes (14:59)
+
+        // Sore window: 15:00 and after (900+ minutes)
+        const soreStart = 15 * 60; // 900 minutes
+
+        const submitBtn = document.getElementById('submit-btn');
+
+        if (currentAction === 'siang') {
+            const isInSiangWindow = currentTimeMinutes >= siangStart && currentTimeMinutes <= siangEnd;
+
+            if (submitBtn) {
+                submitBtn.disabled = !isInSiangWindow;
+                submitBtn.className = submitBtn.className.replace(/(bg-gray-\d+|bg-success-\d+)/g, '');
+                submitBtn.classList.add(isInSiangWindow ? 'bg-success-600' : 'bg-gray-400');
+
+                const buttonText = isInSiangWindow ? 'Absen Siang Sekarang' : 'Waktu Belum Tepat (12:00-14:59)';
+                if (submitBtn.querySelector('span')) {
+                    submitBtn.querySelector('span').textContent = buttonText;
+                } else {
+                    submitBtn.textContent = buttonText;
+                }
+            }
+        } else if (currentAction === 'sore') {
+            const isInSoreWindow = currentTimeMinutes >= soreStart;
+
+            if (submitBtn) {
+                submitBtn.disabled = !isInSoreWindow;
+                submitBtn.className = submitBtn.className.replace(/(bg-gray-\d+|bg-success-\d+)/g, '');
+                submitBtn.classList.add(isInSoreWindow ? 'bg-success-600' : 'bg-gray-400');
+
+                const buttonText = isInSoreWindow ? 'Absen Sore Sekarang' : 'Waktu Belum Tepat (Mulai 15:00)';
+                if (submitBtn.querySelector('span')) {
+                    submitBtn.querySelector('span').textContent = buttonText;
+                } else {
+                    submitBtn.textContent = buttonText;
+                }
+            }
+        }
+    }
+
+    // Start the time update interval
+    if (document.getElementById('current-time')) {
+        updateCurrentTime(); // Initial update
+        setInterval(updateCurrentTime, 1000); // Update every second
+    }
+
+    // Updated submitAttendance function with time validation
     function submitAttendance() {
         if (!capturedPhoto) {
             showNotification('Silakan ambil foto terlebih dahulu.', 'danger');
@@ -727,6 +903,35 @@
             showNotification('Lokasi belum terdeteksi. Silakan coba lagi.', 'danger');
             getCurrentLocation();
             return;
+        }
+
+        // Check if currentAction exists
+        if (!currentAction) {
+            showNotification('Tidak ada aksi absensi yang tersedia saat ini.', 'danger');
+            return;
+        }
+
+        // Check time restrictions before submitting
+        const now = new Date();
+        const currentHour = now.getHours();
+        const currentMinute = now.getMinutes();
+        const currentTimeMinutes = currentHour * 60 + currentMinute;
+
+        if (currentAction === 'siang') {
+            const siangStart = 12 * 60; // 720 minutes (12:00)
+            const siangEnd = 15 * 60 - 1; // 899 minutes (14:59)
+
+            if (currentTimeMinutes < siangStart || currentTimeMinutes > siangEnd) {
+                showNotification('Absensi siang hanya dapat dilakukan antara 12:00 - 14:59', 'danger');
+                return;
+            }
+        } else if (currentAction === 'sore') {
+            const soreStart = 15 * 60; // 900 minutes (15:00)
+
+            if (currentTimeMinutes < soreStart) {
+                showNotification('Absensi sore hanya dapat dilakukan mulai pukul 15:00', 'danger');
+                return;
+            }
         }
 
         console.log('Submitting attendance with photo length:', capturedPhoto.length);

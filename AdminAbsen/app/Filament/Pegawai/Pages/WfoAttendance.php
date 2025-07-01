@@ -35,6 +35,12 @@ class WfoAttendance extends Page implements HasForms
         return 2;
     }
 
+    // Hide from navigation (replaced by combined AttendancePage)
+    public static function shouldRegisterNavigation(): bool
+    {
+        return false;
+    }
+
     public $currentLocation = null;
     public $nearestOffice = null;
     public $isWithinRadius = false;
