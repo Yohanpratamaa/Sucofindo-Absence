@@ -106,7 +106,10 @@ class AttendancePage extends Page implements HasForms
             $this->canCheckInSiang = false;
         } else {
             $this->canCheckIn = false;
-            $this->canCheckOut = $this->todayAttendance->check_in && !$this->todayAttendance->check_out;
+            // WFO check-out hanya bisa setelah jam 15:00 dan sudah check-in
+            $this->canCheckOut = $this->todayAttendance->check_in && 
+                               !$this->todayAttendance->check_out &&
+                               $this->isWithinSoreTimeWindow(); // Gunakan validasi jam 15:00 yang sama
             $this->canCheckInPagi = false;
             $this->canCheckInSiang = false;
         }
@@ -170,7 +173,8 @@ class AttendancePage extends Page implements HasForms
     }
 
     /**
-     * Time window methods for Dinas Luar
+     * Time window methods untuk validasi jam absensi
+     * Berlaku untuk WFO dan Dinas Luar
      */
     protected function isWithinSiangTimeWindow(): bool
     {
@@ -200,8 +204,8 @@ class AttendancePage extends Page implements HasForms
             ],
             'sore_window' => [
                 'start' => '15:00',
-                'end' => null,
-                'is_active' => $this->isWithinSoreTimeWindow()
+                'is_active' => $this->isWithinSoreTimeWindow(),
+                'applicable_to' => 'WFO Check-Out & Dinas Luar Check-Out'
             ]
         ];
     }
@@ -367,6 +371,17 @@ class AttendancePage extends Page implements HasForms
                 ->danger()
                 ->title('Error')
                 ->body('Anda belum check in atau sudah check out hari ini.')
+                ->send();
+            return;
+        }
+
+        // Validasi jam 15:00 untuk check-out WFO (sama seperti dinas luar)
+        if (!$this->isWithinSoreTimeWindow()) {
+            $currentTime = Carbon::now()->format('H:i');
+            Notification::make()
+                ->danger()
+                ->title('Waktu Check-Out Belum Tepat')
+                ->body("Check-out WFO hanya dapat dilakukan mulai jam 15:00. Waktu sekarang: {$currentTime}")
                 ->send();
             return;
         }

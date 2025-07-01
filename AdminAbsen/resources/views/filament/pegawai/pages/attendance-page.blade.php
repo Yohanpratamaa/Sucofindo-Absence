@@ -125,6 +125,11 @@
                                     {{ $todayAttendance->check_out ? $todayAttendance->check_out->format('H:i') : '-' }}
                                 </div>
                                 <div class="text-sm text-gray-500 mt-1">Check Out</div>
+                                @if($todayAttendance->check_in && !$todayAttendance->check_out)
+                                    <div class="text-xs text-orange-600 mt-1">
+                                        Tersedia setelah jam 15:00
+                                    </div>
+                                @endif
                             </div>
                             <div class="text-center">
                                 <x-filament::badge
@@ -356,9 +361,13 @@
                     @if($canCheckIn)
                         Ambil foto selfie untuk melakukan check in
                     @elseif($canCheckOut)
-                        Ambil foto selfie untuk melakukan check out
+                        Ambil foto selfie untuk melakukan check out (tersedia setelah jam 15:00)
                     @else
-                        Absensi WFO hari ini sudah selesai
+                        @if($todayAttendance && $todayAttendance->check_in && !$todayAttendance->check_out)
+                            Check out hanya dapat dilakukan setelah jam 15:00. Waktu saat ini: {{ \Carbon\Carbon::now()->format('H:i') }}
+                        @else
+                            Absensi WFO hari ini sudah selesai
+                        @endif
                     @endif
                 @else
                     @if($canCheckInPagi)
