@@ -10,40 +10,47 @@
                 {{ Carbon\Carbon::now()->isoFormat('dddd, D MMMM Y') }}
             </x-slot>
 
-            <div class="space-y-6">
-                <div class="flex items-center justify-between">
-                    <div class="text-sm text-gray-500">
-                        Status Kehadiran
+            <div class="space-y-4">
+                <!-- Status Badge -->
+                <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg border">
+                    <div class="flex items-center gap-2">
+                        <x-filament::icon icon="heroicon-o-clock" class="w-5 h-5 text-gray-500" />
+                        <span class="text-sm font-medium text-gray-700">Status Kehadiran</span>
                     </div>
                     @if($todayAttendance)
                         <x-filament::badge
                             :color="$todayAttendance->check_out ? 'success' : 'warning'"
-                            size="lg"
                         >
                             {{ $todayAttendance->check_out ? 'Sudah Check Out' : 'Sudah Check In' }}
                         </x-filament::badge>
                     @else
-                        <x-filament::badge color="gray" size="lg">
+                        <x-filament::badge color="gray">
                             Belum Absen
                         </x-filament::badge>
                     @endif
                 </div>
 
                 @if($todayAttendance)
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div class="text-center">
-                            <div class="text-2xl font-bold text-primary-600">
+                    <!-- Attendance Times -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div class="bg-white border rounded-lg p-4 text-center">
+                            <div class="text-2xl font-bold text-primary-600 mb-1">
                                 {{ $todayAttendance->check_in ? $todayAttendance->check_in->format('H:i') : '-' }}
                             </div>
-                            <div class="text-sm text-gray-500 mt-1">Check In</div>
+                            <div class="text-sm text-gray-500">Check In</div>
                         </div>
-                        <div class="text-center">
-                            <div class="text-2xl font-bold text-primary-600">
+                        <div class="bg-white border rounded-lg p-4 text-center">
+                            <div class="text-2xl font-bold text-primary-600 mb-1">
                                 {{ $todayAttendance->check_out ? $todayAttendance->check_out->format('H:i') : '-' }}
                             </div>
-                            <div class="text-sm text-gray-500 mt-1">Check Out</div>
+                            <div class="text-sm text-gray-500">Check Out</div>
+                            @if($todayAttendance->check_in && !$todayAttendance->check_out)
+                                <div class="text-xs text-orange-600 mt-1">
+                                    Tersedia setelah jam 15:00
+                                </div>
+                            @endif
                         </div>
-                        <div class="text-center">
+                        <div class="bg-white border rounded-lg p-4 text-center">
                             <x-filament::badge
                                 :color="match($todayAttendance->status_kehadiran ?? '') {
                                     'Tepat Waktu' => 'success',
@@ -51,19 +58,18 @@
                                     'Tidak Hadir' => 'danger',
                                     default => 'gray'
                                 }"
-                                size="lg"
+                                class="mb-1"
                             >
                                 {{ $todayAttendance->status_kehadiran ?? 'Belum Diketahui' }}
                             </x-filament::badge>
-                            <div class="text-sm text-gray-500 mt-1">Status Kehadiran</div>
+                            <div class="text-sm text-gray-500">Status Kehadiran</div>
                         </div>
                     </div>
                 @else
+                    <!-- No Attendance Alert -->
                     <div class="rounded-lg bg-info-50 p-4 border border-info-200">
-                        <div class="flex items-center">
-                            <svg class="w-5 h-5 text-info-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                            </svg>
+                        <div class="flex items-start gap-3">
+                            <x-filament::icon icon="heroicon-o-information-circle" class="w-5 h-5 text-info-600 mt-0.5 flex-shrink-0" />
                             <div>
                                 <h4 class="font-medium text-info-800">Belum Ada Absensi</h4>
                                 <p class="text-sm text-info-700 mt-1">Anda belum melakukan absensi hari ini. Silakan lakukan check in terlebih dahulu.</p>
@@ -77,7 +83,10 @@
         <!-- Status Lokasi -->
         <x-filament::section id="location-status" style="display: none;">
             <x-slot name="heading">
-                Status Lokasi
+                <div class="flex items-center gap-2">
+                    <x-filament::icon icon="heroicon-o-map-pin" class="w-5 h-5" />
+                    Status Lokasi
+                </div>
             </x-slot>
 
             <x-slot name="description">
@@ -92,14 +101,17 @@
         <!-- Absensi WFO -->
         <x-filament::section>
             <x-slot name="heading">
-                {{ $canCheckIn ? 'Check In WFO' : ($canCheckOut ? 'Check Out WFO' : 'Absensi WFO') }}
+                <div class="flex items-center gap-2">
+                    <x-filament::icon icon="heroicon-o-camera" class="w-5 h-5" />
+                    {{ $canCheckIn ? 'Check In WFO' : ($canCheckOut ? 'Check Out WFO' : 'Absensi WFO') }}
+                </div>
             </x-slot>
 
             <x-slot name="description">
                 @if($canCheckIn)
-                    Ambil foto selfie untuk melakukan check in
+                    Ambil foto selfie untuk melakukan check in WFO
                 @elseif($canCheckOut)
-                    Ambil foto selfie untuk melakukan check out
+                    Ambil foto selfie untuk melakukan check out WFO
                 @else
                     Tidak ada aksi absensi yang tersedia saat ini
                 @endif
@@ -108,13 +120,11 @@
             @if($canCheckIn || $canCheckOut)
                 <!-- Camera Status Alert -->
                 <div id="camera-status" class="rounded-lg bg-info-50 p-4 border border-info-200" style="display: none;">
-                    <div class="flex items-center">
-                        <svg class="w-5 h-5 text-info-600 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        </svg>
+                    <div class="flex items-start gap-3">
+                        <x-filament::icon icon="heroicon-o-information-circle" class="w-5 h-5 text-info-600 mt-0.5 flex-shrink-0" />
                         <div>
                             <h4 class="font-medium text-info-800">Status Kamera</h4>
-                            <span id="camera-status-text" class="text-info-700">Mengakses kamera...</span>
+                            <span id="camera-status-text" class="text-sm text-info-700">Mengakses kamera...</span>
                         </div>
                     </div>
                 </div>
@@ -123,7 +133,7 @@
                 <div class="space-y-4">
                     <video
                         id="camera"
-                        class="w-full h-80 object-cover rounded-lg border-2 border-gray-200"
+                        class="w-full h-80 object-cover rounded-lg border border-gray-200 bg-gray-100"
                         autoplay
                         playsinline
                         muted
@@ -131,25 +141,20 @@
                     ></video>
 
                     <div id="camera-placeholder" class="flex flex-col items-center justify-center h-80 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50">
-                        <svg class="w-16 h-16 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
-                        </svg>
+                        <x-filament::icon icon="heroicon-o-camera" class="w-16 h-16 text-gray-400 mb-4" />
                         <h4 class="text-lg font-medium text-gray-900 mb-2">Kamera Belum Aktif</h4>
-                        <p class="text-sm text-gray-600 text-center mb-2">
+                        <p class="text-sm text-gray-600 text-center mb-2 max-w-sm">
                             Klik tombol "Aktifkan Kamera" untuk memulai proses absensi
                         </p>
-                        <p class="text-xs text-gray-500">
-                            <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                            </svg>
+                        <div class="flex items-center text-xs text-gray-500">
+                            <x-filament::icon icon="heroicon-o-information-circle" class="w-4 h-4 mr-1" />
                             Pastikan izin kamera sudah diaktifkan
-                        </p>
+                        </div>
                     </div>
 
                     <div id="camera-overlay" class="relative" style="display: none;">
                         <div class="absolute inset-0 flex items-center justify-center">
-                            <div class="bg-black bg-opacity-60 text-white px-4 py-2 rounded-lg text-sm">
+                            <div class="bg-black bg-opacity-60 text-white px-4 py-2 rounded-lg text-sm font-medium">
                                 Posisikan wajah dalam frame
                             </div>
                         </div>
@@ -182,13 +187,11 @@
                 <!-- Photo Preview -->
                 <div id="photo-preview" class="space-y-4" style="display: none;">
                     <div class="rounded-lg bg-success-50 p-4 border border-success-200">
-                        <div class="flex items-center">
-                            <svg class="w-5 h-5 text-success-600 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                            </svg>
+                        <div class="flex items-start gap-3">
+                            <x-filament::icon icon="heroicon-o-check-circle" class="w-5 h-5 text-success-600 mt-0.5 flex-shrink-0" />
                             <div>
                                 <h4 class="font-medium text-success-800">Foto Berhasil Diambil</h4>
-                                <p class="text-success-700">Preview foto yang akan digunakan untuk absensi.</p>
+                                <p class="text-sm text-success-700">Preview foto yang akan digunakan untuk absensi.</p>
                             </div>
                         </div>
                     </div>
@@ -196,12 +199,12 @@
                     <div class="relative">
                         <img
                             id="captured-photo"
-                            class="w-full h-80 object-cover rounded-lg border-2 border-green-200"
+                            class="w-full h-80 object-cover rounded-lg border border-success-200 bg-gray-100"
                             alt="Preview foto absensi"
                         >
-                        <div class="absolute top-2 right-2 bg-green-500 text-white px-2 py-1 rounded text-xs font-medium">
+                        <x-filament::badge color="success" class="absolute top-2 right-2">
                             ✓ Foto Siap
-                        </div>
+                        </x-filament::badge>
                     </div>
 
                     <x-filament::button
@@ -243,7 +246,7 @@
                         type="button"
                         outlined
                         color="warning"
-                        icon="heroicon-m-scale"
+                        icon="heroicon-m-adjustments-horizontal"
                         style="display: none;"
                     >
                         Cek Ukuran
@@ -262,41 +265,35 @@
             @else
                 <!-- No Action Available -->
                 <div class="text-center py-12">
-                    <svg class="w-20 h-20 text-gray-400 mx-auto mb-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
+                    <x-filament::icon icon="heroicon-o-clock" class="w-16 h-16 text-gray-400 mx-auto mb-4" />
 
-                    <h3 class="text-xl font-semibold text-gray-900 mb-4">Tidak Ada Aksi Tersedia</h3>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Tidak Ada Aksi Tersedia</h3>
 
                     @if($todayAttendance && $todayAttendance->check_out)
                         <div class="rounded-lg bg-success-50 p-4 border border-success-200 max-w-md mx-auto mb-6">
-                            <div class="flex items-center">
-                                <svg class="w-5 h-5 text-success-600 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                                </svg>
+                            <div class="flex items-start gap-3">
+                                <x-filament::icon icon="heroicon-o-check-circle" class="w-5 h-5 text-success-600 mt-0.5 flex-shrink-0" />
                                 <div>
                                     <h4 class="font-medium text-success-800">Absensi Hari Ini Selesai</h4>
-                                    <p class="text-success-700">Anda telah menyelesaikan check in dan check out untuk hari ini.</p>
+                                    <p class="text-sm text-success-700">Anda telah menyelesaikan check in dan check out untuk hari ini.</p>
                                 </div>
                             </div>
                         </div>
                     @else
                         <div class="rounded-lg bg-info-50 p-4 border border-info-200 max-w-md mx-auto mb-6">
-                            <div class="flex items-center">
-                                <svg class="w-5 h-5 text-info-600 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                </svg>
+                            <div class="flex items-start gap-3">
+                                <x-filament::icon icon="heroicon-o-information-circle" class="w-5 h-5 text-info-600 mt-0.5 flex-shrink-0" />
                                 <div>
                                     <h4 class="font-medium text-info-800">Menunggu Waktu Absensi</h4>
-                                    <p class="text-info-700">Silakan tunggu hingga waktu yang tepat untuk melakukan absensi.</p>
+                                    <p class="text-sm text-info-700">Silakan tunggu hingga waktu yang tepat untuk melakukan absensi.</p>
                                 </div>
                             </div>
                         </div>
                     @endif
 
-                    <div class="text-gray-600 mb-6">
+                    <p class="text-gray-600 mb-6">
                         Lihat riwayat absensi Anda atau hubungi administrator jika ada pertanyaan.
-                    </div>
+                    </p>
 
                     <x-filament::button
                         tag="a"
@@ -306,6 +303,9 @@
                         icon="heroicon-m-clock"
                     >
                         Lihat Riwayat Absensi
+                    </x-filament::button>
+                </div>
+            @endif
                     </x-filament::button>
                 </div>
             @endif
@@ -557,42 +557,49 @@
         const statusIcon = isWithinRadius ? '✅' : '❌';
 
         locationInfo.innerHTML = `
-            <div class="rounded-lg border p-4 ${isWithinRadius ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}">
-                <div class="flex items-center justify-between mb-3">
-                    <div class="flex items-center">
-                        <span class="text-2xl mr-3">${statusIcon}</span>
-                        <div>
-                            <h4 class="font-semibold ${isWithinRadius ? 'text-green-800' : 'text-red-800'}">${statusText}</h4>
-                            <p class="text-sm text-gray-600">Status lokasi untuk absensi WFO</p>
-                        </div>
+            <div class="border rounded-lg p-4 ${isWithinRadius ? 'border-success-200 bg-success-50' : 'border-danger-200 bg-danger-50'}">
+                <div class="flex items-start gap-3 mb-4">
+                    <span class="text-2xl">${statusIcon}</span>
+                    <div>
+                        <h4 class="font-semibold ${isWithinRadius ? 'text-success-800' : 'text-danger-800'}">${statusText}</h4>
+                        <p class="text-sm text-gray-600 mt-1">Status lokasi untuk absensi WFO</p>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                    <div class="flex items-center">
-                        <svg class="w-4 h-4 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm mb-3">
+                    <div class="flex items-center gap-2">
+                        <svg class="w-4 h-4 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
                         </svg>
                         <span class="text-gray-700"><strong>Kantor:</strong> ${nearestOffice ? nearestOffice.name : 'Tidak ditemukan'}</span>
                     </div>
-                    <div class="flex items-center">
-                        <svg class="w-4 h-4 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                    <div class="flex items-center gap-2">
+                        <svg class="w-4 h-4 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
                         </svg>
                         <span class="text-gray-700"><strong>Jarak:</strong> ${Math.round(distance)}m (Max: ${nearestOffice ? nearestOffice.radius : 0}m)</span>
                     </div>
                 </div>
 
                 ${!isWithinRadius ? `
-                    <div class="mt-3 p-3 bg-red-100 border border-red-200 rounded-lg">
-                        <div class="flex items-center">
-                            <svg class="w-4 h-4 text-red-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                    <div class="bg-danger-100 border border-danger-200 rounded-lg p-3">
+                        <div class="flex items-start gap-2">
+                            <svg class="w-4 h-4 text-danger-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/>
                             </svg>
-                            <span class="text-red-700 font-medium text-sm">Anda harus berada dalam radius kantor untuk melakukan absensi</span>
+                            <span class="text-danger-700 font-medium text-sm">Anda harus berada dalam radius kantor untuk melakukan absensi</span>
                         </div>
                     </div>
-                ` : ''}
+                ` : `
+                    <div class="bg-success-100 border border-success-200 rounded-lg p-3">
+                        <div class="flex items-center gap-2">
+                            <svg class="w-4 h-4 text-success-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                            </svg>
+                            <span class="text-success-700 font-medium text-sm">Lokasi valid untuk absensi WFO</span>
+                        </div>
+                    </div>
+                `}
             </div>
         `;
 
@@ -833,22 +840,22 @@
 
         // Fallback: Create a simple toast notification
         const toast = document.createElement('div');
-        const bgColor = {
-            'success': 'bg-green-100 border-green-500 text-green-900',
-            'danger': 'bg-red-100 border-red-500 text-red-900',
-            'warning': 'bg-yellow-100 border-yellow-500 text-yellow-900',
-            'info': 'bg-blue-100 border-blue-500 text-blue-900'
+        const colorScheme = {
+            'success': 'bg-success-100 border-success-500 text-success-900',
+            'danger': 'bg-danger-100 border-danger-500 text-danger-900',
+            'warning': 'bg-warning-100 border-warning-500 text-warning-900',
+            'info': 'bg-info-100 border-info-500 text-info-900'
         };
 
-        toast.className = `fixed top-4 right-4 max-w-sm w-full ${bgColor[type] || bgColor.info} border-l-4 p-4 rounded shadow-lg z-50 transform transition-transform duration-300 translate-x-full`;
+        toast.className = `fixed top-4 right-4 max-w-sm w-full ${colorScheme[type] || colorScheme.info} border-l-4 p-4 rounded-lg shadow-lg z-50 transform transition-transform duration-300 translate-x-full`;
         toast.innerHTML = `
-            <div class="flex justify-between items-start">
-                <div class="mr-3">
+            <div class="flex items-start gap-3">
+                <div class="flex-1">
                     <p class="text-sm font-medium">${message}</p>
                 </div>
-                <button onclick="this.parentElement.parentElement.remove()" class="text-gray-400 hover:text-gray-600">
+                <button onclick="this.parentElement.parentElement.remove()" class="text-gray-400 hover:text-gray-600 flex-shrink-0">
                     <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
                     </svg>
                 </button>
             </div>

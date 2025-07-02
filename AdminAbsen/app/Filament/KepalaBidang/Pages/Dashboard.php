@@ -17,10 +17,10 @@ class Dashboard extends BaseDashboard
         return 'Dashboard Kepala Bidang';
     }
 
-    public function getSubheading(): string
-    {
-        return 'Selamat datang di dashboard kepala bidang. Akses fitur export melalui menu "Export" di sidebar.';
-    }
+    // public function getSubheading(): string
+    // {
+    //     return 'Selamat datang di dashboard kepala bidang. Akses fitur export melalui menu "Export" di sidebar.';
+    // }
 
     public function getWidgets(): array
     {
