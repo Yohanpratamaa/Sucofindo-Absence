@@ -113,9 +113,15 @@ class MyIzinResource extends Resource
 
                                 Forms\Components\FileUpload::make('dokumen_pendukung')
                                     ->label('Dokumen Pendukung')
-                                    ->acceptedFileTypes(['application/pdf', 'image/*'])
-                                    ->maxSize(2048)
-                                    ->helperText('Upload surat dokter, surat keterangan, atau dokumen pendukung lainnya (Max: 2MB)')
+                                    ->acceptedFileTypes(['application/pdf', 'image/jpeg', 'image/png', 'image/jpg'])
+                                    ->maxSize(2048) // 2MB in KB
+                                    ->directory('izin-documents')
+                                    ->disk('public')
+                                    ->visibility('private')
+                                    ->downloadable()
+                                    ->openable()
+                                    ->previewable()
+                                    ->helperText('Upload surat dokter, surat keterangan, atau dokumen pendukung lainnya (PDF/JPG/PNG, Max: 2MB)')
                                     ->required(function (callable $get) {
                                         $jenisIzin = $get('jenis_izin');
                                         if ($jenisIzin) {
@@ -265,8 +271,55 @@ class MyIzinResource extends Resource
             ->count();
     }
 
-    public static function getNavigationBadgeColor(): string|array|null
+    /**
+     * Handle file upload validation and cleanup
+     */
+    public static function validateFileUpload($file): bool
     {
-        return 'warning';
+        try {
+            if (!$file) return true; // No file is okay if not required
+
+            // Check if file exists in temporary storage
+            if (is_string($file)) {
+                return \Illuminate\Support\Facades\Storage::disk('public')->exists($file);
+            }
+
+            // For uploaded file objects
+            if (is_object($file) && method_exists($file, 'isValid')) {
+                return $file->isValid();
+            }
+
+            return false;
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('File validation error', [
+                'error' => $e->getMessage(),
+                'file' => $file
+            ]);
+            return false;
+        }
+    }
+
+    /**
+     * Clean up orphaned temporary files
+     */
+    public static function cleanupTempFiles(): void
+    {
+        try {
+            $tempPath = storage_path('app/livewire-tmp');
+            if (is_dir($tempPath)) {
+                $files = glob($tempPath . '/*');
+                $cutoff = time() - (60 * 60); // 1 hour ago
+
+                foreach ($files as $file) {
+                    if (is_file($file) && filemtime($file) < $cutoff) {
+                        unlink($file);
+                    }
+                }
+            }
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Temp file cleanup error', [
+                'error' => $e->getMessage()
+            ]);
+        }
     }
 }
