@@ -85,6 +85,45 @@ class Attendance extends Model
     // Accessor untuk durasi kerja
     public function getDurasiKerjaAttribute()
     {
+        // Jika status adalah "Tidak Absensi", return durasi khusus
+        if ($this->getStatusKehadiranAttribute() === 'Tidak Absensi') {
+            // Jika tidak ada check_in sama sekali
+            if (!$this->check_in) {
+                return '0 jam 0 menit';
+            }
+
+            // Jika check_in tapi tidak ada check_out
+            if (!$this->check_out) {
+                return 'Belum checkout';
+            }
+
+            // Hitung durasi dari check_in hingga check_out (meskipun check-in terlalu sore)
+            $checkIn = Carbon::parse($this->check_in);
+            $checkOut = Carbon::parse($this->check_out);
+            $totalMinutes = $checkIn->diffInMinutes($checkOut);
+
+            // Jika ada absen siang, kurangi 1 jam untuk istirahat
+            if ($this->absen_siang) {
+                $totalMinutes = max(0, $totalMinutes - 60);
+            }
+
+            if ($totalMinutes <= 0) {
+                return '0 jam 0 menit';
+            }
+
+            $hours = intval($totalMinutes / 60);
+            $minutes = $totalMinutes % 60;
+
+            if ($hours > 0 && $minutes > 0) {
+                return $hours . ' jam ' . $minutes . ' menit';
+            } elseif ($hours > 0) {
+                return $hours . ' jam';
+            } else {
+                return $minutes . ' menit';
+            }
+        }
+
+        // Logic normal untuk status lainnya
         if (!$this->check_in || !$this->check_out) {
             return '-';
         }
@@ -132,13 +171,21 @@ class Attendance extends Model
     // Accessor untuk status kehadiran berdasarkan jadwal kantor
     public function getStatusKehadiranAttribute()
     {
+        // Jika tidak ada check_in sama sekali, maka "Tidak Absensi"
         if (!$this->check_in) {
-            return 'Tidak Hadir';
+            return 'Tidak Absensi';
         }
 
         // Ambil jadwal kantor berdasarkan hari absensi
         $checkInDate = Carbon::parse($this->check_in);
         $dayOfWeek = strtolower($checkInDate->format('l')); // monday, tuesday, etc.
+
+        // Cek apakah check-in dilakukan pada jam 17:00 atau setelahnya
+        $eveningTime = Carbon::parse($this->check_in)->setTime(17, 0, 0);
+
+        if ($checkInDate->greaterThanOrEqualTo($eveningTime)) {
+            return 'Tidak Absensi';
+        }
 
         // Cari jadwal kantor untuk hari tersebut
         $schedule = null;
@@ -173,6 +220,7 @@ class Attendance extends Model
             'Tepat Waktu' => 'success',
             'Terlambat' => 'warning',
             'Tidak Hadir' => 'danger',
+            'Tidak Absensi' => 'danger',
             default => 'gray'
         };
     }
@@ -366,19 +414,19 @@ class Attendance extends Model
         if (!$this->picture_absen_masuk) {
             return asset('images/no-image.png');
         }
-        
+
         // Check if file exists
         if (Storage::disk('public')->exists($this->picture_absen_masuk)) {
             return asset('storage/' . $this->picture_absen_masuk);
         }
-        
+
         // Log missing file
         Log::warning('Attendance image missing', [
             'id' => $this->id,
             'path' => $this->picture_absen_masuk,
             'field' => 'picture_absen_masuk'
         ]);
-        
+
         return asset('images/no-image.png');
     }
 
@@ -388,19 +436,19 @@ class Attendance extends Model
         if (!$this->picture_absen_pulang) {
             return asset('images/no-image.png');
         }
-        
+
         // Check if file exists
         if (Storage::disk('public')->exists($this->picture_absen_pulang)) {
             return asset('storage/' . $this->picture_absen_pulang);
         }
-        
+
         // Log missing file
         Log::warning('Attendance image missing', [
             'id' => $this->id,
             'path' => $this->picture_absen_pulang,
             'field' => 'picture_absen_pulang'
         ]);
-        
+
         return asset('images/no-image.png');
     }
 
@@ -410,19 +458,19 @@ class Attendance extends Model
         if (!$this->picture_absen_siang) {
             return asset('images/no-image.png');
         }
-        
+
         // Check if file exists
         if (Storage::disk('public')->exists($this->picture_absen_siang)) {
             return asset('storage/' . $this->picture_absen_siang);
         }
-        
+
         // Log missing file
         Log::warning('Attendance image missing', [
             'id' => $this->id,
             'path' => $this->picture_absen_siang,
             'field' => 'picture_absen_siang'
         ]);
-        
+
         return asset('images/no-image.png');
     }
 
@@ -434,13 +482,13 @@ class Attendance extends Model
             'check_out' => 'picture_absen_pulang',
             'absen_siang' => 'picture_absen_siang'
         ];
-        
+
         $field = $fieldMap[$type] ?? 'picture_absen_masuk';
-        
+
         if (!$this->$field) {
             return false;
         }
-        
+
         return Storage::disk('public')->exists($this->$field);
     }
 }
