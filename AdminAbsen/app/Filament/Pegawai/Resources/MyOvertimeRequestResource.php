@@ -106,6 +106,20 @@ class MyOvertimeRequestResource extends Resource
                                         if ($state && $jamSelesai) {
                                             $totalJam = \App\Models\OvertimeAssignment::calculateTotalJam($state, $jamSelesai);
                                             $set('total_jam', $totalJam);
+
+                                            // Format the display immediately
+                                            $hours = floor($totalJam / 60);
+                                            $minutes = $totalJam % 60;
+
+                                            if ($hours > 0 && $minutes > 0) {
+                                                $formatted = "{$hours} jam {$minutes} menit";
+                                            } elseif ($hours > 0) {
+                                                $formatted = "{$hours} jam";
+                                            } else {
+                                                $formatted = "{$totalJam} menit";
+                                            }
+
+                                            $set('total_jam_display', $formatted);
                                         }
                                     })
                                     ->columnSpan(1),
@@ -121,34 +135,42 @@ class MyOvertimeRequestResource extends Resource
                                         if ($state && $jamMulai) {
                                             $totalJam = \App\Models\OvertimeAssignment::calculateTotalJam($jamMulai, $state);
                                             $set('total_jam', $totalJam);
+
+                                            // Format the display immediately
+                                            $hours = floor($totalJam / 60);
+                                            $minutes = $totalJam % 60;
+
+                                            if ($hours > 0 && $minutes > 0) {
+                                                $formatted = "{$hours} jam {$minutes} menit";
+                                            } elseif ($hours > 0) {
+                                                $formatted = "{$hours} jam";
+                                            } else {
+                                                $formatted = "{$totalJam} menit";
+                                            }
+
+                                            $set('total_jam_display', $formatted);
                                         }
                                     })
                                     ->columnSpan(1),
 
-                                Forms\Components\TextInput::make('total_jam')
+                                Forms\Components\TextInput::make('total_jam_display')
                                     ->label('Total Jam Lembur')
                                     ->disabled()
-                                    ->formatStateUsing(function ($state) {
-                                        if (!$state) return '0 jam 0 menit';
-
-                                        $hours = floor($state / 60);
-                                        $minutes = $state % 60;
-
-                                        if ($hours > 0 && $minutes > 0) {
-                                            return "{$hours} jam {$minutes} menit";
-                                        } elseif ($hours > 0) {
-                                            return "{$hours} jam";
-                                        } else {
-                                            return "{$minutes} menit";
-                                        }
-                                    })
+                                    ->default('0 menit')
                                     ->helperText('Dihitung otomatis berdasarkan jam mulai dan selesai')
-                                    ->columnSpanFull(),
+                                    ->columnSpan(1),
+
+                                Forms\Components\Hidden::make('total_jam'),
 
                                 Forms\Components\DateTimePicker::make('assigned_at')
                                     ->label('Waktu Pengajuan')
                                     ->required()
-                                    ->default(now())
+                                    ->default(function () {
+                                        // Get current time in Indonesia timezone (WIB = UTC+7)
+                                        return \Carbon\Carbon::now('Asia/Jakarta');
+                                    })
+                                    ->timezone('Asia/Jakarta')
+                                    ->displayFormat('d/m/Y H:i:s')
                                     ->disabled()
                                     ->helperText('Waktu saat pengajuan dibuat')
                                     ->columnSpan(1),
