@@ -12,6 +12,7 @@ use Filament\Forms;
 use Maatwebsite\Excel\Facades\Excel;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
+use Filament\Notifications\Notification;
 
 class ListOvertimeApprovals extends ListRecords
 {
@@ -24,11 +25,30 @@ class ListOvertimeApprovals extends ListRecords
                 ->label('Assign Lembur Baru')
                 ->icon('heroicon-o-plus')
                 ->color('success')
+                ->tooltip('Assign lembur kepada pegawai (langsung disetujui)')
                 ->mutateFormDataUsing(function (array $data): array {
                     $data['assigned_by'] = auth()->id();
-                    $data['status'] = 'Assigned';
+
+                    // Auto-generate overtime ID dengan format: OT-YYYYMMDD-XXXX
+                    $date = now()->format('Ymd');
+                    $lastRecord = OvertimeAssignment::whereDate('created_at', now())
+                        ->orderBy('id', 'desc')
+                        ->first();
+
+                    $sequence = $lastRecord ? (int)substr($lastRecord->overtime_id, -4) + 1 : 1;
+                    $data['overtime_id'] = 'OT-' . $date . '-' . str_pad($sequence, 4, '0', STR_PAD_LEFT);
+
+                    $data['status'] = 'Accepted'; // Langsung disetujui
+                    $data['approved_by'] = auth()->id(); // Kepala bidang yang assign sekaligus approve
+                    $data['approved_at'] = now(); // Set waktu approval saat ini
                     return $data;
-                }),
+                })
+                ->successNotification(
+                    Notification::make()
+                        ->success()
+                        ->title('Lembur Berhasil Di-assign dan Disetujui')
+                        ->body('Penugasan lembur telah berhasil dibuat dan langsung disetujui.')
+                ),
 
             Actions\Action::make('export_excel')
                 ->label('Export Excel')

@@ -65,6 +65,7 @@ class OvertimeApprovalExport implements FromCollection, WithHeadings, WithMappin
             'NPP',
             'Jabatan',
             'ID Lembur',
+            'Keterangan Lembur',
             'Ditugaskan Oleh',
             'Status',
             'Tanggal Disetujui',
@@ -90,6 +91,7 @@ class OvertimeApprovalExport implements FromCollection, WithHeadings, WithMappin
             $overtime->user->npp ?? '-',
             $overtime->user->jabatan_nama ?? '-',
             $overtime->overtime_id ?? '-',
+            $overtime->keterangan ?? '-',
             $overtime->assignedBy->nama ?? '-',
             $statusFormatted,
             $overtime->approved_at ? $overtime->approved_at->format('d/m/Y H:i') : '-',
@@ -122,7 +124,7 @@ class OvertimeApprovalExport implements FromCollection, WithHeadings, WithMappin
                 ],
             ],
             // Style untuk data rows
-            'A2:K' . $lastRow => [
+            'A2:L' . $lastRow => [
                 'alignment' => [
                     'vertical' => Alignment::VERTICAL_TOP,
                     'wrapText' => true,
@@ -139,12 +141,13 @@ class OvertimeApprovalExport implements FromCollection, WithHeadings, WithMappin
             'C' => 15, // NPP
             'D' => 25, // Jabatan
             'E' => 20, // ID Lembur
-            'F' => 25, // Ditugaskan Oleh
-            'G' => 15, // Status
-            'H' => 18, // Tanggal Disetujui
-            'I' => 25, // Disetujui Oleh
-            'J' => 40, // Info Persetujuan - lebar untuk menampilkan teks lengkap
-            'K' => 18, // Dibuat Pada
+            'F' => 35, // Keterangan Lembur - lebar untuk menampilkan teks lengkap
+            'G' => 25, // Ditugaskan Oleh
+            'H' => 15, // Status
+            'I' => 18, // Tanggal Disetujui
+            'J' => 25, // Disetujui Oleh
+            'K' => 40, // Info Persetujuan - lebar untuk menampilkan teks lengkap
+            'L' => 18, // Dibuat Pada
         ];
     }
 
@@ -165,16 +168,22 @@ class OvertimeApprovalExport implements FromCollection, WithHeadings, WithMappin
                     $event->sheet->getDelegate()->getRowDimension($i)->setRowHeight(-1); // Auto height
                 }
 
-                // Set specific styling untuk kolom info persetujuan agar wrap text benar-benar bekerja
+                // Set specific styling untuk kolom keterangan dan info persetujuan agar wrap text benar-benar bekerja
                 $event->sheet->getDelegate()
-                    ->getStyle('J2:J' . $lastRow)
+                    ->getStyle('F2:F' . $lastRow)
+                    ->getAlignment()
+                    ->setWrapText(true)
+                    ->setVertical(Alignment::VERTICAL_TOP);
+
+                $event->sheet->getDelegate()
+                    ->getStyle('K2:K' . $lastRow)
                     ->getAlignment()
                     ->setWrapText(true)
                     ->setVertical(Alignment::VERTICAL_TOP);
 
                 // Set border untuk semua data
                 $event->sheet->getDelegate()
-                    ->getStyle('A1:K' . $lastRow)
+                    ->getStyle('A1:L' . $lastRow)
                     ->applyFromArray([
                         'borders' => [
                             'allBorders' => [

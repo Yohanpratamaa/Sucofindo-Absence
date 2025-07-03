@@ -56,6 +56,10 @@ class ViewOvertimeApproval extends ViewRecord
                                     ->label('Tanggal Dibuat')
                                     ->dateTime(),
                             ]),
+                        Components\TextEntry::make('keterangan')
+                            ->label('Keterangan Lembur')
+                            ->columnSpanFull()
+                            ->formatStateUsing(fn (string $state): string => $state ?: 'Tidak ada keterangan'),
                     ]),
 
                 Components\Section::make('Status Penugasan')
@@ -95,7 +99,7 @@ class ViewOvertimeApproval extends ViewRecord
     {
         return [
             Actions\EditAction::make()
-                ->visible(fn (): bool => $this->record->status === 'Assigned'),
+                ->visible(fn (): bool => in_array($this->record->status, ['Assigned', 'Accepted'])),
 
             Actions\Action::make('approve')
                 ->label('Setujui Lembur')
@@ -140,7 +144,7 @@ class ViewOvertimeApproval extends ViewRecord
                 }),
 
             Actions\DeleteAction::make()
-                ->visible(fn (): bool => $this->record->status === 'Assigned'),
+                ->visible(fn (): bool => in_array($this->record->status, ['Assigned', 'Accepted'])),
         ];
     }
 }

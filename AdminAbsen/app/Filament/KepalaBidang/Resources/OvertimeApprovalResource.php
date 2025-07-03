@@ -46,6 +46,7 @@ class OvertimeApprovalResource extends Resource
         return $form
             ->schema([
                 Forms\Components\Section::make('Detail Penugasan Lembur')
+                    ->description('Lembur yang di-assign oleh kepala bidang akan langsung disetujui otomatis')
                     ->schema([
                         Forms\Components\Grid::make(2)
                             ->schema([
@@ -61,11 +62,12 @@ class OvertimeApprovalResource extends Resource
                                             ->pluck('nama', 'id');
                                     }),
 
-                                Forms\Components\TextInput::make('overtime_id')
-                                    ->label('Task Lembur')
+                                Forms\Components\Textarea::make('keterangan')
+                                    ->label('Keterangan Lembur')
                                     ->required()
-                                    ->unique(ignoreRecord: true)
-                                    ->placeholder('contoh: Mengerjakan laporan mingguan'),
+                                    ->rows(3)
+                                    ->placeholder('Jelaskan detail pekerjaan yang akan dikerjakan dalam lembur ini')
+                                    ->columnSpanFull(),
 
                                 Forms\Components\DateTimePicker::make('assigned_at')
                                     ->label('Waktu Penugasan')
@@ -75,8 +77,26 @@ class OvertimeApprovalResource extends Resource
                                 Forms\Components\Hidden::make('assigned_by')
                                     ->default(fn () => Auth::id()),
 
+                                Forms\Components\Hidden::make('overtime_id')
+                                    ->default(function () {
+                                        // Auto-generate overtime ID dengan format: OT-YYYYMMDD-XXXX
+                                        $date = now()->format('Ymd');
+                                        $lastRecord = OvertimeAssignment::whereDate('created_at', now())
+                                            ->orderBy('id', 'desc')
+                                            ->first();
+
+                                        $sequence = $lastRecord ? (int)substr($lastRecord->overtime_id, -4) + 1 : 1;
+                                        return 'OT-' . $date . '-' . str_pad($sequence, 4, '0', STR_PAD_LEFT);
+                                    }),
+
                                 Forms\Components\Hidden::make('status')
-                                    ->default('Assigned'),
+                                    ->default('Accepted'), // Langsung disetujui karena kepala bidang yang assign
+
+                                Forms\Components\Hidden::make('approved_by')
+                                    ->default(fn () => Auth::id()), // Kepala bidang yang assign sekaligus approve
+
+                                Forms\Components\Hidden::make('approved_at')
+                                    ->default(fn () => now()), // Set waktu approval saat ini
                             ]),
                     ]),
 
@@ -114,7 +134,18 @@ class OvertimeApprovalResource extends Resource
                 Tables\Columns\TextColumn::make('overtime_id')
                     ->label('ID Lembur')
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    ->badge()
+                    ->color('primary'),
+
+                Tables\Columns\TextColumn::make('keterangan')
+                    ->label('Keterangan Lembur')
+                    ->searchable()
+                    ->limit(50)
+                    ->tooltip(function (OvertimeAssignment $record): ?string {
+                        return $record->keterangan;
+                    })
+                    ->wrap(),
 
                 Tables\Columns\TextColumn::make('assignedBy.nama')
                     ->label('Ditugaskan Oleh')
@@ -192,7 +223,7 @@ class OvertimeApprovalResource extends Resource
             ->actions([
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make()
-                    ->visible(fn (OvertimeAssignment $record): bool => $record->status === 'Assigned'),
+                    ->visible(fn (OvertimeAssignment $record): bool => in_array($record->status, ['Assigned', 'Accepted'])),
 
                 Tables\Actions\Action::make('approve')
                     ->label('Setujui')
@@ -260,7 +291,7 @@ class OvertimeApprovalResource extends Resource
                             ->body('Penugasan lembur telah berhasil di-assign ulang.')
                             ->send();
                     })
-                    ->visible(fn (OvertimeAssignment $record): bool => in_array($record->status, ['Rejected', 'Assigned'])),
+                    ->visible(fn (OvertimeAssignment $record): bool => in_array($record->status, ['Rejected', 'Assigned', 'Accepted'])),
             ])
             ->bulkActions([
                 Tables\Actions\BulkAction::make('bulk_approve')
@@ -361,11 +392,11 @@ class OvertimeApprovalResource extends Resource
 
     public static function canEdit($record): bool
     {
-        return $record->status === 'Assigned';
+        return in_array($record->status, ['Assigned', 'Accepted']);
     }
 
     public static function canDelete($record): bool
     {
-        return $record->status === 'Assigned';
+        return in_array($record->status, ['Assigned', 'Accepted']);
     }
 }

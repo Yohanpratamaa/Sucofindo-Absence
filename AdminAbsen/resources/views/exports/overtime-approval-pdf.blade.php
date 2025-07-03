@@ -155,13 +155,14 @@
         .text-center { text-align: center; }
         .text-right { text-align: right; }
 
-        .col-date { width: 12%; }
-        .col-name { width: 15%; }
-        .col-npp { width: 8%; }
-        .col-jabatan { width: 12%; }
-        .col-overtime-id { width: 12%; }
-        .col-assigned-by { width: 12%; }
-        .col-status { width: 10%; }
+        .col-date { width: 10%; }
+        .col-name { width: 12%; }
+        .col-npp { width: 6%; }
+        .col-jabatan { width: 10%; }
+        .col-overtime-id { width: 10%; }
+        .col-keterangan { width: 15%; word-wrap: break-word; word-break: break-word; }
+        .col-assigned-by { width: 10%; }
+        .col-status { width: 8%; }
         .col-approval { width: 19%; word-wrap: break-word; word-break: break-word; }
     </style>
 </head>
@@ -201,6 +202,7 @@
                         <th class="col-npp">NPP</th>
                         <th class="col-jabatan">Jabatan</th>
                         <th class="col-overtime-id">ID Lembur</th>
+                        <th class="col-keterangan">Keterangan</th>
                         <th class="col-assigned-by">Ditugaskan Oleh</th>
                         <th class="col-status">Status</th>
                         <th class="col-approval">Info Persetujuan</th>
@@ -219,6 +221,7 @@
                             <td class="text-center">{{ $overtime->user->npp ?? '-' }}</td>
                             <td>{{ $overtime->user->jabatan_nama ?? '-' }}</td>
                             <td>{{ $overtime->overtime_id ?? '-' }}</td>
+                            <td style="word-wrap: break-word; word-break: break-word; max-width: 120px;">{{ $overtime->keterangan ?? '-' }}</td>
                             <td>{{ $overtime->assignedBy->nama ?? '-' }}</td>
                             <td class="text-center">
                                 @php
