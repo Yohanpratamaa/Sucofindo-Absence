@@ -99,7 +99,7 @@ class ViewMyOvertimeRequest extends ViewRecord
                             ->label('Keterangan Lembur')
                             ->columnSpanFull(),
 
-                        Infolists\Components\Grid::make(2)
+                        Infolists\Components\Grid::make(3)
                             ->schema([
                                 Infolists\Components\TextEntry::make('assigned_at')
                                     ->label('Waktu Pengajuan')
@@ -109,6 +109,26 @@ class ViewMyOvertimeRequest extends ViewRecord
                                 Infolists\Components\TextEntry::make('user.nama')
                                     ->label('Diajukan Oleh')
                                     ->icon('heroicon-m-user'),
+
+                                Infolists\Components\TextEntry::make('total_jam')
+                                    ->label('Total Jam Lembur')
+                                    ->badge()
+                                    ->color('warning')
+                                    ->icon('heroicon-m-clock')
+                                    ->formatStateUsing(function ($state) {
+                                        if (!$state || $state == 0) return '0 menit';
+                                        
+                                        $hours = floor($state / 60);
+                                        $minutes = $state % 60;
+                                        
+                                        if ($hours > 0 && $minutes > 0) {
+                                            return "{$hours} jam {$minutes} menit";
+                                        } elseif ($hours > 0) {
+                                            return "{$hours} jam";
+                                        } else {
+                                            return "{$minutes} menit";
+                                        }
+                                    }),
                             ]),
                     ]),
 

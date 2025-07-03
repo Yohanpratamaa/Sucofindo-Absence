@@ -204,10 +204,24 @@ class MyOvertimeRequestResource extends Resource
                     ->time('H:i')
                     ->color('danger'),
 
-                Tables\Columns\TextColumn::make('total_jam_formatted')
+                Tables\Columns\TextColumn::make('total_jam')
                     ->label('Total Jam')
                     ->badge()
-                    ->color('warning'),
+                    ->color('warning')
+                    ->formatStateUsing(function ($state) {
+                        if (!$state || $state == 0) return '0 menit';
+
+                        $hours = floor($state / 60);
+                        $minutes = $state % 60;
+
+                        if ($hours > 0 && $minutes > 0) {
+                            return "{$hours} jam {$minutes} menit";
+                        } elseif ($hours > 0) {
+                            return "{$hours} jam";
+                        } else {
+                            return "{$minutes} menit";
+                        }
+                    }),
 
                 Tables\Columns\TextColumn::make('keterangan')
                     ->label('Keterangan')
