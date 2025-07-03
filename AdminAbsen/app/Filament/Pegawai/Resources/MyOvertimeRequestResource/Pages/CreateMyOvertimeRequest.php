@@ -40,4 +40,14 @@ class CreateMyOvertimeRequest extends CreateRecord
 
         return $data;
     }
+
+    protected function getFormActions(): array
+    {
+        return [
+            $this->getCreateFormAction()
+                ->label('Ajukan Lembur'), // Ubah label tombol submit
+            $this->getCancelFormAction()
+                ->label('Cancel'), // Tambah tombol cancel
+        ];
+    }
 }

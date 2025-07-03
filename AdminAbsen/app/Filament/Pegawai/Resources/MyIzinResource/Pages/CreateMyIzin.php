@@ -35,7 +35,17 @@ class CreateMyIzin extends CreateRecord
     {
         // Pastikan user_id diisi dengan ID user yang sedang login
         $data['user_id'] = Auth::id();
-        
+
         return $data;
+    }
+
+        protected function getFormActions(): array
+    {
+        return [
+            $this->getCreateFormAction()
+                ->label('Ajukan Izin'), // Ubah label tombol submit
+            $this->getCancelFormAction()
+                ->label('Cancel'), // Tambah tombol cancel
+        ];
     }
 }
