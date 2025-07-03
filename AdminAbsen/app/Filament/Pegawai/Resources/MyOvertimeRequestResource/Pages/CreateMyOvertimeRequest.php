@@ -3,6 +3,7 @@
 namespace App\Filament\Pegawai\Resources\MyOvertimeRequestResource\Pages;
 
 use App\Filament\Pegawai\Resources\MyOvertimeRequestResource;
+use App\Models\OvertimeAssignment;
 use Filament\Actions;
 use Filament\Resources\Pages\CreateRecord;
 use Filament\Notifications\Notification;
@@ -37,6 +38,15 @@ class CreateMyOvertimeRequest extends CreateRecord
         $data['user_id'] = Auth::id();
         $data['assigned_by'] = Auth::id();
         $data['status'] = 'Assigned';
+
+        // Auto-generate overtime ID dengan format: OT-YYYYMMDD-XXXX
+        $date = now()->format('Ymd');
+        $lastRecord = OvertimeAssignment::whereDate('created_at', now())
+            ->orderBy('id', 'desc')
+            ->first();
+
+        $sequence = $lastRecord ? (int)substr($lastRecord->overtime_id, -4) + 1 : 1;
+        $data['overtime_id'] = 'OT-' . $date . '-' . str_pad($sequence, 4, '0', STR_PAD_LEFT);
 
         return $data;
     }
