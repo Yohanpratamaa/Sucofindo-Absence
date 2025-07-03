@@ -64,6 +64,13 @@ class MyIzinResource extends Resource
                                                     $helperText .= " (Maksimal {$jenisIzin->max_hari} hari)";
                                                 }
                                                 $set('helper_text', $helperText);
+
+                                                // Update dokumen pendukung helper text
+                                                if ($jenisIzin->perlu_dokumen) {
+                                                    $set('dokumen_helper', 'Dokumen pendukung WAJIB untuk jenis izin ini');
+                                                } else {
+                                                    $set('dokumen_helper', 'Dokumen pendukung tidak diperlukan untuk jenis izin ini');
+                                                }
                                             }
                                         }
                                     })
@@ -111,12 +118,59 @@ class MyIzinResource extends Resource
                                     ->placeholder('Jelaskan alasan izin Anda...')
                                     ->columnSpanFull(),
 
+                                // Info dokumen pendukung berdasarkan jenis izin
+                                Forms\Components\Placeholder::make('dokumen_info')
+                                    ->label('Info Dokumen Pendukung')
+                                    ->content(function (callable $get) {
+                                        $jenisIzin = $get('jenis_izin');
+                                        if (!$jenisIzin) {
+                                            return '💡 Pilih jenis izin terlebih dahulu untuk melihat apakah dokumen pendukung diperlukan.';
+                                        }
+
+                                        $jenisIzinData = ManajemenIzin::where('kode_izin', $jenisIzin)->first();
+                                        if ($jenisIzinData) {
+                                            if ($jenisIzinData->perlu_dokumen) {
+                                                return '📁 ⚠️ DOKUMEN PENDUKUNG WAJIB untuk jenis izin ini. Form upload akan muncul di bawah.';
+                                            } else {
+                                                return '✅ Dokumen pendukung TIDAK DIPERLUKAN untuk jenis izin ini.';
+                                            }
+                                        }
+                                        return '';
+                                    })
+                                    ->visible(function (callable $get) {
+                                        return $get('jenis_izin') !== null;
+                                    })
+                                    ->columnSpanFull(),
+
                                 Forms\Components\FileUpload::make('dokumen_pendukung')
                                     ->label('Dokumen Pendukung')
-                                    ->acceptedFileTypes(['application/pdf', 'image/*'])
-                                    ->maxSize(2048)
-                                    ->helperText('Upload surat dokter, surat keterangan, atau dokumen pendukung lainnya (Max: 2MB)')
+                                    ->acceptedFileTypes(['application/pdf', 'image/jpeg', 'image/png', 'image/jpg'])
+                                    ->maxSize(2048) // 2MB in KB
+                                    ->directory('izin-documents')
+                                    ->disk('public')
+                                    ->visibility('private')
+                                    ->downloadable()
+                                    ->openable()
+                                    ->previewable()
+                                    ->helperText(function (callable $get) {
+                                        $jenisIzin = $get('jenis_izin');
+                                        if ($jenisIzin) {
+                                            $jenisIzinData = ManajemenIzin::where('kode_izin', $jenisIzin)->first();
+                                            if ($jenisIzinData && $jenisIzinData->perlu_dokumen) {
+                                                return '⚠️ DOKUMEN WAJIB: Upload surat dokter, surat keterangan, atau dokumen pendukung lainnya (PDF/JPG/PNG, Max: 2MB)';
+                                            }
+                                        }
+                                        return 'Upload dokumen pendukung jika diperlukan (PDF/JPG/PNG, Max: 2MB)';
+                                    })
                                     ->required(function (callable $get) {
+                                        $jenisIzin = $get('jenis_izin');
+                                        if ($jenisIzin) {
+                                            $jenisIzinData = ManajemenIzin::where('kode_izin', $jenisIzin)->first();
+                                            return $jenisIzinData ? $jenisIzinData->perlu_dokumen : false;
+                                        }
+                                        return false;
+                                    })
+                                    ->visible(function (callable $get) {
                                         $jenisIzin = $get('jenis_izin');
                                         if ($jenisIzin) {
                                             $jenisIzinData = ManajemenIzin::where('kode_izin', $jenisIzin)->first();
@@ -265,8 +319,55 @@ class MyIzinResource extends Resource
             ->count();
     }
 
-    public static function getNavigationBadgeColor(): string|array|null
+    /**
+     * Handle file upload validation and cleanup
+     */
+    public static function validateFileUpload($file): bool
     {
-        return 'warning';
+        try {
+            if (!$file) return true; // No file is okay if not required
+
+            // Check if file exists in temporary storage
+            if (is_string($file)) {
+                return \Illuminate\Support\Facades\Storage::disk('public')->exists($file);
+            }
+
+            // For uploaded file objects
+            if (is_object($file) && method_exists($file, 'isValid')) {
+                return $file->isValid();
+            }
+
+            return false;
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('File validation error', [
+                'error' => $e->getMessage(),
+                'file' => $file
+            ]);
+            return false;
+        }
+    }
+
+    /**
+     * Clean up orphaned temporary files
+     */
+    public static function cleanupTempFiles(): void
+    {
+        try {
+            $tempPath = storage_path('app/livewire-tmp');
+            if (is_dir($tempPath)) {
+                $files = glob($tempPath . '/*');
+                $cutoff = time() - (60 * 60); // 1 hour ago
+
+                foreach ($files as $file) {
+                    if (is_file($file) && filemtime($file) < $cutoff) {
+                        unlink($file);
+                    }
+                }
+            }
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Temp file cleanup error', [
+                'error' => $e->getMessage()
+            ]);
+        }
     }
 }
