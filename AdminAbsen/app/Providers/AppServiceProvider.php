@@ -23,6 +23,7 @@ class AppServiceProvider extends ServiceProvider
     {
         // Register model observers
         Pegawai::observe(PegawaiObserver::class);
+        \App\Models\Izin::observe(\App\Observers\IzinObserver::class);
 
         // Register custom commands
         if ($this->app->runningInConsole()) {

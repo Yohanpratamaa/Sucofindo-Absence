@@ -29,6 +29,9 @@ class Attendance extends Model
         'picture_absen_pulang',
         'overtime',
         'attendance_type',
+        'izin_id',
+        'status_kehadiran',
+        'keterangan_izin',
     ];
 
     protected $casts = [
@@ -56,6 +59,12 @@ class Attendance extends Model
     public function officeSchedule()
     {
         return $this->belongsTo(OfficeSchedule::class, 'office_working_hours_id');
+    }
+
+    // Relasi dengan Izin
+    public function izin()
+    {
+        return $this->belongsTo(Izin::class, 'izin_id');
     }
 
     // Accessor untuk format tanggal
@@ -171,6 +180,11 @@ class Attendance extends Model
     // Accessor untuk status kehadiran berdasarkan jadwal kantor
     public function getStatusKehadiranAttribute()
     {
+        // Cek jika ada status_kehadiran yang sudah di-set manual (untuk izin)
+        if (isset($this->attributes['status_kehadiran']) && !empty($this->attributes['status_kehadiran'])) {
+            return $this->attributes['status_kehadiran'];
+        }
+
         // Jika tidak ada check_in sama sekali, maka "Tidak Absensi"
         if (!$this->check_in) {
             return 'Tidak Absensi';
@@ -221,6 +235,9 @@ class Attendance extends Model
             'Terlambat' => 'warning',
             'Tidak Hadir' => 'danger',
             'Tidak Absensi' => 'danger',
+            'Izin' => 'info',
+            'Sakit' => 'warning',
+            'Cuti' => 'primary',
             default => 'gray'
         };
     }

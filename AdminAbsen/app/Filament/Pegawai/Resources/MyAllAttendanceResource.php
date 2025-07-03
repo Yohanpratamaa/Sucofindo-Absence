@@ -171,8 +171,25 @@ class MyAllAttendanceResource extends Resource
                         'Terlambat' => 'warning',
                         'Tidak Hadir' => 'danger',
                         'Tidak Absensi' => 'danger',
+                        'Izin' => 'info',
+                        'Sakit' => 'warning',
+                        'Cuti' => 'primary',
                         default => 'gray',
                     }),
+
+                // Keterangan Izin (jika ada)
+                Tables\Columns\TextColumn::make('keterangan_izin')
+                    ->label('Keterangan')
+                    ->limit(30)
+                    ->tooltip(function (Tables\Columns\TextColumn $column): ?string {
+                        $state = $column->getState();
+                        if (strlen($state) <= 30) {
+                            return null;
+                        }
+                        return $state;
+                    })
+                    ->placeholder('-')
+                    ->visible(fn ($record) => !empty($record->keterangan_izin)),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('attendance_type')
@@ -190,6 +207,9 @@ class MyAllAttendanceResource extends Resource
                         'Terlambat' => 'Terlambat',
                         'Tidak Hadir' => 'Tidak Hadir',
                         'Tidak Absensi' => 'Tidak Absensi',
+                        'Izin' => 'Izin',
+                        'Sakit' => 'Sakit',
+                        'Cuti' => 'Cuti',
                     ])
                     ->placeholder('Semua Status'),
 
@@ -229,6 +249,13 @@ class MyAllAttendanceResource extends Resource
                         });
                     })
                     ->indicator('Tidak Absensi'),
+
+                Tables\Filters\Filter::make('izin_sakit_cuti')
+                    ->label('Izin/Sakit/Cuti')
+                    ->query(function ($query) {
+                        return $query->whereIn('status_kehadiran', ['Izin', 'Sakit', 'Cuti']);
+                    })
+                    ->indicator('Izin/Sakit/Cuti'),
             ])
             ->actions([
                 Tables\Actions\ViewAction::make()
