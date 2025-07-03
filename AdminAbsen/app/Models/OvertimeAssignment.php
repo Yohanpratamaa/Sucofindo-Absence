@@ -21,6 +21,11 @@ class OvertimeAssignment extends Model
         'assign_by',
         'status',
         'keterangan',
+        'hari_lembur',
+        'tanggal_lembur',
+        'jam_mulai',
+        'jam_selesai',
+        'total_jam',
     ];
 
     protected $casts = [
@@ -28,6 +33,9 @@ class OvertimeAssignment extends Model
         'approved_at' => 'datetime',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
+        'tanggal_lembur' => 'datetime',
+        'jam_mulai' => 'datetime',
+        'jam_selesai' => 'datetime',
     ];
 
     // Relasi dengan Pegawai (user yang ditugaskan lembur)
@@ -83,6 +91,53 @@ class OvertimeAssignment extends Model
         if (!$this->assigned_at) return '-';
 
         return Carbon::parse($this->assigned_at)->diffForHumans();
+    }
+
+    // Accessor untuk format total jam lembur
+    public function getTotalJamFormattedAttribute()
+    {
+        if (!$this->total_jam) return '-';
+
+        $hours = floor($this->total_jam / 60);
+        $minutes = $this->total_jam % 60;
+
+        if ($hours > 0 && $minutes > 0) {
+            return "{$hours} jam {$minutes} menit";
+        } elseif ($hours > 0) {
+            return "{$hours} jam";
+        } else {
+            return "{$minutes} menit";
+        }
+    }
+
+    // Accessor untuk jadwal lembur lengkap
+    public function getJadwalLemburAttribute()
+    {
+        if (!$this->tanggal_lembur || !$this->jam_mulai || !$this->jam_selesai) {
+            return '-';
+        }
+
+        $tanggal = $this->tanggal_lembur->format('d M Y');
+        $jamMulai = $this->jam_mulai->format('H:i');
+        $jamSelesai = $this->jam_selesai->format('H:i');
+
+        return "{$this->hari_lembur}, {$tanggal} ({$jamMulai} - {$jamSelesai})";
+    }
+
+    // Method untuk menghitung total jam otomatis
+    public static function calculateTotalJam($jamMulai, $jamSelesai)
+    {
+        if (!$jamMulai || !$jamSelesai) return 0;
+
+        $mulai = Carbon::parse($jamMulai);
+        $selesai = Carbon::parse($jamSelesai);
+
+        // Jika jam selesai lebih kecil dari jam mulai, anggap melewati tengah malam
+        if ($selesai->lessThan($mulai)) {
+            $selesai->addDay();
+        }
+
+        return $mulai->diffInMinutes($selesai);
     }
 
     // Scope untuk filter berdasarkan status

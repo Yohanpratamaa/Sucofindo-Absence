@@ -53,41 +53,82 @@ class ViewMyOvertimeRequest extends ViewRecord
                                         'Rejected' => 'Ditolak',
                                         default => ucfirst($state),
                                     }),
-
-                                Infolists\Components\TextEntry::make('assigned_at')
-                                    ->label('Waktu Mulai Lembur')
-                                    ->dateTime('d M Y H:i'),
-
-                                Infolists\Components\TextEntry::make('created_at')
-                                    ->label('Waktu Pengajuan')
-                                    ->dateTime('d M Y H:i'),
-
-                                Infolists\Components\TextEntry::make('keterangan')
-                                    ->label('Keterangan')
-                                    ->columnSpanFull(),
                             ]),
                     ]),
 
-                Infolists\Components\Section::make('Informasi Persetujuan')
+                Infolists\Components\Section::make('Jadwal Lembur')
+                    ->schema([
+                        Infolists\Components\Grid::make(3)
+                            ->schema([
+                                Infolists\Components\TextEntry::make('hari_lembur')
+                                    ->label('Hari')
+                                    ->badge()
+                                    ->color('info'),
+
+                                Infolists\Components\TextEntry::make('tanggal_lembur')
+                                    ->label('Tanggal')
+                                    ->date('d M Y')
+                                    ->icon('heroicon-m-calendar-days'),
+
+                                Infolists\Components\TextEntry::make('total_jam_formatted')
+                                    ->label('Total Jam')
+                                    ->badge()
+                                    ->color('warning')
+                                    ->icon('heroicon-m-clock'),
+                            ]),
+
+                        Infolists\Components\Grid::make(2)
+                            ->schema([
+                                Infolists\Components\TextEntry::make('jam_mulai')
+                                    ->label('Jam Mulai')
+                                    ->time('H:i')
+                                    ->icon('heroicon-m-play')
+                                    ->color('success'),
+
+                                Infolists\Components\TextEntry::make('jam_selesai')
+                                    ->label('Jam Selesai')
+                                    ->time('H:i')
+                                    ->icon('heroicon-m-stop')
+                                    ->color('danger'),
+                            ]),
+                    ]),
+
+                Infolists\Components\Section::make('Detail Lembur')
+                    ->schema([
+                        Infolists\Components\TextEntry::make('keterangan')
+                            ->label('Keterangan Lembur')
+                            ->columnSpanFull(),
+
+                        Infolists\Components\Grid::make(2)
+                            ->schema([
+                                Infolists\Components\TextEntry::make('assigned_at')
+                                    ->label('Waktu Pengajuan')
+                                    ->dateTime('d M Y H:i')
+                                    ->icon('heroicon-m-paper-airplane'),
+
+                                Infolists\Components\TextEntry::make('user.nama')
+                                    ->label('Diajukan Oleh')
+                                    ->icon('heroicon-m-user'),
+                            ]),
+                    ]),
+
+                Infolists\Components\Section::make('Status Persetujuan')
                     ->schema([
                         Infolists\Components\Grid::make(2)
                             ->schema([
                                 Infolists\Components\TextEntry::make('approvedBy.nama')
                                     ->label('Diproses Oleh')
-                                    ->placeholder('Belum diproses'),
+                                    ->placeholder('Belum diproses')
+                                    ->icon('heroicon-m-user-circle'),
 
                                 Infolists\Components\TextEntry::make('approved_at')
-                                    ->label('Tanggal Diproses')
+                                    ->label('Waktu Diproses')
                                     ->dateTime('d M Y H:i')
-                                    ->placeholder('Belum diproses'),
-
-                                Infolists\Components\TextEntry::make('approval_info')
-                                    ->label('Keterangan Persetujuan')
-                                    ->columnSpanFull()
-                                    ->placeholder('Tidak ada keterangan'),
+                                    ->placeholder('Belum diproses')
+                                    ->icon('heroicon-m-check-circle'),
                             ]),
                     ])
-                    ->visible(fn ($record) => $record->approved_by !== null),
+                    ->visible(fn ($record) => $record->approved_by || $record->approved_at),
             ]);
     }
 }
