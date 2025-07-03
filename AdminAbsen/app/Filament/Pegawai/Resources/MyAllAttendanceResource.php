@@ -170,14 +170,8 @@ class MyAllAttendanceResource extends Resource
                         'Tepat Waktu' => 'success',
                         'Terlambat' => 'warning',
                         'Tidak Hadir' => 'danger',
-                        'Tidak Absensi' => 'danger',
                         default => 'gray',
-                    })
-                    ->extraAttributes(fn (string $state): array => 
-                        $state === 'Tidak Absensi' 
-                            ? ['style' => 'background-color: #dc2626 !important; color: white !important; font-weight: bold;']
-                            : []
-                    ),
+                    }),
             ])
             ->headerActions([
                 Tables\Actions\Action::make('daftar_presensi')
@@ -202,7 +196,6 @@ class MyAllAttendanceResource extends Resource
                         'Tepat Waktu' => 'Tepat Waktu',
                         'Terlambat' => 'Terlambat',
                         'Tidak Hadir' => 'Tidak Hadir',
-                        'Tidak Absensi' => 'Tidak Absensi',
                     ])
                     ->placeholder('Semua Status'),
 
@@ -232,13 +225,6 @@ class MyAllAttendanceResource extends Resource
                         });
                     })
                     ->indicator('Belum Lengkap'),
-
-                Tables\Filters\Filter::make('tidak_absensi')
-                    ->label('Tidak Absensi')
-                    ->query(function ($query) {
-                        return $query->where('status_kehadiran', 'Tidak Absensi');
-                    })
-                    ->indicator('Tidak Absensi'),
             ])
             ->actions([
                 Tables\Actions\ViewAction::make()

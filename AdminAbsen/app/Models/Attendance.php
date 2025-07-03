@@ -85,45 +85,6 @@ class Attendance extends Model
     // Accessor untuk durasi kerja
     public function getDurasiKerjaAttribute()
     {
-        // Jika status adalah "Tidak Absensi", return durasi khusus
-        if ($this->getStatusKehadiranAttribute() === 'Tidak Absensi') {
-            // Jika tidak ada check_in sama sekali
-            if (!$this->check_in) {
-                return '0 jam 0 menit';
-            }
-            
-            // Jika check_in tapi tidak ada check_out
-            if (!$this->check_out) {
-                return 'Belum checkout';
-            }
-            
-            // Hitung durasi dari check_in hingga check_out (meskipun terlambat)
-            $checkIn = Carbon::parse($this->check_in);
-            $checkOut = Carbon::parse($this->check_out);
-            $totalMinutes = $checkIn->diffInMinutes($checkOut);
-            
-            // Jika ada absen siang, kurangi 1 jam untuk istirahat
-            if ($this->absen_siang) {
-                $totalMinutes = max(0, $totalMinutes - 60);
-            }
-            
-            if ($totalMinutes <= 0) {
-                return '0 jam 0 menit';
-            }
-
-            $hours = intval($totalMinutes / 60);
-            $minutes = $totalMinutes % 60;
-
-            if ($hours > 0 && $minutes > 0) {
-                return $hours . ' jam ' . $minutes . ' menit';
-            } elseif ($hours > 0) {
-                return $hours . ' jam';
-            } else {
-                return $minutes . ' menit';
-            }
-        }
-
-        // Logic normal untuk status lainnya
         if (!$this->check_in || !$this->check_out) {
             return '-';
         }
@@ -171,21 +132,13 @@ class Attendance extends Model
     // Accessor untuk status kehadiran berdasarkan jadwal kantor
     public function getStatusKehadiranAttribute()
     {
-        // Jika tidak ada check_in sama sekali, maka "Tidak Absensi"
         if (!$this->check_in) {
-            return 'Tidak Absensi';
+            return 'Tidak Hadir';
         }
 
         // Ambil jadwal kantor berdasarkan hari absensi
         $checkInDate = Carbon::parse($this->check_in);
         $dayOfWeek = strtolower($checkInDate->format('l')); // monday, tuesday, etc.
-
-        // Cek apakah check-in dilakukan pada atau setelah jam 12:00
-        $noonTime = Carbon::parse($this->check_in)->setTime(12, 0, 0);
-        
-        if ($checkInDate->greaterThanOrEqualTo($noonTime)) {
-            return 'Tidak Absensi';
-        }
 
         // Cari jadwal kantor untuk hari tersebut
         $schedule = null;
@@ -220,7 +173,6 @@ class Attendance extends Model
             'Tepat Waktu' => 'success',
             'Terlambat' => 'warning',
             'Tidak Hadir' => 'danger',
-            'Tidak Absensi' => 'danger',
             default => 'gray'
         };
     }
