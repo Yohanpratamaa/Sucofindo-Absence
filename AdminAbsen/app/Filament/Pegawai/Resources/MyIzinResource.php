@@ -51,9 +51,20 @@ class MyIzinResource extends Resource
                             ->schema([
                                 Forms\Components\Select::make('jenis_izin')
                                     ->label('Jenis Izin')
-                                    ->options(ManajemenIzin::getSelectOptions())
+                                    ->options(function () {
+                                        try {
+                                            return ManajemenIzin::getSelectOptions();
+                                        } catch (\Exception $e) {
+                                            \Illuminate\Support\Facades\Log::error('Error loading jenis izin options', [
+                                                'error' => $e->getMessage()
+                                            ]);
+                                            return [];
+                                        }
+                                    })
                                     ->required()
                                     ->reactive()
+                                    ->placeholder('Pilih jenis izin...')
+                                    ->searchable()
                                     ->afterStateUpdated(function ($state, callable $set) {
                                         if ($state) {
                                             $jenisIzin = ManajemenIzin::where('kode_izin', $state)->first();
@@ -72,6 +83,10 @@ class MyIzinResource extends Resource
                                                     $set('dokumen_helper', 'Dokumen pendukung tidak diperlukan untuk jenis izin ini');
                                                 }
                                             }
+                                        } else {
+                                            // Reset helper texts when no selection
+                                            $set('helper_text', '');
+                                            $set('dokumen_helper', '');
                                         }
                                     })
                                     ->columnSpan(1),
@@ -108,34 +123,137 @@ class MyIzinResource extends Resource
                                                 }
                                             }
                                         }
+
+                                        // Trigger refresh untuk form medis dan dokumen pendukung hanya jika jenis izin adalah sakit
+                                        if ($jenisIzin === 'sakit') {
+                                            // Trigger refresh UI untuk mengupdate status required dokumen pendukung
+                                            $set('_trigger_refresh', time());
+                                        }
                                     })
                                     ->columnSpan(1),
 
+                                Forms\Components\Hidden::make('_trigger_refresh'),
+
                                 Forms\Components\Textarea::make('keterangan')
                                     ->label('Keterangan/Alasan')
-                                    ->required()
+                                    ->required(function (callable $get) {
+                                        // Tidak required untuk izin sakit karena akan menggunakan keterangan medis
+                                        return $get('jenis_izin') !== 'sakit';
+                                    })
                                     ->rows(4)
                                     ->placeholder('Jelaskan alasan izin Anda...')
+                                    ->visible(function (callable $get) {
+                                        // Sembunyikan untuk izin sakit, gunakan keterangan medis saja
+                                        return $get('jenis_izin') !== 'sakit';
+                                    })
                                     ->columnSpanFull(),
+
+                                // Form khusus untuk izin sakit
+                                Forms\Components\Section::make('Informasi Medis')
+                                    ->description('Informasi tambahan yang diperlukan untuk izin sakit')
+                                    ->schema([
+                                        Forms\Components\Grid::make(2)
+                                            ->schema([
+                                                Forms\Components\TextInput::make('lokasi_berobat')
+                                                    ->label('Lokasi Berobat')
+                                                    ->placeholder('Contoh: RS Cipto Mangunkusumo, Klinik ABC, dll')
+                                                    ->required(function (callable $get) {
+                                                        return $get('jenis_izin') === 'sakit';
+                                                    })
+                                                    ->columnSpan(1),
+
+                                                Forms\Components\TextInput::make('nama_dokter')
+                                                    ->label('Nama Dokter')
+                                                    ->placeholder('Contoh: Dr. John Doe, Sp.PD')
+                                                    ->required(function (callable $get) {
+                                                        return $get('jenis_izin') === 'sakit';
+                                                    })
+                                                    ->columnSpan(1),
+
+                                                Forms\Components\Select::make('diagnosa_dokter')
+                                                    ->label('Diagnosa Dokter')
+                                                    ->options([
+                                                        'Demam' => 'Demam',
+                                                        'Flu' => 'Flu',
+                                                        'Batuk Pilek' => 'Batuk Pilek',
+                                                        'Diare' => 'Diare',
+                                                        'Gastritis' => 'Gastritis',
+                                                        'Hipertensi' => 'Hipertensi',
+                                                        'Migrain' => 'Migrain',
+                                                        'Vertigo' => 'Vertigo',
+                                                        'Asma' => 'Asma',
+                                                        'Diabetes' => 'Diabetes',
+                                                        'Cedera/Kecelakaan' => 'Cedera/Kecelakaan',
+                                                        'Operasi' => 'Operasi',
+                                                        'Rawat Inap' => 'Rawat Inap',
+                                                        'Penyakit Kronis' => 'Penyakit Kronis',
+                                                        'Lainnya' => 'Lainnya',
+                                                    ])
+                                                    ->searchable()
+                                                    ->required(function (callable $get) {
+                                                        return $get('jenis_izin') === 'sakit';
+                                                    })
+                                                    ->columnSpan(2),
+
+                                                Forms\Components\Textarea::make('keterangan_medis')
+                                                    ->label('Keterangan Alasan Sakit')
+                                                    ->placeholder('Jelaskan kondisi medis secara detail, keluhan yang dirasakan, obat yang dikonsumsi, atau informasi tambahan lainnya...')
+                                                    ->rows(4)
+                                                    ->required(function (callable $get) {
+                                                        return $get('jenis_izin') === 'sakit';
+                                                    })
+                                                    ->columnSpanFull(),
+                                            ]),
+                                    ])
+                                    ->visible(function (callable $get) {
+                                        return $get('jenis_izin') === 'sakit';
+                                    })
+                                    ->collapsed(false),
 
                                 // Info dokumen pendukung berdasarkan jenis izin
                                 Forms\Components\Placeholder::make('dokumen_info')
                                     ->label('Info Dokumen Pendukung')
                                     ->content(function (callable $get) {
                                         $jenisIzin = $get('jenis_izin');
+                                        $tanggalMulai = $get('tanggal_mulai');
+                                        $tanggalAkhir = $get('tanggal_akhir');
+
                                         if (!$jenisIzin) {
                                             return '💡 Pilih jenis izin terlebih dahulu untuk melihat apakah dokumen pendukung diperlukan.';
                                         }
 
-                                        $jenisIzinData = ManajemenIzin::where('kode_izin', $jenisIzin)->first();
-                                        if ($jenisIzinData) {
-                                            if ($jenisIzinData->perlu_dokumen) {
-                                                return '📁 ⚠️ DOKUMEN PENDUKUNG WAJIB untuk jenis izin ini. Form upload akan muncul di bawah.';
+                                        // Khusus untuk izin sakit
+                                        if ($jenisIzin === 'sakit') {
+                                            if ($tanggalMulai && $tanggalAkhir) {
+                                                try {
+                                                    $durasi = \Carbon\Carbon::parse($tanggalMulai)->diffInDays(\Carbon\Carbon::parse($tanggalAkhir)) + 1;
+                                                    if ($durasi > 1) {
+                                                        return '📁 ⚠️ DOKUMEN PENDUKUNG WAJIB untuk izin sakit lebih dari 1 hari. Upload surat dokter atau surat keterangan sakit.';
+                                                    } else {
+                                                        return '✅ Dokumen pendukung TIDAK DIPERLUKAN untuk izin sakit 1 hari.';
+                                                    }
+                                                } catch (\Exception $e) {
+                                                    return '📁 ℹ️ Periksa format tanggal yang dimasukkan.';
+                                                }
                                             } else {
-                                                return '✅ Dokumen pendukung TIDAK DIPERLUKAN untuk jenis izin ini.';
+                                                return '📁 ℹ️ Lengkapi tanggal untuk melihat persyaratan dokumen.';
                                             }
                                         }
-                                        return '';
+
+                                        try {
+                                            $jenisIzinData = ManajemenIzin::where('kode_izin', $jenisIzin)->first();
+                                            if ($jenisIzinData) {
+                                                if ($jenisIzinData->perlu_dokumen) {
+                                                    return '📁 ⚠️ DOKUMEN PENDUKUNG WAJIB untuk jenis izin ini. Form upload akan muncul di bawah.';
+                                                } else {
+                                                    return '✅ Dokumen pendukung TIDAK DIPERLUKAN untuk jenis izin ini.';
+                                                }
+                                            }
+                                        } catch (\Exception $e) {
+                                            return '⚠️ Terjadi error saat memuat informasi jenis izin.';
+                                        }
+
+                                        return '💡 Pilih jenis izin untuk melihat persyaratan dokumen.';
                                     })
                                     ->visible(function (callable $get) {
                                         return $get('jenis_izin') !== null;
@@ -154,50 +272,95 @@ class MyIzinResource extends Resource
                                     ->previewable()
                                     ->helperText(function (callable $get) {
                                         $jenisIzin = $get('jenis_izin');
+
+                                        if ($jenisIzin === 'sakit') {
+                                            $tanggalMulai = $get('tanggal_mulai');
+                                            $tanggalAkhir = $get('tanggal_akhir');
+
+                                            if ($tanggalMulai && $tanggalAkhir) {
+                                                try {
+                                                    $durasi = \Carbon\Carbon::parse($tanggalMulai)->diffInDays(\Carbon\Carbon::parse($tanggalAkhir)) + 1;
+                                                    if ($durasi > 1) {
+                                                        return '⚠️ DOKUMEN WAJIB untuk izin sakit lebih dari 1 hari: Upload surat dokter/keterangan sakit (PDF/JPG/PNG, Max: 2MB)';
+                                                    } else {
+                                                        return 'Dokumen tidak diperlukan untuk izin sakit 1 hari';
+                                                    }
+                                                } catch (\Exception $e) {
+                                                    return '📋 Upload surat dokter/keterangan sakit (PDF/JPG/PNG, Max: 2MB)';
+                                                }
+                                            }
+                                            return '📋 Upload surat dokter/keterangan sakit (PDF/JPG/PNG, Max: 2MB)';
+                                        }
+
                                         if ($jenisIzin) {
-                                            $jenisIzinData = ManajemenIzin::where('kode_izin', $jenisIzin)->first();
-                                            if ($jenisIzinData && $jenisIzinData->perlu_dokumen) {
-                                                return '⚠️ DOKUMEN WAJIB: Upload surat dokter, surat keterangan, atau dokumen pendukung lainnya (PDF/JPG/PNG, Max: 2MB)';
+                                            try {
+                                                $jenisIzinData = ManajemenIzin::where('kode_izin', $jenisIzin)->first();
+                                                if ($jenisIzinData && $jenisIzinData->perlu_dokumen) {
+                                                    return '⚠️ DOKUMEN WAJIB: Upload surat dokter, surat keterangan, atau dokumen pendukung lainnya (PDF/JPG/PNG, Max: 2MB)';
+                                                }
+                                            } catch (\Exception $e) {
+                                                return 'Upload dokumen pendukung jika diperlukan (PDF/JPG/PNG, Max: 2MB)';
                                             }
                                         }
                                         return 'Upload dokumen pendukung jika diperlukan (PDF/JPG/PNG, Max: 2MB)';
                                     })
                                     ->required(function (callable $get) {
                                         $jenisIzin = $get('jenis_izin');
-                                        if ($jenisIzin) {
-                                            $jenisIzinData = ManajemenIzin::where('kode_izin', $jenisIzin)->first();
-                                            return $jenisIzinData ? $jenisIzinData->perlu_dokumen : false;
-                                        }
-                                        return false;
-                                    })
-                                    ->visible(function (callable $get) {
-                                        $jenisIzin = $get('jenis_izin');
-                                        if ($jenisIzin) {
-                                            $jenisIzinData = ManajemenIzin::where('kode_izin', $jenisIzin)->first();
-                                            return $jenisIzinData ? $jenisIzinData->perlu_dokumen : false;
-                                        }
-                                        return false;
-                                    })
-                                    ->columnSpanFull(),
 
-                                // Display syarat pengajuan
-                                Forms\Components\Placeholder::make('syarat_info')
-                                    ->label('Syarat Pengajuan')
-                                    ->content(function (callable $get) {
-                                        $jenisIzin = $get('jenis_izin');
+                                        // Wajib untuk izin sakit lebih dari 1 hari
+                                        if ($jenisIzin === 'sakit') {
+                                            $tanggalMulai = $get('tanggal_mulai');
+                                            $tanggalAkhir = $get('tanggal_akhir');
+
+                                            if ($tanggalMulai && $tanggalAkhir) {
+                                                try {
+                                                    $durasi = \Carbon\Carbon::parse($tanggalMulai)->diffInDays(\Carbon\Carbon::parse($tanggalAkhir)) + 1;
+                                                    return $durasi > 1;
+                                                } catch (\Exception $e) {
+                                                    return false;
+                                                }
+                                            }
+                                            return false;
+                                        }
+
+                                        // Wajib berdasarkan jenis izin lainnya
                                         if ($jenisIzin) {
-                                            $jenisIzinData = ManajemenIzin::where('kode_izin', $jenisIzin)->first();
-                                            if ($jenisIzinData && !empty($jenisIzinData->syarat_pengajuan)) {
-                                                return implode("\n", array_map(fn($syarat) => "• " . $syarat, $jenisIzinData->syarat_pengajuan));
+                                            try {
+                                                $jenisIzinData = ManajemenIzin::where('kode_izin', $jenisIzin)->first();
+                                                return $jenisIzinData ? $jenisIzinData->perlu_dokumen : false;
+                                            } catch (\Exception $e) {
+                                                return false;
                                             }
                                         }
-                                        return 'Pilih jenis izin untuk melihat syarat pengajuan.';
+                                        return false;
                                     })
                                     ->visible(function (callable $get) {
                                         $jenisIzin = $get('jenis_izin');
+
+                                        // Untuk izin sakit, hanya tampil jika lebih dari 1 hari
+                                        if ($jenisIzin === 'sakit') {
+                                            $tanggalMulai = $get('tanggal_mulai');
+                                            $tanggalAkhir = $get('tanggal_akhir');
+
+                                            if ($tanggalMulai && $tanggalAkhir) {
+                                                try {
+                                                    $durasi = \Carbon\Carbon::parse($tanggalMulai)->diffInDays(\Carbon\Carbon::parse($tanggalAkhir)) + 1;
+                                                    return $durasi > 1;
+                                                } catch (\Exception $e) {
+                                                    return false;
+                                                }
+                                            }
+                                            return false;
+                                        }
+
+                                        // Tampil berdasarkan jenis izin lainnya
                                         if ($jenisIzin) {
-                                            $jenisIzinData = ManajemenIzin::where('kode_izin', $jenisIzin)->first();
-                                            return $jenisIzinData && !empty($jenisIzinData->syarat_pengajuan);
+                                            try {
+                                                $jenisIzinData = ManajemenIzin::where('kode_izin', $jenisIzin)->first();
+                                                return $jenisIzinData ? $jenisIzinData->perlu_dokumen : false;
+                                            } catch (\Exception $e) {
+                                                return false;
+                                            }
                                         }
                                         return false;
                                     })
@@ -238,19 +401,34 @@ class MyIzinResource extends Resource
                     ->label('Keterangan')
                     ->limit(50),
 
+                Tables\Columns\TextColumn::make('lokasi_berobat')
+                    ->label('Lokasi Berobat')
+                    ->limit(30)
+                    ->placeholder('-')
+                    ->visible(fn ($record) => $record && isset($record->jenis_izin) && $record->jenis_izin === 'sakit')
+                    ->toggleable(),
+
+                Tables\Columns\TextColumn::make('diagnosa_dokter')
+                    ->label('Diagnosa')
+                    ->badge()
+                    ->color('info')
+                    ->placeholder('-')
+                    ->visible(fn ($record) => $record && isset($record->jenis_izin) && $record->jenis_izin === 'sakit')
+                    ->toggleable(),
+
                 Tables\Columns\TextColumn::make('approval_status')
                     ->label('Status')
                     ->badge()
-                    ->color(fn ($record): string => match (true) {
+                    ->color(fn ($record): string => $record ? match (true) {
                         is_null($record->approved_by) => 'warning',
                         !is_null($record->approved_at) => 'success',
                         default => 'danger',
-                    })
-                    ->formatStateUsing(fn ($record): string => match (true) {
+                    } : 'gray')
+                    ->formatStateUsing(fn ($record): string => $record ? match (true) {
                         is_null($record->approved_by) => 'Menunggu',
                         !is_null($record->approved_at) => 'Disetujui',
                         default => 'Ditolak',
-                    }),
+                    } : '-'),
 
                 Tables\Columns\TextColumn::make('approvedBy.nama')
                     ->label('Diproses Oleh')
@@ -286,7 +464,7 @@ class MyIzinResource extends Resource
             ->actions([
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make()
-                    ->visible(fn ($record) => is_null($record->approved_by)), // Only editable if not processed
+                    ->visible(fn ($record) => $record && is_null($record->approved_by)), // Only editable if not processed
             ])
             ->bulkActions([])
             ->defaultSort('created_at', 'desc');
@@ -304,12 +482,12 @@ class MyIzinResource extends Resource
 
     public static function canEdit($record): bool
     {
-        return is_null($record->approved_by);
+        return $record && is_null($record->approved_by);
     }
 
     public static function canDelete($record): bool
     {
-        return is_null($record->approved_by);
+        return $record && is_null($record->approved_by);
     }
 
     public static function getNavigationBadge(): ?string

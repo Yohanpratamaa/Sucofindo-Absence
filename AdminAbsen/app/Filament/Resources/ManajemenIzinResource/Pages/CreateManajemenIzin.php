@@ -37,4 +37,14 @@ class CreateManajemenIzin extends CreateRecord
 
         return $data;
     }
+
+    protected function getFormActions(): array
+    {
+        return [
+            $this->getCreateFormAction()
+                ->label('SImpan Izin'), // Ubah label tombol submit
+            $this->getCancelFormAction()
+                ->label('Cancel'), // Tambah tombol cancel
+        ];
+    }
 }

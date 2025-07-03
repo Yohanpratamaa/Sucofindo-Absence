@@ -38,6 +38,22 @@ class CreateMyIzin extends CreateRecord
         // Pastikan user_id diisi dengan ID user yang sedang login
         $data['user_id'] = Auth::id();
 
+        // Handle keterangan untuk izin sakit - gunakan keterangan_medis sebagai keterangan utama
+        if (isset($data['jenis_izin']) && $data['jenis_izin'] === 'sakit') {
+            if (!empty($data['keterangan_medis'])) {
+                $data['keterangan'] = $data['keterangan_medis'];
+            }
+        } else {
+            // Bersihkan field medis jika bukan izin sakit
+            $data['lokasi_berobat'] = null;
+            $data['nama_dokter'] = null;
+            $data['diagnosa_dokter'] = null;
+            $data['keterangan_medis'] = null;
+        }
+
+        // Remove trigger refresh field
+        unset($data['_trigger_refresh']);
+
         // Handle file upload with better error handling
         if (isset($data['dokumen_pendukung']) && $data['dokumen_pendukung']) {
             try {
@@ -79,7 +95,7 @@ class CreateMyIzin extends CreateRecord
         ]);
     }
 
-        protected function getFormActions(): array
+    protected function getFormActions(): array
     {
         return [
             $this->getCreateFormAction()

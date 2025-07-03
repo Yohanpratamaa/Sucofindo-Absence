@@ -24,7 +24,6 @@ class ManajemenIzin extends Model
         'warna_badge',
         'is_active',
         'urutan_tampil',
-        'syarat_pengajuan',
         'created_by',
         'updated_by'
     ];
@@ -33,7 +32,6 @@ class ManajemenIzin extends Model
         'perlu_dokumen' => 'boolean',
         'auto_approve' => 'boolean',
         'is_active' => 'boolean',
-        'syarat_pengajuan' => 'array',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
         'deleted_at' => 'datetime',
@@ -72,7 +70,15 @@ class ManajemenIzin extends Model
     // Accessor untuk mendapatkan opsi select
     public static function getSelectOptions()
     {
-        return static::active()->ordered()->pluck('nama_izin', 'kode_izin')->toArray();
+        try {
+            return static::active()->ordered()->pluck('nama_izin', 'kode_izin')->toArray();
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Error getting ManajemenIzin select options', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return [];
+        }
     }
 
     // Accessor untuk badge
