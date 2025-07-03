@@ -20,8 +20,8 @@ class DatabaseSeeder extends Seeder
             PosisiSeeder::class,
             PegawaiSeeder::class,
             IzinSeeder::class,
-            OvertimeAssignmentSeeder::class,
-            AttendanceSeeder::class,
+            // OvertimeAssignmentSeeder::class,
+            // AttendanceSeeder::class,
             SuperAdminSeeder::class,
         ]);
 
