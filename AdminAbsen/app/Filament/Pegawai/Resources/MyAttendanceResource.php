@@ -94,8 +94,14 @@ class MyAttendanceResource extends Resource
                         'Tepat Waktu' => 'success',
                         'Terlambat' => 'warning',
                         'Tidak Hadir' => 'danger',
+                        'Tidak Absensi' => 'danger',
                         default => 'gray',
-                    }),
+                    })
+                    ->extraAttributes(fn (string $state): array => 
+                        $state === 'Tidak Absensi' 
+                            ? ['style' => 'background-color: #dc2626 !important; color: white !important; font-weight: bold;']
+                            : []
+                    ),
 
                 Tables\Columns\ImageColumn::make('picture_absen_masuk_url')
                     ->label('Foto Masuk')
@@ -130,6 +136,7 @@ class MyAttendanceResource extends Resource
                         'Tepat Waktu' => 'Tepat Waktu',
                         'Terlambat' => 'Terlambat',
                         'Tidak Hadir' => 'Tidak Hadir',
+                        'Tidak Absensi' => 'Tidak Absensi',
                     ]),
 
                 Tables\Filters\Filter::make('bulan_ini')
