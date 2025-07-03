@@ -53,15 +53,104 @@ class MyOvertimeRequestResource extends Resource
                                     ->label('ID Lembur')
                                     ->required()
                                     ->unique(ignoreRecord: true)
-                                    ->placeholder('Contoh: OT-2025-001')
-                                    ->helperText('ID unik untuk identifikasi lembur ini')
+                                    ->default(function () {
+                                        // Auto-generate overtime ID dengan format: OT-YYYYMMDD-XXXX
+                                        $date = now()->format('Ymd');
+                                        $lastRecord = \App\Models\OvertimeAssignment::whereDate('created_at', now())
+                                            ->orderBy('id', 'desc')
+                                            ->first();
+
+                                        $sequence = $lastRecord ? (int)substr($lastRecord->overtime_id, -4) + 1 : 1;
+                                        return 'OT-' . $date . '-' . str_pad($sequence, 4, '0', STR_PAD_LEFT);
+                                    })
+                                    ->disabled()
+                                    ->helperText('ID otomatis dibuat oleh sistem')
                                     ->columnSpan(1),
 
-                                Forms\Components\DateTimePicker::make('assigned_at')
-                                    ->label('Waktu Mulai Lembur')
+                                Forms\Components\Select::make('hari_lembur')
+                                    ->label('Hari Lembur')
+                                    ->options([
+                                        'Senin' => 'Senin',
+                                        'Selasa' => 'Selasa',
+                                        'Rabu' => 'Rabu',
+                                        'Kamis' => 'Kamis',
+                                        'Jumat' => 'Jumat',
+                                        'Sabtu' => 'Sabtu',
+                                        'Minggu' => 'Minggu',
+                                    ])
+                                    ->required()
+                                    ->reactive()
+                                    ->columnSpan(1),
+
+                                Forms\Components\DatePicker::make('tanggal_lembur')
+                                    ->label('Tanggal Lembur')
                                     ->required()
                                     ->default(now())
-                                    ->helperText('Kapan lembur akan dilaksanakan')
+                                    ->reactive()
+                                    ->afterStateUpdated(function ($state, callable $set) {
+                                        if ($state) {
+                                            $dayName = \Carbon\Carbon::parse($state)->locale('id')->dayName;
+                                            $set('hari_lembur', ucfirst($dayName));
+                                        }
+                                    })
+                                    ->columnSpan(1),
+
+                                Forms\Components\TimePicker::make('jam_mulai')
+                                    ->label('Jam Mulai')
+                                    ->required()
+                                    ->default('17:00')
+                                    ->seconds(false)
+                                    ->reactive()
+                                    ->afterStateUpdated(function ($state, callable $get, callable $set) {
+                                        $jamSelesai = $get('jam_selesai');
+                                        if ($state && $jamSelesai) {
+                                            $totalJam = \App\Models\OvertimeAssignment::calculateTotalJam($state, $jamSelesai);
+                                            $set('total_jam', $totalJam);
+                                        }
+                                    })
+                                    ->columnSpan(1),
+
+                                Forms\Components\TimePicker::make('jam_selesai')
+                                    ->label('Jam Selesai')
+                                    ->required()
+                                    ->default('20:00')
+                                    ->seconds(false)
+                                    ->reactive()
+                                    ->afterStateUpdated(function ($state, callable $get, callable $set) {
+                                        $jamMulai = $get('jam_mulai');
+                                        if ($state && $jamMulai) {
+                                            $totalJam = \App\Models\OvertimeAssignment::calculateTotalJam($jamMulai, $state);
+                                            $set('total_jam', $totalJam);
+                                        }
+                                    })
+                                    ->columnSpan(1),
+
+                                Forms\Components\TextInput::make('total_jam')
+                                    ->label('Total Jam Lembur')
+                                    ->disabled()
+                                    ->formatStateUsing(function ($state) {
+                                        if (!$state) return '0 jam 0 menit';
+                                        
+                                        $hours = floor($state / 60);
+                                        $minutes = $state % 60;
+                                        
+                                        if ($hours > 0 && $minutes > 0) {
+                                            return "{$hours} jam {$minutes} menit";
+                                        } elseif ($hours > 0) {
+                                            return "{$hours} jam";
+                                        } else {
+                                            return "{$minutes} menit";
+                                        }
+                                    })
+                                    ->helperText('Dihitung otomatis berdasarkan jam mulai dan selesai')
+                                    ->columnSpanFull(),
+
+                                Forms\Components\DateTimePicker::make('assigned_at')
+                                    ->label('Waktu Pengajuan')
+                                    ->required()
+                                    ->default(now())
+                                    ->disabled()
+                                    ->helperText('Waktu saat pengajuan dibuat')
                                     ->columnSpan(1),
 
                                 Forms\Components\Textarea::make('keterangan')
@@ -95,17 +184,37 @@ class MyOvertimeRequestResource extends Resource
                     ->badge()
                     ->color('primary'),
 
-                Tables\Columns\TextColumn::make('assigned_at')
-                    ->label('Waktu Lembur')
-                    ->dateTime('d M Y H:i')
+                Tables\Columns\TextColumn::make('hari_lembur')
+                    ->label('Hari')
+                    ->badge()
+                    ->color('info'),
+
+                Tables\Columns\TextColumn::make('tanggal_lembur')
+                    ->label('Tanggal')
+                    ->date('d M Y')
                     ->sortable(),
+
+                Tables\Columns\TextColumn::make('jam_mulai')
+                    ->label('Jam Mulai')
+                    ->time('H:i')
+                    ->color('success'),
+
+                Tables\Columns\TextColumn::make('jam_selesai')
+                    ->label('Jam Selesai')
+                    ->time('H:i')
+                    ->color('danger'),
+
+                Tables\Columns\TextColumn::make('total_jam_formatted')
+                    ->label('Total Jam')
+                    ->badge()
+                    ->color('warning'),
 
                 Tables\Columns\TextColumn::make('keterangan')
                     ->label('Keterangan')
-                    ->limit(50)
+                    ->limit(30)
                     ->tooltip(function (Tables\Columns\TextColumn $column): ?string {
                         $state = $column->getState();
-                        if (strlen($state) <= 50) {
+                        if (strlen($state) <= 30) {
                             return null;
                         }
                         return $state;
@@ -127,16 +236,20 @@ class MyOvertimeRequestResource extends Resource
 
                 Tables\Columns\TextColumn::make('approvedBy.nama')
                     ->label('Diproses Oleh')
-                    ->placeholder('-'),
+                    ->placeholder('-')
+                    ->toggleable(),
 
                 Tables\Columns\TextColumn::make('approved_at')
                     ->label('Tanggal Diproses')
                     ->dateTime('d M Y H:i')
-                    ->placeholder('-'),
+                    ->placeholder('-')
+                    ->toggleable(),
 
-                Tables\Columns\TextColumn::make('durasi_assignment')
+                Tables\Columns\TextColumn::make('assigned_at')
                     ->label('Waktu Pengajuan')
-                    ->placeholder('-'),
+                    ->dateTime('d M Y H:i')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('status')
@@ -147,21 +260,52 @@ class MyOvertimeRequestResource extends Resource
                         'Rejected' => 'Ditolak',
                     ]),
 
+                Tables\Filters\SelectFilter::make('hari_lembur')
+                    ->label('Hari Lembur')
+                    ->options([
+                        'Senin' => 'Senin',
+                        'Selasa' => 'Selasa',
+                        'Rabu' => 'Rabu',
+                        'Kamis' => 'Kamis',
+                        'Jumat' => 'Jumat',
+                        'Sabtu' => 'Sabtu',
+                        'Minggu' => 'Minggu',
+                    ]),
+
                 Tables\Filters\Filter::make('bulan_ini')
                     ->label('Bulan Ini')
                     ->query(fn (Builder $query): Builder =>
-                        $query->whereMonth('assigned_at', now()->month)
-                              ->whereYear('assigned_at', now()->year)
+                        $query->whereMonth('tanggal_lembur', now()->month)
+                              ->whereYear('tanggal_lembur', now()->year)
                     ),
 
                 Tables\Filters\Filter::make('minggu_ini')
                     ->label('Minggu Ini')
                     ->query(fn (Builder $query): Builder =>
-                        $query->whereBetween('assigned_at', [
+                        $query->whereBetween('tanggal_lembur', [
                             now()->startOfWeek(),
                             now()->endOfWeek()
                         ])
                     ),
+
+                Tables\Filters\Filter::make('tanggal_lembur')
+                    ->form([
+                        Forms\Components\DatePicker::make('dari_tanggal')
+                            ->label('Dari Tanggal'),
+                        Forms\Components\DatePicker::make('sampai_tanggal')
+                            ->label('Sampai Tanggal'),
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query
+                            ->when(
+                                $data['dari_tanggal'],
+                                fn (Builder $query, $date): Builder => $query->whereDate('tanggal_lembur', '>=', $date),
+                            )
+                            ->when(
+                                $data['sampai_tanggal'],
+                                fn (Builder $query, $date): Builder => $query->whereDate('tanggal_lembur', '<=', $date),
+                            );
+                    }),
             ])
             ->actions([
                 Tables\Actions\ViewAction::make()

@@ -138,6 +138,36 @@ class OvertimeApprovalResource extends Resource
                     ->badge()
                     ->color('primary'),
 
+                Tables\Columns\TextColumn::make('hari_lembur')
+                    ->label('Hari')
+                    ->badge()
+                    ->color('info')
+                    ->toggleable(),
+
+                Tables\Columns\TextColumn::make('tanggal_lembur')
+                    ->label('Tanggal')
+                    ->date('d M Y')
+                    ->sortable()
+                    ->toggleable(),
+
+                Tables\Columns\TextColumn::make('jam_mulai')
+                    ->label('Jam Mulai')
+                    ->time('H:i')
+                    ->color('success')
+                    ->toggleable(),
+
+                Tables\Columns\TextColumn::make('jam_selesai')
+                    ->label('Jam Selesai')
+                    ->time('H:i')
+                    ->color('danger')
+                    ->toggleable(),
+
+                Tables\Columns\TextColumn::make('total_jam_formatted')
+                    ->label('Total Jam')
+                    ->badge()
+                    ->color('warning')
+                    ->toggleable(),
+
                 Tables\Columns\TextColumn::make('keterangan')
                     ->label('Keterangan Lembur')
                     ->searchable()
