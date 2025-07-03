@@ -22,6 +22,19 @@ class ViewMyOvertimeRequest extends ViewRecord
         return [
             Actions\EditAction::make()
                 ->visible(fn ($record) => $record->status === 'Assigned'),
+
+            Actions\Action::make('download_pdf')
+                ->label('Download Bukti Lembur')
+                ->icon('heroicon-o-document-arrow-down')
+                ->color('info')
+                ->action(function ($record) {
+                    return response()->streamDownload(function () use ($record) {
+                        $service = new \App\Services\OvertimeProofPdfService();
+                        echo $service->generateOvertimeProofPdf($record);
+                    }, "bukti-lembur-{$record->overtime_id}.pdf", [
+                        'Content-Type' => 'application/pdf',
+                    ]);
+                }),
         ];
     }
 
@@ -117,10 +130,10 @@ class ViewMyOvertimeRequest extends ViewRecord
                                     ->icon('heroicon-m-clock')
                                     ->formatStateUsing(function ($state) {
                                         if (!$state || $state == 0) return '0 menit';
-                                        
+
                                         $hours = floor($state / 60);
                                         $minutes = $state % 60;
-                                        
+
                                         if ($hours > 0 && $minutes > 0) {
                                             return "{$hours} jam {$minutes} menit";
                                         } elseif ($hours > 0) {

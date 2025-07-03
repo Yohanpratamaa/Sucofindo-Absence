@@ -351,6 +351,19 @@ class MyOvertimeRequestResource extends Resource
                     ->label('Ubah')
                     ->visible(fn (OvertimeAssignment $record): bool => $record->status === 'Assigned'),
 
+                Tables\Actions\Action::make('download_pdf')
+                    ->label('Download PDF')
+                    ->icon('heroicon-o-document-arrow-down')
+                    ->color('info')
+                    ->action(function (OvertimeAssignment $record) {
+                        return response()->streamDownload(function () use ($record) {
+                            $service = new \App\Services\OvertimeProofPdfService();
+                            echo $service->generateOvertimeProofPdf($record);
+                        }, "bukti-lembur-{$record->overtime_id}.pdf", [
+                            'Content-Type' => 'application/pdf',
+                        ]);
+                    }),
+
                 Tables\Actions\Action::make('cancel')
                     ->label('Batalkan')
                     ->icon('heroicon-o-x-mark')
