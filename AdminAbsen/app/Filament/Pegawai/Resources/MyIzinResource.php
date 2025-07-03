@@ -424,19 +424,63 @@ class MyIzinResource extends Resource
                         'sakit' => 'danger',
                         'cuti' => 'success',
                         'izin' => 'warning',
+                        'cuti_melahirkan' => 'info',
+                        'dinas_luar' => 'primary',
+                        'izin_setengah_hari' => 'secondary',
                         default => 'gray',
                     }),
 
                 Tables\Columns\TextColumn::make('keterangan')
                     ->label('Keterangan')
-                    ->limit(50),
+                    ->limit(50)
+                    ->tooltip(function (Tables\Columns\TextColumn $column): ?string {
+                        $state = $column->getState();
+                        if (strlen($state) <= 50) {
+                            return null;
+                        }
+                        return $state;
+                    }),
 
+                Tables\Columns\TextColumn::make('status')
+                    ->label('Status')
+                    ->badge()
+                    ->getStateUsing(function ($record): string {
+                        if (!$record->approved_by) {
+                            return 'Menunggu';
+                        } elseif ($record->approved_at) {
+                            return 'Disetujui';
+                        } else {
+                            return 'Ditolak';
+                        }
+                    })
+                    ->color(function ($record): string {
+                        if (!$record->approved_by) {
+                            return 'warning';
+                        } elseif ($record->approved_at) {
+                            return 'success';
+                        } else {
+                            return 'danger';
+                        }
+                    }),
+
+                Tables\Columns\TextColumn::make('approvedBy.nama')
+                    ->label('Diproses Oleh')
+                    ->placeholder('-')
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                Tables\Columns\TextColumn::make('approved_at')
+                    ->label('Tanggal Diproses')
+                    ->dateTime('d M Y H:i')
+                    ->placeholder('-')
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                // Kolom tambahan untuk jenis sakit
                 Tables\Columns\TextColumn::make('lokasi_berobat')
                     ->label('Lokasi Berobat')
                     ->limit(30)
                     ->placeholder('-')
                     ->visible(fn ($record) => $record && isset($record->jenis_izin) && $record->jenis_izin === 'sakit')
-                    ->toggleable(),
+                    ->toggleable(isToggledHiddenByDefault: true),
 
                 Tables\Columns\TextColumn::make('diagnosa_dokter')
                     ->label('Diagnosa')
@@ -444,52 +488,54 @@ class MyIzinResource extends Resource
                     ->color('info')
                     ->placeholder('-')
                     ->visible(fn ($record) => $record && isset($record->jenis_izin) && $record->jenis_izin === 'sakit')
-                    ->toggleable(),
-
-                Tables\Columns\TextColumn::make('approval_status')
-                    ->label('Status')
-                    ->badge()
-                    ->color(fn ($record): string => $record ? match (true) {
-                        is_null($record->approved_by) => 'warning',
-                        !is_null($record->approved_at) => 'success',
-                        default => 'danger',
-                    } : 'gray')
-                    ->formatStateUsing(fn ($record): string => $record ? match (true) {
-                        is_null($record->approved_by) => 'Menunggu',
-                        !is_null($record->approved_at) => 'Disetujui',
-                        default => 'Ditolak',
-                    } : '-'),
-
-                Tables\Columns\TextColumn::make('approvedBy.nama')
-                    ->label('Diproses Oleh')
-                    ->placeholder('-')
-                    ->toggleable(),
-
-                Tables\Columns\TextColumn::make('approved_at')
-                    ->label('Tanggal Diproses')
-                    ->dateTime('d M Y H:i')
-                    ->placeholder('-')
-                    ->toggleable(),
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('jenis_izin')
+                    ->label('Jenis Izin')
                     ->options([
                         'sakit' => 'Sakit',
                         'cuti' => 'Cuti',
                         'izin' => 'Izin',
-                    ]),
+                        'cuti_melahirkan' => 'Cuti Melahirkan',
+                        'dinas_luar' => 'Dinas Luar',
+                        'izin_setengah_hari' => 'Izin Setengah Hari',
+                    ])
+                    ->placeholder('Semua Jenis'),
 
-                Tables\Filters\Filter::make('status_pending')
-                    ->label('Menunggu Persetujuan')
-                    ->query(fn (Builder $query): Builder => $query->whereNull('approved_by')),
+                Tables\Filters\SelectFilter::make('status_izin')
+                    ->label('Status Izin')
+                    ->options([
+                        'menunggu' => 'Menunggu',
+                        'disetujui' => 'Disetujui',
+                        'ditolak' => 'Ditolak',
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        if (! $data['value']) {
+                            return $query;
+                        }
 
-                Tables\Filters\Filter::make('status_approved')
-                    ->label('Disetujui')
-                    ->query(fn (Builder $query): Builder => $query->whereNotNull('approved_by')->whereNotNull('approved_at')),
+                        return match ($data['value']) {
+                            'menunggu' => $query->whereNull('approved_by'),
+                            'disetujui' => $query->whereNotNull('approved_by')->whereNotNull('approved_at'),
+                            'ditolak' => $query->whereNotNull('approved_by')->whereNull('approved_at'),
+                            default => $query,
+                        };
+                    })
+                    ->placeholder('Semua Status'),
 
-                Tables\Filters\Filter::make('status_rejected')
-                    ->label('Ditolak')
-                    ->query(fn (Builder $query): Builder => $query->whereNotNull('approved_by')->whereNull('approved_at')),
+                Tables\Filters\Filter::make('bulan_ini')
+                    ->label('Bulan Ini')
+                    ->query(fn (Builder $query): Builder =>
+                        $query->whereMonth('tanggal_mulai', now()->month)
+                              ->whereYear('tanggal_mulai', now()->year)
+                    ),
+
+                Tables\Filters\Filter::make('tahun_ini')
+                    ->label('Tahun Ini')
+                    ->query(fn (Builder $query): Builder =>
+                        $query->whereYear('tanggal_mulai', now()->year)
+                    ),
             ])
             ->actions([
                 Tables\Actions\ViewAction::make(),
