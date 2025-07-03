@@ -174,14 +174,6 @@ class MyAllAttendanceResource extends Resource
                         default => 'gray',
                     }),
             ])
-            ->headerActions([
-                Tables\Actions\Action::make('daftar_presensi')
-                    ->label('Daftar Presensi')
-                    ->icon('heroicon-o-document-text')
-                    ->color('primary')
-                    ->url(fn () => route('filament.pegawai.pages.attendance-page'))
-                    ->tooltip('Halaman Absensi'),
-            ])
             ->filters([
                 Tables\Filters\SelectFilter::make('attendance_type')
                     ->label('Tipe Absensi')

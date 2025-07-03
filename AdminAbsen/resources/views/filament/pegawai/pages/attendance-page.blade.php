@@ -256,6 +256,211 @@
             </div>
         </x-filament::section>
 
+        <!-- Alert Absensi Terkunci (Setelah Jam 17:00) -->
+        @php
+            $timeInfo = $this->getTimeWindowInfo();
+            $isLocked = $timeInfo['attendance_locked']['is_locked'] ?? false;
+        @endphp
+
+        @if($isLocked)
+            <div class="rounded-lg bg-red-50 border-l-4 border-red-400 p-4">
+                <div class="flex items-start">
+                    <div class="flex-shrink-0">
+                        <x-filament::icon icon="heroicon-o-lock-closed" class="w-5 h-5 text-red-400" />
+                    </div>
+                    <div class="ml-3">
+                        <h3 class="text-sm font-medium text-red-800">
+                            🔒 Absensi Terkunci - Waktu Absensi Telah Berakhir
+                        </h3>
+                        <div class="mt-2 text-sm text-red-700">
+                            <p>
+                                Waktu absensi telah berakhir (setelah jam <strong>17:00</strong>).
+                                @if(!$todayAttendance)
+                                    Data "Tidak Absensi" telah dibuat secara otomatis untuk hari ini.
+                                @elseif($todayAttendance && $todayAttendance->status_kehadiran === 'Tidak Absensi')
+                                    Data Anda tercatat sebagai "Tidak Absensi" karena check-in dilakukan setelah jam 17:00.
+                                @endif
+                            </p>
+                            <p class="mt-1">
+                                ⏰ Waktu saat ini: <strong>{{ $timeInfo['current_time'] ?? Carbon\Carbon::now()->format('H:i:s') }}</strong>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        @endif
+
+        <!-- Status Absensi Hari Ini -->
+        <x-filament::section>
+            <x-slot name="heading">
+                <div class="flex items-center gap-2">
+                    <x-filament::icon icon="heroicon-o-chart-bar" class="w-5 h-5" />
+                    Status Absensi {{ $attendanceType }} Hari Ini
+                </div>
+            </x-slot>
+
+            <x-slot name="description">
+                {{ Carbon\Carbon::now()->isoFormat('dddd, D MMMM Y') }}
+            </x-slot>
+
+            <div class="space-y-4">
+                @if($attendanceType === 'WFO')
+                    <!-- WFO Status Display -->
+                    <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg border">
+                        <div class="flex items-center gap-2">
+                            <x-filament::icon icon="heroicon-o-clock" class="w-5 h-5 text-gray-500" />
+                            <span class="text-sm font-medium text-gray-700">Status Kehadiran</span>
+                        </div>
+                        @if($todayAttendance)
+                            <x-filament::badge
+                                :color="$todayAttendance->check_out ? 'success' : 'warning'"
+                            >
+                                {{ $todayAttendance->check_out ? 'Sudah Check Out' : 'Sudah Check In' }}
+                            </x-filament::badge>
+                        @else
+                            <x-filament::badge color="gray">
+                                Belum Absen
+                            </x-filament::badge>
+                        @endif
+                    </div>
+
+                    @if($todayAttendance)
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <div class="bg-white border rounded-lg p-4 text-center">
+                                <div class="text-2xl font-bold text-primary-600 mb-1">
+                                    {{ $todayAttendance->check_in ? $todayAttendance->check_in->format('H:i') : '-' }}
+                                </div>
+                                <div class="text-sm text-gray-500">Check In</div>
+                            </div>
+                            <div class="bg-white border rounded-lg p-4 text-center">
+                                <div class="text-2xl font-bold text-primary-600 mb-1">
+                                    {{ $todayAttendance->check_out ? $todayAttendance->check_out->format('H:i') : '-' }}
+                                </div>
+                                <div class="text-sm text-gray-500">Check Out</div>
+                                @if($todayAttendance->check_in && !$todayAttendance->check_out)
+                                    <div class="text-xs text-orange-600 mt-1">
+                                        Tersedia setelah jam 15:00
+                                    </div>
+                                @endif
+                            </div>
+                            <div class="bg-white border rounded-lg p-4 text-center">
+                                <x-filament::badge
+                                    :color="match($todayAttendance->status_kehadiran ?? '') {
+                                        'Tepat Waktu' => 'success',
+                                        'Terlambat' => 'warning',
+                                        'Tidak Hadir' => 'danger',
+                                        default => 'gray'
+                                    }"
+                                    class="mb-1"
+                                >
+                                    {{ $todayAttendance->status_kehadiran ?? 'Belum Diketahui' }}
+                                </x-filament::badge>
+                                <div class="text-sm text-gray-500">Status Kehadiran</div>
+                            </div>
+                        </div>
+                    @endif
+                @else
+                    <!-- Dinas Luar Status Display -->
+                    @if($todayAttendance)
+                        @php
+                            $progress = $this->getAttendanceProgress();
+                        @endphp
+
+                        <!-- Progress Badge -->
+                        <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg border">
+                            <div class="flex items-center gap-2">
+                                <x-filament::icon icon="heroicon-o-chart-bar" class="w-5 h-5 text-gray-500" />
+                                <span class="text-sm font-medium text-gray-700">Progress Absensi</span>
+                            </div>
+                            <x-filament::badge
+                                :color="$progress['percentage'] == 100 ? 'success' : 'warning'"
+                            >
+                                {{ $progress['percentage'] }}% Selesai
+                            </x-filament::badge>
+                        </div>
+
+                        <!-- Waktu Absensi -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <div class="bg-white border rounded-lg p-4 text-center">
+                                <div class="text-2xl font-bold text-primary-600 mb-1">
+                                    {{ $todayAttendance->check_in ? $todayAttendance->check_in->format('H:i') : '-' }}
+                                </div>
+                                <div class="text-sm text-gray-500">Absen Pagi</div>
+                                @if($progress['pagi'])
+                                    <x-filament::badge color="success" size="sm" class="mt-1">✓</x-filament::badge>
+                                @endif
+                            </div>
+                            <div class="bg-white border rounded-lg p-4 text-center">
+                                <div class="text-2xl font-bold text-primary-600 mb-1">
+                                    {{ $todayAttendance->absen_siang ? $todayAttendance->absen_siang->format('H:i') : '-' }}
+                                </div>
+                                <div class="text-sm text-gray-500">Absen Siang</div>
+                                @if($progress['siang'])
+                                    <x-filament::badge color="warning" size="sm" class="mt-1">✓</x-filament::badge>
+                                @endif
+                            </div>
+                            <div class="bg-white border rounded-lg p-4 text-center">
+                                <div class="text-2xl font-bold text-primary-600 mb-1">
+                                    {{ $todayAttendance->check_out ? $todayAttendance->check_out->format('H:i') : '-' }}
+                                </div>
+                                <div class="text-sm text-gray-500">Absen Sore</div>
+                                @if($progress['sore'])
+                                    <x-filament::badge color="info" size="sm" class="mt-1">✓</x-filament::badge>
+                                @endif
+                            </div>
+                            <div class="bg-white border rounded-lg p-4 text-center">
+                                <x-filament::badge
+                                    :color="match($todayAttendance->status_kehadiran ?? '') {
+                                        'Tepat Waktu' => 'success',
+                                        'Terlambat' => 'warning',
+                                        'Tidak Hadir' => 'danger',
+                                        default => 'gray'
+                                    }"
+                                    class="mb-1"
+                                >
+                                    {{ $todayAttendance->status_kehadiran ?? 'Belum Diketahui' }}
+                                </x-filament::badge>
+                                <div class="text-sm text-gray-500">Status Kehadiran</div>
+                            </div>
+                        </div>
+
+                        <!-- Progress Bar for Dinas Luar -->
+                        <div class="space-y-2">
+                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                <div
+                                    class="bg-primary-600 h-2 rounded-full transition-all duration-300"
+                                    style="width: {{ $progress['percentage'] }}%"
+                                ></div>
+                            </div>
+                            <div class="flex justify-between text-xs text-gray-500">
+                                <span class="{{ $progress['pagi'] ? 'text-success-600 font-medium' : '' }}">Pagi</span>
+                                <span class="{{ $progress['siang'] ? 'text-warning-600 font-medium' : '' }}">Siang</span>
+                                <span class="{{ $progress['sore'] ? 'text-info-600 font-medium' : '' }}">Sore</span>
+                            </div>
+                        </div>
+                    @endif
+                @endif
+
+                @if(!$todayAttendance)
+                    <div class="rounded-lg bg-info-50 p-4 border border-info-200">
+                        <div class="flex items-start gap-3">
+                            <x-filament::icon icon="heroicon-o-information-circle" class="w-5 h-5 text-info-600 mt-0.5 flex-shrink-0" />
+                            <div>
+                                <h4 class="font-medium text-info-800">Belum Ada Absensi</h4>
+                                <p class="text-sm text-info-700 mt-1">
+                                    @if($attendanceType === 'WFO')
+                                        Anda belum melakukan absensi WFO hari ini. Silakan lakukan check in terlebih dahulu.
+                                    @else
+                                        Anda belum melakukan absensi dinas luar hari ini. Silakan lakukan absensi pagi terlebih dahulu.
+                                    @endif
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                @endif
+            </div>
+        </x-filament::section>
+
         <!-- Status Lokasi untuk WFO -->
         @if($attendanceType === 'WFO')
         <x-filament::section id="location-status" style="display: none;">
@@ -424,13 +629,23 @@
 
                             <!-- Camera Controls -->
                             <div class="flex flex-wrap gap-3 justify-center">
-                                <x-filament::button
-                                    id="start-camera"
-                                    color="primary"
-                                    icon="heroicon-m-camera"
-                                >
-                                    Aktifkan Kamera
-                                </x-filament::button>
+                                @if($isLocked)
+                                    <x-filament::button
+                                        disabled
+                                        color="gray"
+                                        icon="heroicon-m-lock-closed"
+                                    >
+                                        🔒 Absensi Terkunci (Setelah 17:00)
+                                    </x-filament::button>
+                                @else
+                                    <x-filament::button
+                                        id="start-camera"
+                                        color="primary"
+                                        icon="heroicon-m-camera"
+                                    >
+                                        Aktifkan Kamera
+                                    </x-filament::button>
+                                @endif
 
                                 <x-filament::button
                                     id="take-photo"
