@@ -62,10 +62,10 @@ class OvertimeApprovalResource extends Resource
                                     }),
 
                                 Forms\Components\TextInput::make('overtime_id')
-                                    ->label('ID Proyek/Task Lembur')
+                                    ->label('Task Lembur')
                                     ->required()
                                     ->unique(ignoreRecord: true)
-                                    ->placeholder('Contoh: OT-2025-001'),
+                                    ->placeholder('contoh: Mengerjakan laporan mingguan'),
 
                                 Forms\Components\DateTimePicker::make('assigned_at')
                                     ->label('Waktu Penugasan')
