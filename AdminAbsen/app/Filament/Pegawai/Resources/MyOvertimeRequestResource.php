@@ -63,36 +63,15 @@ class MyOvertimeRequestResource extends Resource
                                         $sequence = $lastRecord ? (int)substr($lastRecord->overtime_id, -4) + 1 : 1;
                                         return 'OT-' . $date . '-' . str_pad($sequence, 4, '0', STR_PAD_LEFT);
                                     })
-                                    ->disabled()
+                                    ->readOnly()
+                                    ->dehydrated()
                                     ->helperText('ID otomatis dibuat oleh sistem')
-                                    ->columnSpan(1),
-
-                                Forms\Components\Select::make('hari_lembur')
-                                    ->label('Hari Lembur')
-                                    ->options([
-                                        'Senin' => 'Senin',
-                                        'Selasa' => 'Selasa',
-                                        'Rabu' => 'Rabu',
-                                        'Kamis' => 'Kamis',
-                                        'Jumat' => 'Jumat',
-                                        'Sabtu' => 'Sabtu',
-                                        'Minggu' => 'Minggu',
-                                    ])
-                                    ->required()
-                                    ->reactive()
                                     ->columnSpan(1),
 
                                 Forms\Components\DatePicker::make('tanggal_lembur')
                                     ->label('Tanggal Lembur')
                                     ->required()
                                     ->default(now())
-                                    ->reactive()
-                                    ->afterStateUpdated(function ($state, callable $set) {
-                                        if ($state) {
-                                            $dayName = \Carbon\Carbon::parse($state)->locale('id')->dayName;
-                                            $set('hari_lembur', ucfirst($dayName));
-                                        }
-                                    })
                                     ->columnSpan(1),
 
                                 Forms\Components\TimePicker::make('jam_mulai')
@@ -127,7 +106,8 @@ class MyOvertimeRequestResource extends Resource
 
                                 Forms\Components\TextInput::make('total_jam')
                                     ->label('Total Jam Lembur')
-                                    ->disabled()
+                                    ->readOnly()
+                                    ->dehydrated()
                                     ->formatStateUsing(function ($state) {
                                         if (!$state) return '0 jam 0 menit';
 
@@ -149,7 +129,8 @@ class MyOvertimeRequestResource extends Resource
                                     ->label('Waktu Pengajuan')
                                     ->required()
                                     ->default(now())
-                                    ->disabled()
+                                    ->readOnly()
+                                    ->dehydrated()
                                     ->helperText('Waktu saat pengajuan dibuat')
                                     ->columnSpan(1),
 
@@ -183,11 +164,6 @@ class MyOvertimeRequestResource extends Resource
                     ->sortable()
                     ->badge()
                     ->color('primary'),
-
-                Tables\Columns\TextColumn::make('hari_lembur')
-                    ->label('Hari')
-                    ->badge()
-                    ->color('info'),
 
                 Tables\Columns\TextColumn::make('tanggal_lembur')
                     ->label('Tanggal')
@@ -258,18 +234,6 @@ class MyOvertimeRequestResource extends Resource
                         'Assigned' => 'Menunggu Persetujuan',
                         'Accepted' => 'Disetujui',
                         'Rejected' => 'Ditolak',
-                    ]),
-
-                Tables\Filters\SelectFilter::make('hari_lembur')
-                    ->label('Hari Lembur')
-                    ->options([
-                        'Senin' => 'Senin',
-                        'Selasa' => 'Selasa',
-                        'Rabu' => 'Rabu',
-                        'Kamis' => 'Kamis',
-                        'Jumat' => 'Jumat',
-                        'Sabtu' => 'Sabtu',
-                        'Minggu' => 'Minggu',
                     ]),
 
                 Tables\Filters\Filter::make('bulan_ini')
