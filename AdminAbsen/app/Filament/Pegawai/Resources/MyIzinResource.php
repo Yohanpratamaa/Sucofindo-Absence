@@ -152,7 +152,13 @@ class MyIzinResource extends Resource
                                 Forms\Components\Section::make('Informasi Medis')
                                     ->description('Informasi tambahan yang diperlukan untuk izin sakit')
                                     ->schema([
-                                        Forms\Components\Grid::make(2)
+                                        Forms\Components\Grid::make([
+                                            'default' => 1,  // Mobile: 1 kolom
+                                            'sm' => 1,        // Small: 1 kolom
+                                            'md' => 2,        // Medium: 2 kolom
+                                            'lg' => 2,        // Large: 2 kolom
+                                            'xl' => 2,        // Extra Large: 2 kolom
+                                        ])
                                             ->schema([
                                                 Forms\Components\TextInput::make('lokasi_berobat')
                                                     ->label('Lokasi Berobat')
@@ -160,7 +166,13 @@ class MyIzinResource extends Resource
                                                     ->required(function (callable $get) {
                                                         return $get('jenis_izin') === 'sakit';
                                                     })
-                                                    ->columnSpan(1),
+                                                    ->columnSpan([
+                                                        'default' => 1,  // Mobile: full width
+                                                        'sm' => 1,        // Small: full width
+                                                        'md' => 1,        // Medium: half width
+                                                        'lg' => 1,        // Large: half width
+                                                        'xl' => 1,        // Extra Large: half width
+                                                    ]),
 
                                                 Forms\Components\TextInput::make('nama_dokter')
                                                     ->label('Nama Dokter')
@@ -168,7 +180,13 @@ class MyIzinResource extends Resource
                                                     ->required(function (callable $get) {
                                                         return $get('jenis_izin') === 'sakit';
                                                     })
-                                                    ->columnSpan(1),
+                                                    ->columnSpan([
+                                                        'default' => 1,  // Mobile: full width
+                                                        'sm' => 1,        // Small: full width
+                                                        'md' => 1,        // Medium: half width
+                                                        'lg' => 1,        // Large: half width
+                                                        'xl' => 1,        // Extra Large: half width
+                                                    ]),
 
                                                 Forms\Components\Select::make('diagnosa_dokter')
                                                     ->label('Diagnosa Dokter')
@@ -193,7 +211,13 @@ class MyIzinResource extends Resource
                                                     ->required(function (callable $get) {
                                                         return $get('jenis_izin') === 'sakit';
                                                     })
-                                                    ->columnSpan(2),
+                                                    ->columnSpan([
+                                                        'default' => 1,  // Mobile: full width
+                                                        'sm' => 1,        // Small: full width
+                                                        'md' => 2,        // Medium: full width (span 2 columns)
+                                                        'lg' => 2,        // Large: full width (span 2 columns)
+                                                        'xl' => 2,        // Extra Large: full width (span 2 columns)
+                                                    ]),
 
                                                 Forms\Components\Textarea::make('keterangan_medis')
                                                     ->label('Keterangan Alasan Sakit')
@@ -202,7 +226,13 @@ class MyIzinResource extends Resource
                                                     ->required(function (callable $get) {
                                                         return $get('jenis_izin') === 'sakit';
                                                     })
-                                                    ->columnSpanFull(),
+                                                    ->columnSpan([
+                                                        'default' => 1,  // Mobile: full width
+                                                        'sm' => 1,        // Small: full width
+                                                        'md' => 2,        // Medium: full width (span 2 columns)
+                                                        'lg' => 2,        // Large: full width (span 2 columns)
+                                                        'xl' => 2,        // Extra Large: full width (span 2 columns)
+                                                    ]),
                                             ]),
                                     ])
                                     ->visible(function (callable $get) {
