@@ -130,10 +130,10 @@ class MyOvertimeRequestResource extends Resource
                                     ->disabled()
                                     ->formatStateUsing(function ($state) {
                                         if (!$state) return '0 jam 0 menit';
-                                        
+
                                         $hours = floor($state / 60);
                                         $minutes = $state % 60;
-                                        
+
                                         if ($hours > 0 && $minutes > 0) {
                                             return "{$hours} jam {$minutes} menit";
                                         } elseif ($hours > 0) {

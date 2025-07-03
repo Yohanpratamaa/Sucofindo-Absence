@@ -97,10 +97,10 @@ class OvertimeAssignment extends Model
     public function getTotalJamFormattedAttribute()
     {
         if (!$this->total_jam) return '-';
-        
+
         $hours = floor($this->total_jam / 60);
         $minutes = $this->total_jam % 60;
-        
+
         if ($hours > 0 && $minutes > 0) {
             return "{$hours} jam {$minutes} menit";
         } elseif ($hours > 0) {
@@ -116,11 +116,11 @@ class OvertimeAssignment extends Model
         if (!$this->tanggal_lembur || !$this->jam_mulai || !$this->jam_selesai) {
             return '-';
         }
-        
+
         $tanggal = $this->tanggal_lembur->format('d M Y');
         $jamMulai = $this->jam_mulai->format('H:i');
         $jamSelesai = $this->jam_selesai->format('H:i');
-        
+
         return "{$this->hari_lembur}, {$tanggal} ({$jamMulai} - {$jamSelesai})";
     }
 
@@ -128,15 +128,15 @@ class OvertimeAssignment extends Model
     public static function calculateTotalJam($jamMulai, $jamSelesai)
     {
         if (!$jamMulai || !$jamSelesai) return 0;
-        
+
         $mulai = Carbon::parse($jamMulai);
         $selesai = Carbon::parse($jamSelesai);
-        
+
         // Jika jam selesai lebih kecil dari jam mulai, anggap melewati tengah malam
         if ($selesai->lessThan($mulai)) {
             $selesai->addDay();
         }
-        
+
         return $mulai->diffInMinutes($selesai);
     }
 

@@ -119,7 +119,7 @@ class ViewMyOvertimeRequest extends ViewRecord
                                 Infolists\Components\TextEntry::make('approvedBy.nama')
                                     ->label('Diproses Oleh')
                                     ->placeholder('Belum diproses')
-                                    ->icon('heroicon-m-user-check'),
+                                    ->icon('heroicon-m-user-circle'),
 
                                 Infolists\Components\TextEntry::make('approved_at')
                                     ->label('Waktu Diproses')
