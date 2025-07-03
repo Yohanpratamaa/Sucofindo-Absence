@@ -7,6 +7,7 @@ use App\Filament\Resources\IzinResource\RelationManagers;
 use App\Models\Izin;
 use App\Models\Pegawai;
 use App\Models\ManajemenIzin;
+use App\Helpers\UserHelper;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -225,22 +226,32 @@ class IzinResource extends Resource
                     ->requiresConfirmation()
                     ->modalHeading('Setujui Izin')
                     ->modalDescription(function (Izin $record): string {
-                        $currentUser = Filament::auth()->user();
-                        return "Apakah Anda yakin ingin menyetujui izin ini?\n\nIzin akan tercatat disetujui oleh: {$currentUser->nama}";
+                        $currentUser = UserHelper::getCurrentUser();
+                        $displayName = UserHelper::getDisplayName();
+                        return "Apakah Anda yakin ingin menyetujui izin ini?\n\nIzin akan tercatat disetujui oleh: {$displayName}";
                     })
                     ->action(function (Izin $record): void {
-                        $currentUser = Filament::auth()->user();
+                        $validation = UserHelper::validateForApproval();
+                        
+                        if (!$validation['success']) {
+                            Notification::make()
+                                ->danger()
+                                ->title('Akses Ditolak')
+                                ->body($validation['message'])
+                                ->send();
+                            return;
+                        }
+
                         $record->approve(Filament::auth()->id());
 
                         Notification::make()
                             ->success()
                             ->title('Izin Disetujui')
-                            ->body("Izin telah berhasil disetujui oleh {$currentUser->nama}")
+                            ->body("Izin telah berhasil disetujui oleh {$validation['user']->nama}")
                             ->send();
                     })
                     ->visible(function (Izin $record): bool {
-                        $currentUser = Filament::auth()->user();
-                        return $record->status === 'pending' && !$currentUser->isSuperAdmin();
+                        return $record->status === 'pending' && UserHelper::canApprove();
                     }),
 
                 Tables\Actions\Action::make('reject')
@@ -250,22 +261,31 @@ class IzinResource extends Resource
                     ->requiresConfirmation()
                     ->modalHeading('Tolak Izin')
                     ->modalDescription(function (Izin $record): string {
-                        $currentUser = Filament::auth()->user();
-                        return "Apakah Anda yakin ingin menolak izin ini?\n\nIzin akan tercatat ditolak oleh: {$currentUser->nama}";
+                        $displayName = UserHelper::getDisplayName();
+                        return "Apakah Anda yakin ingin menolak izin ini?\n\nIzin akan tercatat ditolak oleh: {$displayName}";
                     })
                     ->action(function (Izin $record): void {
-                        $currentUser = Filament::auth()->user();
+                        $validation = UserHelper::validateForApproval();
+                        
+                        if (!$validation['success']) {
+                            Notification::make()
+                                ->danger()
+                                ->title('Akses Ditolak')
+                                ->body($validation['message'])
+                                ->send();
+                            return;
+                        }
+
                         $record->reject(Filament::auth()->id());
 
                         Notification::make()
                             ->success()
                             ->title('Izin Ditolak')
-                            ->body("Izin telah berhasil ditolak oleh {$currentUser->nama}")
+                            ->body("Izin telah berhasil ditolak oleh {$validation['user']->nama}")
                             ->send();
                     })
                     ->visible(function (Izin $record): bool {
-                        $currentUser = Filament::auth()->user();
-                        return $record->status === 'pending' && !$currentUser->isSuperAdmin();
+                        return $record->status === 'pending' && UserHelper::canApprove();
                     }),
             ])
             ->bulkActions([
@@ -277,19 +297,18 @@ class IzinResource extends Resource
                         ->requiresConfirmation()
                         ->modalHeading('Setujui Izin Terpilih')
                         ->modalDescription(function (Collection $records): string {
-                            $currentUser = Filament::auth()->user();
+                            $displayName = UserHelper::getDisplayName();
                             $pendingCount = $records->filter(fn (Izin $record) => $record->status === 'pending')->count();
-                            return "Apakah Anda yakin ingin menyetujui {$pendingCount} izin?\n\nSemua izin akan tercatat disetujui oleh: {$currentUser->nama}";
+                            return "Apakah Anda yakin ingin menyetujui {$pendingCount} izin?\n\nSemua izin akan tercatat disetujui oleh: {$displayName}";
                         })
                         ->action(function (Collection $records): void {
-                            $currentUser = Filament::auth()->user();
-
-                            // Cek apakah user adalah super admin
-                            if ($currentUser->isSuperAdmin()) {
+                            $validation = UserHelper::validateForApproval();
+                            
+                            if (!$validation['success']) {
                                 Notification::make()
                                     ->danger()
                                     ->title('Akses Ditolak')
-                                    ->body('Super Admin tidak diperbolehkan melakukan approval/reject izin.')
+                                    ->body($validation['message'])
                                     ->send();
                                 return;
                             }
@@ -303,7 +322,7 @@ class IzinResource extends Resource
                             Notification::make()
                                 ->success()
                                 ->title('Izin Disetujui')
-                                ->body($pending->count() . " izin telah berhasil disetujui oleh {$currentUser->nama}")
+                                ->body($pending->count() . " izin telah berhasil disetujui oleh {$validation['user']->nama}")
                                 ->send();
                         }),
 
@@ -314,19 +333,18 @@ class IzinResource extends Resource
                         ->requiresConfirmation()
                         ->modalHeading('Tolak Izin Terpilih')
                         ->modalDescription(function (Collection $records): string {
-                            $currentUser = Filament::auth()->user();
+                            $displayName = UserHelper::getDisplayName();
                             $pendingCount = $records->filter(fn (Izin $record) => $record->status === 'pending')->count();
-                            return "Apakah Anda yakin ingin menolak {$pendingCount} izin?\n\nSemua izin akan tercatat ditolak oleh: {$currentUser->nama}";
+                            return "Apakah Anda yakin ingin menolak {$pendingCount} izin?\n\nSemua izin akan tercatat ditolak oleh: {$displayName}";
                         })
                         ->action(function (Collection $records): void {
-                            $currentUser = Filament::auth()->user();
-
-                            // Cek apakah user adalah super admin
-                            if ($currentUser->isSuperAdmin()) {
+                            $validation = UserHelper::validateForApproval();
+                            
+                            if (!$validation['success']) {
                                 Notification::make()
                                     ->danger()
                                     ->title('Akses Ditolak')
-                                    ->body('Super Admin tidak diperbolehkan melakukan approval/reject izin.')
+                                    ->body($validation['message'])
                                     ->send();
                                 return;
                             }
@@ -340,12 +358,11 @@ class IzinResource extends Resource
                             Notification::make()
                                 ->success()
                                 ->title('Izin Ditolak')
-                                ->body($pending->count() . " izin telah berhasil ditolak oleh {$currentUser->nama}")
+                                ->body($pending->count() . " izin telah berhasil ditolak oleh {$validation['user']->nama}")
                                 ->send();
                         }),
                 ])->visible(function (): bool {
-                    $currentUser = Filament::auth()->user();
-                    return !$currentUser->isSuperAdmin();
+                    return UserHelper::canApprove();
                 }),
             ])
             ->defaultSort('created_at', 'desc');

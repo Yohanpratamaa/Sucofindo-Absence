@@ -20,6 +20,10 @@ class Izin extends Model
         'dokumen_pendukung',
         'approved_by',
         'approved_at',
+        'lokasi_berobat',
+        'nama_dokter',
+        'diagnosa_dokter',
+        'keterangan_medis',
     ];
 
     protected $casts = [

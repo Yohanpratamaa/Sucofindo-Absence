@@ -9,10 +9,11 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Notifications\Notifiable;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
+use App\Traits\HasRoleManagement;
 
 class Pegawai extends Authenticatable implements FilamentUser
 {
-    use HasFactory, SoftDeletes, Notifiable;
+    use HasFactory, SoftDeletes, Notifiable, HasRoleManagement;
 
     protected $fillable = [
         // Tab Users - Data Dasar
@@ -154,18 +155,6 @@ class Pegawai extends Authenticatable implements FilamentUser
             default:
                 return false;
         }
-    }
-
-    // Method untuk mengecek apakah user adalah super admin
-    public function isSuperAdmin(): bool
-    {
-        return $this->role_user === 'super admin';
-    }
-
-    // Method untuk mengecek apakah user dapat melakukan approval
-    public function canApprove(): bool
-    {
-        return !$this->isSuperAdmin();
     }
 
     // Additional Filament user methods for better compatibility

@@ -117,41 +117,6 @@ class ManajemenIzinResource extends Resource
                                     ->columnSpan(1),
                             ]),
                     ]),
-
-                Section::make('Pengaturan Tampilan')
-                    ->description('Pengaturan tampilan dan visual')
-                    ->schema([
-                        Forms\Components\Select::make('warna_badge')
-                            ->label('Warna Badge')
-                            ->options([
-                                'primary' => 'Primary (Biru)',
-                                'success' => 'Success (Hijau)',
-                                'warning' => 'Warning (Kuning)',
-                                'danger' => 'Danger (Merah)',
-                                'info' => 'Info (Cyan)',
-                                'secondary' => 'Secondary (Abu-abu)',
-                            ])
-                            ->default('primary')
-                            ->required(),
-                    ]),
-
-                Section::make('Syarat Pengajuan')
-                    ->description('Daftar syarat dan ketentuan untuk pengajuan izin ini')
-                    ->schema([
-                        Forms\Components\Repeater::make('syarat_pengajuan')
-                            ->label('Daftar Syarat')
-                            ->schema([
-                                Forms\Components\TextInput::make('syarat')
-                                    ->label('Syarat')
-                                    ->required()
-                                    ->placeholder('contoh: Surat keterangan dokter wajib untuk izin lebih dari 1 hari')
-                                    ->columnSpanFull(),
-                            ])
-                            ->defaultItems(1)
-                            ->addActionLabel('Tambah Syarat')
-                            ->columnSpanFull(),
-                    ])
-                    ->collapsible(),
             ]);
     }
 

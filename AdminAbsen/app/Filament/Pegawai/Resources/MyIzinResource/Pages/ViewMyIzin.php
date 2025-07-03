@@ -80,6 +80,13 @@ class ViewMyIzin extends ViewRecord
 
                                 Infolists\Components\TextEntry::make('keterangan')
                                     ->label('Keterangan/Alasan')
+                                    ->visible(fn ($record) => $record->jenis_izin !== 'sakit')
+                                    ->columnSpanFull(),
+
+                                Infolists\Components\TextEntry::make('keterangan_medis')
+                                    ->label('Keterangan Alasan Sakit')
+                                    ->visible(fn ($record) => $record->jenis_izin === 'sakit')
+                                    ->placeholder('Tidak ada keterangan')
                                     ->columnSpanFull(),
 
                                 Infolists\Components\TextEntry::make('dokumen_pendukung')
@@ -88,6 +95,29 @@ class ViewMyIzin extends ViewRecord
                                     ->columnSpanFull(),
                             ]),
                     ]),
+
+                Infolists\Components\Section::make('Informasi Medis')
+                    ->description('Informasi tambahan terkait kondisi medis')
+                    ->schema([
+                        Infolists\Components\Grid::make(2)
+                            ->schema([
+                                Infolists\Components\TextEntry::make('lokasi_berobat')
+                                    ->label('Lokasi Berobat')
+                                    ->placeholder('Tidak diisi'),
+
+                                Infolists\Components\TextEntry::make('nama_dokter')
+                                    ->label('Nama Dokter')
+                                    ->placeholder('Tidak diisi'),
+
+                                Infolists\Components\TextEntry::make('diagnosa_dokter')
+                                    ->label('Diagnosa Dokter')
+                                    ->badge()
+                                    ->color('info')
+                                    ->placeholder('Tidak diisi')
+                                    ->columnSpan(2),
+                            ]),
+                    ])
+                    ->visible(fn ($record) => $record->jenis_izin === 'sakit'),
 
                 Infolists\Components\Section::make('Informasi Persetujuan')
                     ->schema([

@@ -94,6 +94,7 @@ class MyAttendanceResource extends Resource
                         'Tepat Waktu' => 'success',
                         'Terlambat' => 'warning',
                         'Tidak Hadir' => 'danger',
+                        'Tidak Absensi' => 'danger',
                         default => 'gray',
                     }),
 
@@ -130,6 +131,7 @@ class MyAttendanceResource extends Resource
                         'Tepat Waktu' => 'Tepat Waktu',
                         'Terlambat' => 'Terlambat',
                         'Tidak Hadir' => 'Tidak Hadir',
+                        'Tidak Absensi' => 'Tidak Absensi',
                     ]),
 
                 Tables\Filters\Filter::make('bulan_ini')
@@ -145,7 +147,12 @@ class MyAttendanceResource extends Resource
                 Tables\Actions\ViewAction::make(),
             ])
             ->bulkActions([])
-            ->defaultSort('created_at', 'desc');
+            ->defaultSort('created_at', 'desc')
+            ->recordClasses(fn ($record) =>
+                $record->status_kehadiran === 'Tidak Absensi'
+                    ? 'bg-red-50 border-l-4 border-red-500'
+                    : null
+            );
     }
 
     public static function getPages(): array

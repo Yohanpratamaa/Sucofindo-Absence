@@ -46,6 +46,7 @@ class AttendancePage extends Page implements HasForms
     public function mount()
     {
         $this->loadTodayAttendance();
+        $this->checkAndCreateTidakAbsensi(); // Auto-create jika sudah lewat jam 17:00
         $this->calculateAttendanceStatus();
     }
 
@@ -80,6 +81,15 @@ class AttendancePage extends Page implements HasForms
 
     protected function calculateDinasLuarStatus()
     {
+        // Jika sudah lewat jam 17:00, kunci semua aksi absensi
+        if ($this->isAttendanceLocked()) {
+            $this->canCheckInPagi = false;
+            $this->canCheckInSiang = false;
+            $this->canCheckOut = false;
+            $this->canCheckIn = false;
+            return;
+        }
+
         if (!$this->todayAttendance) {
             $this->canCheckInPagi = true;
             $this->canCheckInSiang = false;
@@ -99,6 +109,15 @@ class AttendancePage extends Page implements HasForms
 
     protected function calculateWfoStatus()
     {
+        // Jika sudah lewat jam 17:00, kunci semua aksi absensi
+        if ($this->isAttendanceLocked()) {
+            $this->canCheckIn = false;
+            $this->canCheckOut = false;
+            $this->canCheckInPagi = false;
+            $this->canCheckInSiang = false;
+            return;
+        }
+
         if (!$this->todayAttendance) {
             $this->canCheckIn = true;
             $this->canCheckOut = false;
@@ -107,7 +126,7 @@ class AttendancePage extends Page implements HasForms
         } else {
             $this->canCheckIn = false;
             // WFO check-out hanya bisa setelah jam 15:00 dan sudah check-in
-            $this->canCheckOut = $this->todayAttendance->check_in && 
+            $this->canCheckOut = $this->todayAttendance->check_in &&
                                !$this->todayAttendance->check_out &&
                                $this->isWithinSoreTimeWindow(); // Gunakan validasi jam 15:00 yang sama
             $this->canCheckInPagi = false;
@@ -191,6 +210,59 @@ class AttendancePage extends Page implements HasForms
         return $currentTime->greaterThanOrEqualTo($startTime);
     }
 
+    /**
+     * Check if attendance is locked due to time restriction (after 17:00)
+     */
+    protected function isAttendanceLocked(): bool
+    {
+        $currentTime = Carbon::now();
+        $lockTime = Carbon::today()->setTime(17, 0, 0);
+        return $currentTime->greaterThanOrEqualTo($lockTime);
+    }
+
+    /**
+     * Auto-create "Tidak Absensi" record if no attendance today and time is past 17:00
+     */
+    protected function checkAndCreateTidakAbsensi()
+    {
+        // Skip jika sudah ada attendance hari ini
+        if ($this->todayAttendance) {
+            return;
+        }
+
+        // Skip jika belum jam 17:00
+        if (!$this->isAttendanceLocked()) {
+            return;
+        }
+
+        // Buat record "Tidak Absensi" otomatis
+        $attendance = Attendance::create([
+            'user_id' => Auth::id(),
+            'office_working_hours_id' => null,
+            'check_in' => null,
+            'check_out' => null,
+            'latitude_absen_masuk' => null,
+            'longitude_absen_masuk' => null,
+            'latitude_absen_pulang' => null,
+            'longitude_absen_pulang' => null,
+            'picture_absen_masuk' => null,
+            'picture_absen_pulang' => null,
+            'attendance_type' => 'WFO',
+            'created_at' => Carbon::today(), // Set ke tanggal hari ini
+            'updated_at' => Carbon::today(),
+        ]);
+
+        // Reload data attendance
+        $this->loadTodayAttendance();
+
+        // Log untuk tracking
+        Log::info('Auto-created Tidak Absensi record', [
+            'user_id' => Auth::id(),
+            'attendance_id' => $attendance->id,
+            'created_at' => Carbon::now()->format('Y-m-d H:i:s')
+        ]);
+    }
+
     public function getTimeWindowInfo(): array
     {
         $currentTime = Carbon::now();
@@ -206,6 +278,11 @@ class AttendancePage extends Page implements HasForms
                 'start' => '15:00',
                 'is_active' => $this->isWithinSoreTimeWindow(),
                 'applicable_to' => 'WFO Check-Out & Dinas Luar Check-Out'
+            ],
+            'attendance_locked' => [
+                'lock_time' => '17:00',
+                'is_locked' => $this->isAttendanceLocked(),
+                'message' => $this->isAttendanceLocked() ? 'Absensi terkunci. Data "Tidak Absensi" telah dibuat otomatis.' : 'Absensi masih tersedia.'
             ]
         ];
     }
@@ -305,6 +382,16 @@ class AttendancePage extends Page implements HasForms
      */
     public function processCheckIn($photoData, $latitude, $longitude)
     {
+        // Cek apakah absensi sudah terkunci
+        if ($this->isAttendanceLocked()) {
+            Notification::make()
+                ->danger()
+                ->title('Absensi Terkunci')
+                ->body('Waktu absensi telah berakhir (setelah jam 17:00). Data "Tidak Absensi" telah dibuat secara otomatis.')
+                ->send();
+            return;
+        }
+
         if (!$this->canCheckIn) {
             Notification::make()
                 ->danger()
@@ -418,6 +505,16 @@ class AttendancePage extends Page implements HasForms
      */
     public function processCheckInPagi($photoData, $latitude, $longitude)
     {
+        // Cek apakah absensi sudah terkunci
+        if ($this->isAttendanceLocked()) {
+            Notification::make()
+                ->danger()
+                ->title('Absensi Terkunci')
+                ->body('Waktu absensi telah berakhir (setelah jam 17:00). Data "Tidak Absensi" telah dibuat secara otomatis.')
+                ->send();
+            return;
+        }
+
         if (!$this->canCheckInPagi) {
             Notification::make()
                 ->danger()
@@ -460,6 +557,16 @@ class AttendancePage extends Page implements HasForms
 
     public function processCheckInSiang($photoData, $latitude, $longitude)
     {
+        // Cek apakah absensi sudah terkunci
+        if ($this->isAttendanceLocked()) {
+            Notification::make()
+                ->danger()
+                ->title('Absensi Terkunci')
+                ->body('Waktu absensi telah berakhir (setelah jam 17:00). Data "Tidak Absensi" telah dibuat secara otomatis.')
+                ->send();
+            return;
+        }
+
         if (!$this->canCheckInSiang) {
             Notification::make()
                 ->danger()

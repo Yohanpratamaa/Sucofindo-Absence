@@ -170,16 +170,9 @@ class MyAllAttendanceResource extends Resource
                         'Tepat Waktu' => 'success',
                         'Terlambat' => 'warning',
                         'Tidak Hadir' => 'danger',
+                        'Tidak Absensi' => 'danger',
                         default => 'gray',
                     }),
-            ])
-            ->headerActions([
-                Tables\Actions\Action::make('daftar_presensi')
-                    ->label('Daftar Presensi')
-                    ->icon('heroicon-o-document-text')
-                    ->color('primary')
-                    ->url(fn () => route('filament.pegawai.pages.attendance-page'))
-                    ->tooltip('Halaman Absensi'),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('attendance_type')
@@ -196,6 +189,7 @@ class MyAllAttendanceResource extends Resource
                         'Tepat Waktu' => 'Tepat Waktu',
                         'Terlambat' => 'Terlambat',
                         'Tidak Hadir' => 'Tidak Hadir',
+                        'Tidak Absensi' => 'Tidak Absensi',
                     ])
                     ->placeholder('Semua Status'),
 
@@ -225,6 +219,16 @@ class MyAllAttendanceResource extends Resource
                         });
                     })
                     ->indicator('Belum Lengkap'),
+
+                Tables\Filters\Filter::make('tidak_absensi')
+                    ->label('Tidak Absensi')
+                    ->query(function ($query) {
+                        return $query->where(function ($q) {
+                            $q->whereNull('check_in')
+                              ->orWhereTime('check_in', '>=', '17:00:00');
+                        });
+                    })
+                    ->indicator('Tidak Absensi'),
             ])
             ->actions([
                 Tables\Actions\ViewAction::make()
@@ -235,7 +239,12 @@ class MyAllAttendanceResource extends Resource
             ->defaultSort('created_at', 'desc')
             ->striped()
             ->paginated([10, 25, 50])
-            ->poll('30s'); // Auto refresh setiap 30 detik
+            ->poll('30s') // Auto refresh setiap 30 detik
+            ->recordClasses(fn ($record) =>
+                $record->status_kehadiran === 'Tidak Absensi'
+                    ? 'bg-red-50 border-l-4 border-red-500'
+                    : null
+            );
     }
 
     public static function getPages(): array
