@@ -123,4 +123,17 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    'providers' => [
+        // ...existing code...
+
+        // Filament Service Providers
+        Filament\FilamentServiceProvider::class,
+        Filament\Forms\FormsServiceProvider::class,
+        Filament\Tables\TablesServiceProvider::class,
+        Filament\Notifications\NotificationsServiceProvider::class,
+
+        // Your Filament Providers
+        App\Providers\Filament\AdminPanelProvider::class,
+    ],
+
 ];
