@@ -23,7 +23,7 @@
                 Filter Data
             </div>
         </x-slot>
-        
+
         {{ $this->filtersForm }}
     </x-filament::section>
 
@@ -45,8 +45,8 @@
             >
                 <div class="space-y-2">
                     <div class="flex items-center justify-center">
-                        <x-filament::icon 
-                            icon="heroicon-o-users" 
+                        <x-filament::icon
+                            icon="heroicon-o-users"
                             class="h-12 w-12 text-primary-500"
                         />
                     </div>
@@ -67,8 +67,8 @@
             >
                 <div class="space-y-2">
                     <div class="flex items-center justify-center">
-                        <x-filament::icon 
-                            icon="heroicon-o-calendar" 
+                        <x-filament::icon
+                            icon="heroicon-o-calendar"
                             class="h-12 w-12 text-success-500"
                         />
                     </div>
@@ -89,8 +89,8 @@
             >
                 <div class="space-y-2">
                     <div class="flex items-center justify-center">
-                        <x-filament::icon 
-                            icon="heroicon-o-check-circle" 
+                        <x-filament::icon
+                            icon="heroicon-o-check-circle"
                             class="h-12 w-12 text-success-500"
                         />
                     </div>
@@ -114,8 +114,8 @@
             >
                 <div class="space-y-2">
                     <div class="flex items-center justify-center">
-                        <x-filament::icon 
-                            icon="heroicon-o-clock" 
+                        <x-filament::icon
+                            icon="heroicon-o-clock"
                             class="h-12 w-12 text-warning-500"
                         />
                     </div>
@@ -155,7 +155,7 @@
                                 $onTimePercentage = $total > 0 ? round(($onTime / $total) * 100) : 0;
                                 $latePercentage = $total > 0 ? round(($late / $total) * 100) : 0;
                             @endphp
-                            
+
                             <x-filament::section
                                 :heading="false"
                                 :description="false"
@@ -177,13 +177,13 @@
                                                 </span>
                                             </div>
                                             <div class="bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                                                <div 
+                                                <div
                                                     class="bg-success-500 h-2 rounded-full transition-all duration-500"
                                                     style="width: {{ min($onTimePercentage, 100) }}%"
                                                 ></div>
                                             </div>
                                         </div>
-                                        
+
                                         <!-- Late Progress -->
                                         @if($latePercentage > 0)
                                             <div class="space-y-1">
@@ -196,7 +196,7 @@
                                                     </span>
                                                 </div>
                                                 <div class="bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
-                                                    <div 
+                                                    <div
                                                         class="bg-warning-500 h-1.5 rounded-full transition-all duration-500"
                                                         style="width: {{ min($latePercentage, 100) }}%"
                                                     ></div>
@@ -227,8 +227,8 @@
                     </div>
                 @else
                     <div class="text-center py-8">
-                        <x-filament::icon 
-                            icon="heroicon-o-chart-bar" 
+                        <x-filament::icon
+                            icon="heroicon-o-chart-bar"
                             class="h-16 w-16 mx-auto text-gray-300 dark:text-gray-600 mb-4"
                         />
                         <p class="text-gray-500 dark:text-gray-400">Belum ada data absensi untuk periode ini</p>
@@ -249,7 +249,7 @@
 
                 @if(count($topPerformers) > 0)
                     @php $topPerformer = $topPerformers[0] ?? null; @endphp
-                    
+
                     <!-- Top Performer Highlight -->
                     @if($topPerformer)
                         <x-filament::section
@@ -259,8 +259,8 @@
                         >
                             <div class="space-y-3">
                                 <div class="flex items-center justify-center gap-2">
-                                    <x-filament::icon 
-                                        icon="heroicon-o-trophy" 
+                                    <x-filament::icon
+                                        icon="heroicon-o-trophy"
                                         class="h-8 w-8 text-warning-500"
                                     />
                                     <span class="font-bold text-warning-600 dark:text-warning-400 uppercase tracking-wide text-sm">
@@ -277,8 +277,8 @@
                         </x-filament::section>
                     @else
                         <div class="text-center py-6">
-                            <x-filament::icon 
-                                icon="heroicon-o-trophy" 
+                            <x-filament::icon
+                                icon="heroicon-o-trophy"
                                 class="h-16 w-16 mx-auto text-gray-300 dark:text-gray-600 mb-4"
                             />
                             <p class="text-gray-500 dark:text-gray-400 font-medium">Belum ada data performer</p>
@@ -304,7 +304,7 @@
                                 </div>
                             </div>
                         </x-filament::section>
-                        
+
                         <x-filament::section
                             :heading="false"
                             :description="false"
@@ -325,8 +325,8 @@
                     </div>
                 @else
                     <div class="text-center py-8">
-                        <x-filament::icon 
-                            icon="heroicon-o-users" 
+                        <x-filament::icon
+                            icon="heroicon-o-users"
                             class="h-16 w-16 mx-auto text-gray-300 dark:text-gray-600 mb-4"
                         />
                         <p class="text-gray-500 dark:text-gray-400">Belum ada data pegawai</p>
@@ -421,7 +421,7 @@
                     <span class="text-primary-600 dark:text-primary-400">Insights Performa</span>
                 </div>
             </x-slot>
-            
+
             <div class="space-y-3">
                 @if($attendanceRate >= 90)
                     <x-filament::section
@@ -504,7 +504,7 @@
                     <span class="text-warning-600 dark:text-warning-400">Analisis Ketepatan Waktu</span>
                 </div>
             </x-slot>
-            
+
             <div class="space-y-3">
                 @if($punctualityRate >= 90)
                     <x-filament::section
@@ -546,7 +546,7 @@
                         </div>
                     </x-filament::section>
                 @endif
-                
+
                 <x-filament::section
                     :heading="false"
                     :description="false"
@@ -570,7 +570,7 @@
                     <span class="text-success-600 dark:text-success-400">Rekomendasi Tindakan</span>
                 </div>
             </x-slot>
-            
+
             <div class="space-y-3">
                 @if($needsAttention > 0)
                     <x-filament::section
@@ -586,7 +586,7 @@
                         </div>
                     </x-filament::section>
                 @endif
-                
+
                 @if($currentMonthLate > $totalEmployees * 0.3)
                     <x-filament::section
                         :heading="false"
@@ -601,7 +601,7 @@
                         </div>
                     </x-filament::section>
                 @endif
-                
+
                 @if($excellentPerformers > 0)
                     <x-filament::section
                         :heading="false"
@@ -616,7 +616,7 @@
                         </div>
                     </x-filament::section>
                 @endif
-                
+
                 <x-filament::section
                     :heading="false"
                     :description="false"
@@ -629,7 +629,7 @@
                         </span>
                     </div>
                 </x-filament::section>
-                
+
                 <x-filament::section
                     :heading="false"
                     :description="false"
