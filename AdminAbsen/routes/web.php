@@ -52,6 +52,11 @@ Route::get('/test-storage', [StorageTestController::class, 'testStorage']);
 Route::post('/test-upload', [StorageTestController::class, 'testUpload']);
 Route::get('/test-attendance-images', [StorageTestController::class, 'testAttendanceImages']);
 
+// Railway debugging routes
+Route::get('/debug-railway-attendance', function () {
+    include base_path('debug-railway-attendance.php');
+});
+
 // Redirect root URL to appropriate panel based on authentication and setup status
 Route::get('/', function () {
     try {

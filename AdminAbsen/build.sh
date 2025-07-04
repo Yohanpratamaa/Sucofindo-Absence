@@ -58,4 +58,10 @@ chmod -R 775 storage/app/public
 echo "🔗 Creating initial storage link..."
 php artisan storage:link --force
 
+# Railway-specific attendance images migration
+echo "📸 Setting up attendance images for Railway..."
+if [ -n "$RAILWAY_ENVIRONMENT" ]; then
+    bash railway-attendance-migration.sh
+fi
+
 echo "✅ Build completed successfully!"

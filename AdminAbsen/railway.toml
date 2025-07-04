@@ -1,5 +1,6 @@
 [build]
 builder = "nixpacks"
+buildCommand = "bash build.sh"
 
 [build.env]
 NODE_ENV = "production"
@@ -9,6 +10,7 @@ NIXPACKS_PHP_COMPOSER_VERSION = "2"
 COMPOSER_INSTALL_FLAGS = "--no-dev --optimize-autoloader --no-interaction"
 
 [deploy]
+startCommand = "bash start.sh"
 healthcheckPath = "/admin"
 healthcheckTimeout = 300
 restartPolicyType = "on_failure"
