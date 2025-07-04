@@ -199,7 +199,7 @@ class Attendance extends Model
 
         // Ambil jadwal kantor berdasarkan hari absensi
         $checkInDate = Carbon::parse($this->check_in);
-        
+
         // PRIORITY 1: Cek apakah check-in dilakukan pada jam 17:00 atau setelahnya
         $eveningTime = Carbon::createFromFormat('H:i:s', '17:00:00');
         $eveningTime->setDate($checkInDate->year, $checkInDate->month, $checkInDate->day);
@@ -209,8 +209,8 @@ class Attendance extends Model
         }
 
         // PRIORITY 2: Cek jika ada status_kehadiran yang sudah di-set manual (untuk izin)
-        if (isset($this->attributes['status_kehadiran']) && 
-            !empty($this->attributes['status_kehadiran']) && 
+        if (isset($this->attributes['status_kehadiran']) &&
+            !empty($this->attributes['status_kehadiran']) &&
             in_array($this->attributes['status_kehadiran'], ['Izin', 'Sakit', 'Cuti'])) {
             return $this->attributes['status_kehadiran'];
         }
