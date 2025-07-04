@@ -3,8 +3,16 @@ builder = "nixpacks"
 
 [build.env]
 NODE_ENV = "production"
+PHP_VERSION = "8.2"
+NIXPACKS_PHP_INSTALL_COMPOSER = "1"
+NIXPACKS_PHP_COMPOSER_VERSION = "2"
+COMPOSER_INSTALL_FLAGS = "--no-dev --optimize-autoloader --no-interaction"
 
 [deploy]
 healthcheckPath = "/admin"
 healthcheckTimeout = 300
-restartPolicyType = "always"
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 3
+
+[variables]
+RAILWAY_ENVIRONMENT = "production"

@@ -1,0 +1,62 @@
+# Files and directories to ignore during Railway deployment
+
+# Development files
+.env
+.env.local
+.env.example
+.env.testing
+
+# Node modules (akan di-install saat build)
+node_modules/
+
+# Development dependencies
+tests/
+.phpunit.result.cache
+phpunit.xml
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Git files
+.git/
+.gitignore
+.gitattributes
+
+# Documentation
+README.md
+*.md
+
+# Development scripts
+test_*.php
+test-*.php
+
+# Log files
+*.log
+storage/logs/
+
+# Cache files (akan di-generate saat runtime)
+bootstrap/cache/
+storage/framework/cache/
+storage/framework/sessions/
+storage/framework/views/
+
+# Public uploaded files (jika ada)
+public/uploads/
+public/storage/
+
+# Backup files
+*.bak
+*.backup
+*.old
+
+# Temporary files
+*.tmp
+*.temp
