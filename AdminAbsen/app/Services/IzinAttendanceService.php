@@ -115,11 +115,12 @@ class IzinAttendanceService
         // Buat keterangan izin
         $keteranganIzin = $this->buildKeteranganIzin($izin);
 
-        // Buat tanggal yang tepat untuk attendance
-        $attendanceDate = $date->copy()->setTime(8, 0, 0); // Set waktu ke jam 8 pagi
+        // PERBAIKAN: Buat tanggal yang tepat dengan menggunakan tanggal dari periode
+        // bukan menggunakan tanggal hari ini
+        $attendanceDate = $date->copy()->setTime(8, 0, 0); // Set waktu ke jam 8 pagi untuk tanggal yang benar
 
-        // Buat record attendance dengan tanggal yang tepat
-        Attendance::create([
+        // PERBAIKAN: Gunakan DB::table untuk bypass Eloquent timestamps
+        \Illuminate\Support\Facades\DB::table('attendances')->insert([
             'user_id' => $izin->user_id,
             'office_working_hours_id' => $this->getDefaultOfficeWorkingHoursId($izin->user_id),
             'check_in' => null,
@@ -130,9 +131,11 @@ class IzinAttendanceService
             'izin_id' => $izin->id,
             'status_kehadiran' => $statusKehadiran,
             'keterangan_izin' => $keteranganIzin,
-            'created_at' => $attendanceDate,
-            'updated_at' => $attendanceDate,
+            'created_at' => $attendanceDate, // Menggunakan tanggal dari periode izin
+            'updated_at' => $attendanceDate, // Menggunakan tanggal dari periode izin
         ]);
+
+        Log::info("Created attendance for izin ID: {$izin->id} on date: {$attendanceDate->format('Y-m-d H:i:s')} using raw SQL");
     }
 
     /**

@@ -291,7 +291,7 @@
         @endif
 
         <!-- Status Absensi Hari Ini -->
-        <x-filament::section>
+        {{-- <x-filament::section>
             <x-slot name="heading">
                 <div class="flex items-center gap-2">
                     <x-filament::icon icon="heroicon-o-chart-bar" class="w-5 h-5" />
@@ -459,7 +459,7 @@
                     </div>
                 @endif
             </div>
-        </x-filament::section>
+        </x-filament::section> --}}
 
         <!-- Status Lokasi untuk WFO -->
         @if($attendanceType === 'WFO')
