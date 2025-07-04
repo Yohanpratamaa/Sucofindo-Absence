@@ -61,6 +61,12 @@ TRUST_PROXIES="*"
 TRUSTED_HOSTS=sucofindo-absen-production.up.railway.app
 
 # =============================================
+# FILESYSTEM & STORAGE
+# =============================================
+FILESYSTEM_DISK=public
+FILESYSTEM_DRIVER=local
+
+# =============================================
 # RAILWAY SPECIFIC
 # =============================================
 RAILWAY_STATIC_URL=https://sucofindo-absen-production.up.railway.app

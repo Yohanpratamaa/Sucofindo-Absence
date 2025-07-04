@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\RealTimeController;
 use App\Http\Controllers\SetupController;
 use App\Http\Controllers\Auth\UnifiedLoginController;
 use App\Models\Pegawai;
+use App\Http\Controllers\StorageTestController;
 
 // Setup routes for initial admin creation
 Route::middleware('guest')->group(function () {
@@ -45,6 +46,10 @@ Route::get('/test-dinas-luar', function () {
 
     return response()->json($data, 200, [], JSON_PRETTY_PRINT);
 })->name('test.dinas.luar');
+
+// Storage testing routes untuk Railway debugging
+Route::get('/test-storage', [StorageTestController::class, 'testStorage']);
+Route::post('/test-upload', [StorageTestController::class, 'testUpload']);
 
 // Redirect root URL to appropriate panel based on authentication and setup status
 Route::get('/', function () {

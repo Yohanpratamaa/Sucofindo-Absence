@@ -44,6 +44,17 @@ fi
 # Final optimizations
 echo "🚀 Final optimizations..."
 php artisan optimize
-php artisan storage:link
+
+# Setup storage directories and permissions
+echo "📁 Setting up storage structure..."
+mkdir -p storage/app/public/uploads
+mkdir -p storage/app/public/images
+mkdir -p storage/app/public/avatars
+mkdir -p storage/app/public/documents
+chmod -R 775 storage/app/public
+
+# Create storage link - will be recreated in start.sh for Railway
+echo "🔗 Creating initial storage link..."
+php artisan storage:link --force
 
 echo "✅ Build completed successfully!"

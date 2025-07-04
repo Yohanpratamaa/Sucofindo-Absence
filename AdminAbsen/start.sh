@@ -15,10 +15,33 @@ mkdir -p bootstrap/cache
 chmod -R 775 storage
 chmod -R 775 bootstrap/cache
 
-# Ensure storage link exists
-if [ ! -L "public/storage" ]; then
-    php artisan storage:link
+# Ensure storage link exists and is properly configured for Railway
+echo "🔗 Setting up storage link for Railway..."
+
+# Remove existing storage link if it exists
+if [ -L "public/storage" ]; then
+    rm public/storage
 fi
+
+# Create storage link - Railway compatible
+php artisan storage:link --force
+
+# Verify storage link was created
+if [ -L "public/storage" ]; then
+    echo "✅ Storage link created successfully"
+    ls -la public/storage
+else
+    echo "⚠️ Storage link creation failed, creating manual symlink..."
+    # Manual symlink creation as fallback
+    ln -sf ../storage/app/public public/storage
+    echo "✅ Manual storage link created"
+fi
+
+# Ensure storage/app/public has proper permissions and structure
+mkdir -p storage/app/public/uploads
+mkdir -p storage/app/public/images
+mkdir -p storage/app/public/avatars
+chmod -R 775 storage/app/public
 
 # Clear any leftover caches from build
 php artisan config:clear

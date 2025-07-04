@@ -33,8 +33,10 @@ git push origin main
 ### 4. **Verify Deployment**
 
 -   Check health: `https://sucofindo-absen-production.up.railway.app/admin`
+-   Test storage: `https://sucofindo-absen-production.up.railway.app/test-storage`
 -   Monitor logs: `railway logs`
 -   Test analytics: `/admin/kepala-bidang/attendance-analytics`
+-   Test file upload: Upload test via `/test-upload`
 
 ## 🌐 URLs After Deployment
 
