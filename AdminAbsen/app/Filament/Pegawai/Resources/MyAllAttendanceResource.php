@@ -72,7 +72,14 @@ class MyAllAttendanceResource extends Resource
                         ->time('H:i')
                         ->weight(FontWeight::Medium)
                         ->placeholder('-')
-                        ->color('success'),
+                        ->color('success')
+                        ->formatStateUsing(function ($state, $record) {
+                            // Jika ada izin_id atau status izin/sakit/cuti, tampilkan "-"
+                            if ($record->izin_id || in_array($record->status_kehadiran, ['Izin', 'Sakit', 'Cuti'])) {
+                                return '-';
+                            }
+                            return $state ? $state->format('H:i') : '-';
+                        }),
 
                     // Check-In - Foto & Jam
                     Tables\Columns\ImageColumn::make('picture_absen_masuk_url')
@@ -80,12 +87,26 @@ class MyAllAttendanceResource extends Resource
                         ->height(40)
                         ->width(40)
                         ->circular()
-                        ->defaultImageUrl('/images/no-photo.png'),
+                        ->defaultImageUrl('/images/no-image.png')
+                        ->getStateUsing(function ($record) {
+                            // Jika ada izin_id atau status izin/sakit/cuti, jangan tampilkan foto
+                            if ($record->izin_id || in_array($record->status_kehadiran, ['Izin', 'Sakit', 'Cuti'])) {
+                                return null;
+                            }
+                            // Jika ada foto, gunakan foto tersebut, jika tidak gunakan default no-image.png
+                            return $record->picture_absen_masuk_url ?: '/images/no-image.png';
+                        }),
 
                     // Check-In - Lokasi
                     Tables\Columns\IconColumn::make('location_checkin')
                         ->label('Lokasi')
-                        ->getStateUsing(fn ($record) => !is_null($record->latitude_absen_masuk))
+                        ->getStateUsing(function ($record) {
+                            // Jika ada izin_id atau status izin/sakit/cuti, return null (tidak tampil)
+                            if ($record->izin_id || in_array($record->status_kehadiran, ['Izin', 'Sakit', 'Cuti'])) {
+                                return null;
+                            }
+                            return !is_null($record->latitude_absen_masuk);
+                        })
                         ->boolean()
                         ->icon(fn ($state) => $state ? 'heroicon-s-map-pin' : 'heroicon-s-x-mark')
                         ->color(fn ($state) => $state ? 'success' : 'gray'),
@@ -99,7 +120,14 @@ class MyAllAttendanceResource extends Resource
                         ->time('H:i')
                         ->weight(FontWeight::Medium)
                         ->placeholder('-')
-                        ->color('warning'),
+                        ->color('warning')
+                        ->formatStateUsing(function ($state, $record) {
+                            // Jika ada izin_id atau status izin/sakit/cuti, tampilkan "-"
+                            if ($record->izin_id || in_array($record->status_kehadiran, ['Izin', 'Sakit', 'Cuti'])) {
+                                return '-';
+                            }
+                            return $state ? $state->format('H:i') : '-';
+                        }),
 
                     // Check-In Ke-2 - Foto & Jam
                     Tables\Columns\ImageColumn::make('picture_absen_siang_url')
@@ -107,12 +135,26 @@ class MyAllAttendanceResource extends Resource
                         ->height(40)
                         ->width(40)
                         ->circular()
-                        ->defaultImageUrl('/images/no-photo.png'),
+                        ->defaultImageUrl('/images/no-image.png')
+                        ->getStateUsing(function ($record) {
+                            // Jika ada izin_id atau status izin/sakit/cuti, jangan tampilkan foto
+                            if ($record->izin_id || in_array($record->status_kehadiran, ['Izin', 'Sakit', 'Cuti'])) {
+                                return null;
+                            }
+                            // Jika ada foto, gunakan foto tersebut, jika tidak gunakan default no-image.png
+                            return $record->picture_absen_siang_url ?: '/images/no-image.png';
+                        }),
 
                     // Check-In Ke-2 - Lokasi & Jarak
                     Tables\Columns\IconColumn::make('location_siang')
                         ->label('Lokasi & Jarak')
-                        ->getStateUsing(fn ($record) => !is_null($record->latitude_absen_siang))
+                        ->getStateUsing(function ($record) {
+                            // Jika ada izin_id atau status izin/sakit/cuti, return null (tidak tampil)
+                            if ($record->izin_id || in_array($record->status_kehadiran, ['Izin', 'Sakit', 'Cuti'])) {
+                                return null;
+                            }
+                            return !is_null($record->latitude_absen_siang);
+                        })
                         ->boolean()
                         ->icon(fn ($state) => $state ? 'heroicon-s-map-pin' : 'heroicon-s-x-mark')
                         ->color(fn ($state) => $state ? 'warning' : 'gray'),
@@ -126,7 +168,14 @@ class MyAllAttendanceResource extends Resource
                         ->time('H:i')
                         ->weight(FontWeight::Medium)
                         ->placeholder('-')
-                        ->color('danger'),
+                        ->color('danger')
+                        ->formatStateUsing(function ($state, $record) {
+                            // Jika ada izin_id atau status izin/sakit/cuti, tampilkan "-"
+                            if ($record->izin_id || in_array($record->status_kehadiran, ['Izin', 'Sakit', 'Cuti'])) {
+                                return '-';
+                            }
+                            return $state ? $state->format('H:i') : '-';
+                        }),
 
                     // Check-Out - Foto & Jam
                     Tables\Columns\ImageColumn::make('picture_absen_pulang_url')
@@ -134,12 +183,26 @@ class MyAllAttendanceResource extends Resource
                         ->height(40)
                         ->width(40)
                         ->circular()
-                        ->defaultImageUrl('/images/no-photo.png'),
+                        ->defaultImageUrl('/images/no-image.png')
+                        ->getStateUsing(function ($record) {
+                            // Jika ada izin_id atau status izin/sakit/cuti, jangan tampilkan foto
+                            if ($record->izin_id || in_array($record->status_kehadiran, ['Izin', 'Sakit', 'Cuti'])) {
+                                return null;
+                            }
+                            // Jika ada foto, gunakan foto tersebut, jika tidak gunakan default no-image.png
+                            return $record->picture_absen_pulang_url ?: '/images/no-image.png';
+                        }),
 
                     // Check-Out - Lokasi & Jarak
                     Tables\Columns\IconColumn::make('location_checkout')
                         ->label('Lokasi & Jarak')
-                        ->getStateUsing(fn ($record) => !is_null($record->latitude_absen_pulang))
+                        ->getStateUsing(function ($record) {
+                            // Jika ada izin_id atau status izin/sakit/cuti, return null (tidak tampil)
+                            if ($record->izin_id || in_array($record->status_kehadiran, ['Izin', 'Sakit', 'Cuti'])) {
+                                return null;
+                            }
+                            return !is_null($record->latitude_absen_pulang);
+                        })
                         ->boolean()
                         ->icon(fn ($state) => $state ? 'heroicon-s-map-pin' : 'heroicon-s-x-mark')
                         ->color(fn ($state) => $state ? 'danger' : 'gray'),
@@ -151,17 +214,31 @@ class MyAllAttendanceResource extends Resource
                     ->label('Tipe')
                     ->badge()
                     ->formatStateUsing(function (string $state, $record): string {
-                        // Jika status "Tidak Absensi", tampilkan "-"
-                        if ($record->status_kehadiran === 'Tidak Absensi') {
+                        // Jika ada izin_id (artinya ini adalah record izin), tampilkan "-"
+                        if ($record->izin_id) {
                             return '-';
                         }
+
+                        // Jika status "Tidak Absensi", "Izin", "Sakit", "Cuti", tampilkan "-"
+                        if (in_array($record->status_kehadiran, ['Tidak Absensi', 'Izin', 'Sakit', 'Cuti'])) {
+                            return '-';
+                        }
+
+                        // Jika tidak ada check_in dan check_out (bukan absensi langsung), tampilkan "-"
+                        if (!$record->check_in && !$record->check_out) {
+                            return '-';
+                        }
+
                         return $state;
                     })
                     ->color(function (string $state, $record): string {
-                        // Jika status "Tidak Absensi", warna gray
-                        if ($record->status_kehadiran === 'Tidak Absensi') {
+                        // Jika ada izin_id atau status non-absensi, warna gray
+                        if ($record->izin_id ||
+                            in_array($record->status_kehadiran, ['Tidak Absensi', 'Izin', 'Sakit', 'Cuti']) ||
+                            (!$record->check_in && !$record->check_out)) {
                             return 'gray';
                         }
+
                         return match ($state) {
                             'WFO' => 'success',
                             'Dinas Luar' => 'info',
@@ -174,17 +251,31 @@ class MyAllAttendanceResource extends Resource
                     ->label('Durasi')
                     ->badge()
                     ->formatStateUsing(function (string $state, $record): string {
-                        // Jika status "Tidak Absensi", tampilkan "-"
-                        if ($record->status_kehadiran === 'Tidak Absensi') {
+                        // Jika ada izin_id (artinya ini adalah record izin), tampilkan "-"
+                        if ($record->izin_id) {
                             return '-';
                         }
+
+                        // Jika status "Tidak Absensi", "Izin", "Sakit", "Cuti", tampilkan "-"
+                        if (in_array($record->status_kehadiran, ['Tidak Absensi', 'Izin', 'Sakit', 'Cuti'])) {
+                            return '-';
+                        }
+
+                        // Jika tidak ada check_in dan check_out (bukan absensi langsung), tampilkan "-"
+                        if (!$record->check_in && !$record->check_out) {
+                            return '-';
+                        }
+
                         return $state;
                     })
                     ->color(function (string $state, $record): string {
-                        // Jika status "Tidak Absensi", warna gray
-                        if ($record->status_kehadiran === 'Tidak Absensi') {
+                        // Jika ada izin_id atau status non-absensi, warna gray
+                        if ($record->izin_id ||
+                            in_array($record->status_kehadiran, ['Tidak Absensi', 'Izin', 'Sakit', 'Cuti']) ||
+                            (!$record->check_in && !$record->check_out)) {
                             return 'gray';
                         }
+
                         return 'primary';
                     }),
 
@@ -209,7 +300,7 @@ class MyAllAttendanceResource extends Resource
                     ->limit(30)
                     ->tooltip(function (Tables\Columns\TextColumn $column): ?string {
                         $state = $column->getState();
-                        if (strlen($state) <= 30) {
+                        if (!$state || strlen($state) <= 30) {
                             return null;
                         }
                         return $state;
@@ -223,7 +314,20 @@ class MyAllAttendanceResource extends Resource
                     ->options([
                         'WFO' => 'Work From Office',
                         'Dinas Luar' => 'Dinas Luar',
+                        'izin' => 'Izin/Sakit/Cuti',
                     ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        if (!$data['value']) {
+                            return $query;
+                        }
+
+                        return match ($data['value']) {
+                            'WFO' => $query->where('attendance_type', 'WFO')->whereNull('izin_id'),
+                            'Dinas Luar' => $query->where('attendance_type', 'Dinas Luar')->whereNull('izin_id'),
+                            'izin' => $query->whereNotNull('izin_id')->orWhereIn('status_kehadiran', ['Izin', 'Sakit', 'Cuti']),
+                            default => $query,
+                        };
+                    })
                     ->placeholder('Semua Tipe'),
 
                 Tables\Filters\SelectFilter::make('status_kehadiran')
@@ -276,10 +380,25 @@ class MyAllAttendanceResource extends Resource
                     })
                     ->indicator('Tidak Absensi'),
 
-                Tables\Filters\Filter::make('izin_sakit_cuti')
-                    ->label('Izin/Sakit/Cuti')
+                Tables\Filters\Filter::make('hanya_absensi_langsung')
+                    ->label('Hanya Absensi Langsung')
                     ->query(function ($query) {
-                        return $query->whereIn('status_kehadiran', ['Izin', 'Sakit', 'Cuti']);
+                        return $query->whereNull('izin_id')
+                                    ->whereNotIn('status_kehadiran', ['Izin', 'Sakit', 'Cuti'])
+                                    ->where(function ($q) {
+                                        $q->whereNotNull('check_in')
+                                          ->orWhereNotNull('check_out');
+                                    });
+                    })
+                    ->indicator('Absensi Langsung'),
+
+                Tables\Filters\Filter::make('hanya_izin')
+                    ->label('Hanya Izin/Sakit/Cuti')
+                    ->query(function ($query) {
+                        return $query->where(function ($q) {
+                            $q->whereNotNull('izin_id')
+                              ->orWhereIn('status_kehadiran', ['Izin', 'Sakit', 'Cuti']);
+                        });
                     })
                     ->indicator('Izin/Sakit/Cuti'),
             ])
@@ -293,11 +412,18 @@ class MyAllAttendanceResource extends Resource
             ->striped()
             ->paginated([10, 25, 50])
             ->poll('30s') // Auto refresh setiap 30 detik
-            ->recordClasses(fn ($record) =>
-                $record->status_kehadiran === 'Tidak Absensi'
-                    ? 'bg-red-50 border-l-4 border-red-500'
-                    : null
-            );
+            ->recordClasses(function ($record) {
+                // Styling khusus untuk berbagai status
+                if ($record->status_kehadiran === 'Tidak Absensi') {
+                    return 'bg-red-50 border-l-4 border-red-500';
+                }
+
+                if ($record->izin_id || in_array($record->status_kehadiran, ['Izin', 'Sakit', 'Cuti'])) {
+                    return 'bg-blue-50 border-l-4 border-blue-400';
+                }
+
+                return null;
+            });
     }
 
     public static function getPages(): array
