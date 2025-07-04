@@ -189,10 +189,16 @@ class Attendance extends Model
      * Status "Tidak Absensi" akan otomatis diterapkan untuk:
      * 1. Pegawai yang check-in setelah jam 17:00 (5 PM)
      * 2. Pegawai yang tidak check-in sama sekali (null)
-     */
-    public function getStatusKehadiranAttribute()
+     */    public function getStatusKehadiranAttribute()
     {
-        // Jika tidak ada check_in sama sekali, maka "Tidak Absensi"
+        // PRIORITY 1: Cek jika ada status_kehadiran yang sudah di-set manual (untuk izin)
+        if (isset($this->attributes['status_kehadiran']) &&
+            !empty($this->attributes['status_kehadiran']) &&
+            in_array($this->attributes['status_kehadiran'], ['Izin', 'Sakit', 'Cuti'])) {
+            return $this->attributes['status_kehadiran'];
+        }
+
+        // PRIORITY 2: Jika tidak ada check_in sama sekali dan bukan izin, maka "Tidak Absensi"
         if (!$this->check_in) {
             return 'Tidak Absensi';
         }
@@ -200,7 +206,7 @@ class Attendance extends Model
         // Ambil jadwal kantor berdasarkan hari absensi
         $checkInDate = Carbon::parse($this->check_in);
 
-        // PRIORITY 1: Cek apakah check-in dilakukan pada jam 17:00 atau setelahnya
+        // PRIORITY 3: Cek apakah check-in dilakukan pada jam 17:00 atau setelahnya
         $eveningTime = Carbon::createFromFormat('H:i:s', '17:00:00');
         $eveningTime->setDate($checkInDate->year, $checkInDate->month, $checkInDate->day);
 

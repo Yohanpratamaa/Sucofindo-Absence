@@ -115,18 +115,23 @@ class IzinAttendanceService
         // Buat keterangan izin
         $keteranganIzin = $this->buildKeteranganIzin($izin);
 
-        // Buat record attendance
+        // Buat tanggal yang tepat untuk attendance
+        $attendanceDate = $date->copy()->setTime(8, 0, 0); // Set waktu ke jam 8 pagi
+
+        // Buat record attendance dengan tanggal yang tepat
         Attendance::create([
             'user_id' => $izin->user_id,
             'office_working_hours_id' => $this->getDefaultOfficeWorkingHoursId($izin->user_id),
             'check_in' => null,
             'check_out' => null,
+            'longitude_absen_masuk' => 0,
+            'latitude_absen_masuk' => 0,
             'attendance_type' => 'WFO',
             'izin_id' => $izin->id,
             'status_kehadiran' => $statusKehadiran,
             'keterangan_izin' => $keteranganIzin,
-            'created_at' => $date,
-            'updated_at' => $date,
+            'created_at' => $attendanceDate,
+            'updated_at' => $attendanceDate,
         ]);
     }
 
