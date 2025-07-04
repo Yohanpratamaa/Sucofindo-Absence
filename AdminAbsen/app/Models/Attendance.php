@@ -456,7 +456,8 @@ class Attendance extends Model
 
         // Check if file exists
         if (Storage::disk('public')->exists($this->picture_absen_masuk)) {
-            return asset('storage/' . $this->picture_absen_masuk);
+            // Use current domain for proper URL generation
+            return url('storage/' . $this->picture_absen_masuk);
         }
 
         // Log missing file
@@ -478,7 +479,8 @@ class Attendance extends Model
 
         // Check if file exists
         if (Storage::disk('public')->exists($this->picture_absen_pulang)) {
-            return asset('storage/' . $this->picture_absen_pulang);
+            // Use current domain for proper URL generation
+            return url('storage/' . $this->picture_absen_pulang);
         }
 
         // Log missing file
@@ -500,7 +502,8 @@ class Attendance extends Model
 
         // Check if file exists
         if (Storage::disk('public')->exists($this->picture_absen_siang)) {
-            return asset('storage/' . $this->picture_absen_siang);
+            // Use current domain for proper URL generation
+            return url('storage/' . $this->picture_absen_siang);
         }
 
         // Log missing file

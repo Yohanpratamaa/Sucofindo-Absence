@@ -13,6 +13,9 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Filament\Notifications\Notification;
 use Filament\Support\Enums\FontWeight;
+use Filament\Tables\Columns\Layout\Panel;
+use Filament\Tables\Columns\Layout\Split;
+use Filament\Tables\Columns\Layout\Stack;
 use Carbon\Carbon;
 
 class AttendanceResource extends Resource
@@ -249,69 +252,146 @@ class AttendanceResource extends Resource
     {
         return $table
             ->columns([
+                // Nama Pegawai Column (tambahan untuk kepala bidang)
                 Tables\Columns\TextColumn::make('user.nama')
-                    ->label('Nama Karyawan')
+                    ->label('Nama Pegawai')
                     ->searchable()
                     ->sortable()
-                    ->weight(FontWeight::Medium),
+                    ->weight(FontWeight::Bold)
+                    ->color('primary'),
 
                 Tables\Columns\TextColumn::make('user.npp')
                     ->label('NPP')
                     ->searchable()
-                    ->sortable(),
+                    ->size('sm')
+                    ->color('gray'),
 
-                Tables\Columns\TextColumn::make('tanggal_absen')
+                // Tanggal Column
+                Tables\Columns\TextColumn::make('created_at')
                     ->label('Tanggal')
-                    ->sortable(),
+                    ->date('d-m-Y')
+                    ->sortable()
+                    ->weight(FontWeight::Medium)
+                    ->searchable(),
 
-                Tables\Columns\TextColumn::make('check_in_formatted')
-                    ->label('Check In')
-                    ->sortable(query: function (Builder $query, string $direction): Builder {
-                        return $query->orderBy('check_in', $direction);
+                // === CHECK-IN GROUP ===
+                Tables\Columns\ColumnGroup::make('Check-In', [
+                    // Check-In - Jam Masuk
+                    Tables\Columns\TextColumn::make('check_in')
+                        ->label('Jam Masuk')
+                        ->time('H:i')
+                        ->weight(FontWeight::Medium)
+                        ->placeholder('-')
+                        ->color('success'),
+
+                    // Check-In - Foto & Jam
+                    Tables\Columns\ImageColumn::make('picture_absen_masuk_url')
+                        ->label('Foto')
+                        ->height(40)
+                        ->width(40)
+                        ->circular()
+                        ->defaultImageUrl('/images/no-photo.png'),
+
+                    // Check-In - Lokasi
+                    Tables\Columns\IconColumn::make('location_checkin')
+                        ->label('Lokasi')
+                        ->getStateUsing(fn ($record) => !is_null($record->latitude_absen_masuk))
+                        ->boolean()
+                        ->icon(fn ($state) => $state ? 'heroicon-s-map-pin' : 'heroicon-s-x-mark')
+                        ->color(fn ($state) => $state ? 'success' : 'gray'),
+                ]),
+
+                // === CHECK-IN KE-2 GROUP (Hanya untuk Dinas Luar) ===
+                Tables\Columns\ColumnGroup::make('Check-In Ke-2', [
+                    // Check-In Ke-2 - Jam
+                    Tables\Columns\TextColumn::make('absen_siang')
+                        ->label('Jam')
+                        ->time('H:i')
+                        ->weight(FontWeight::Medium)
+                        ->placeholder('-')
+                        ->color('warning'),
+
+                    // Check-In Ke-2 - Foto & Jam
+                    Tables\Columns\ImageColumn::make('picture_absen_siang_url')
+                        ->label('Foto')
+                        ->height(40)
+                        ->width(40)
+                        ->circular()
+                        ->defaultImageUrl('/images/no-photo.png'),
+
+                    // Check-In Ke-2 - Lokasi & Jarak
+                    Tables\Columns\IconColumn::make('location_siang')
+                        ->label('Lokasi')
+                        ->getStateUsing(fn ($record) => !is_null($record->latitude_absen_siang))
+                        ->boolean()
+                        ->icon(fn ($state) => $state ? 'heroicon-s-map-pin' : 'heroicon-s-x-mark')
+                        ->color(fn ($state) => $state ? 'warning' : 'gray'),
+                ])->visibleFrom('md'), // Hide on mobile for better responsive
+
+                // === CHECK-OUT GROUP ===
+                Tables\Columns\ColumnGroup::make('Check-Out', [
+                    // Check-Out - Jam Pulang
+                    Tables\Columns\TextColumn::make('check_out')
+                        ->label('Jam Pulang')
+                        ->time('H:i')
+                        ->weight(FontWeight::Medium)
+                        ->placeholder('-')
+                        ->color('danger'),
+
+                    // Check-Out - Foto & Jam
+                    Tables\Columns\ImageColumn::make('picture_absen_pulang_url')
+                        ->label('Foto')
+                        ->height(40)
+                        ->width(40)
+                        ->circular()
+                        ->defaultImageUrl('/images/no-photo.png'),
+
+                    // Check-Out - Lokasi & Jarak
+                    Tables\Columns\IconColumn::make('location_checkout')
+                        ->label('Lokasi')
+                        ->getStateUsing(fn ($record) => !is_null($record->latitude_absen_pulang))
+                        ->boolean()
+                        ->icon(fn ($state) => $state ? 'heroicon-s-map-pin' : 'heroicon-s-x-mark')
+                        ->color(fn ($state) => $state ? 'danger' : 'gray'),
+                ]),
+
+                // === STATUS GROUP ===
+                // Tipe Absensi
+                Tables\Columns\TextColumn::make('attendance_type')
+                    ->label('Tipe')
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'WFO' => 'success',
+                        'Dinas Luar' => 'info',
+                        default => 'gray',
                     }),
 
-                Tables\Columns\TextColumn::make('absen_siang_formatted')
-                    ->label('Absen Siang')
-                    ->getStateUsing(function (?Attendance $record): string {
-                        if (!$record || $record->attendance_type === 'WFO') {
-                            return 'Tidak Perlu';
-                        }
-                        return $record->absen_siang_formatted;
-                    })
-                    ->color(fn (?Attendance $record): string =>
-                        !$record || $record->attendance_type === 'WFO' ? 'gray' : 'primary'
-                    )
-                    ->toggleable(isToggledHiddenByDefault: true),
-
-                Tables\Columns\TextColumn::make('check_out_formatted')
-                    ->label('Check Out')
-                    ->sortable(query: function (Builder $query, string $direction): Builder {
-                        return $query->orderBy('check_out', $direction);
-                    }),
-
+                // Durasi Kerja
                 Tables\Columns\TextColumn::make('durasi_kerja')
-                    ->label('Durasi Kerja'),
+                    ->label('Durasi')
+                    ->badge()
+                    ->color('primary'),
 
-                Tables\Columns\TextColumn::make('overtime_formatted')
-                    ->label('Lembur')
-                    ->toggleable(isToggledHiddenByDefault: true),
-
+                // Status Kehadiran
                 Tables\Columns\TextColumn::make('status_kehadiran')
                     ->label('Status')
                     ->badge()
-                    ->color(fn (string $state): string => match($state) {
+                    ->color(fn (string $state): string => match ($state) {
                         'Tepat Waktu' => 'success',
                         'Terlambat' => 'warning',
                         'Tidak Hadir' => 'danger',
-                        default => 'gray'
+                        'Tidak Absensi' => 'danger',
+                        default => 'gray',
                     }),
 
+                // Toggleable columns untuk detail tambahan
                 Tables\Columns\TextColumn::make('keterlambatan_detail')
-                    ->label('Detail')
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->label('Detail Keterlambatan')
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->wrap(),
 
-                Tables\Columns\TextColumn::make('jam_masuk_standar')
-                    ->label('Jam Masuk Std')
+                Tables\Columns\TextColumn::make('overtime_formatted')
+                    ->label('Lembur')
                     ->toggleable(isToggledHiddenByDefault: true),
 
                 Tables\Columns\BadgeColumn::make('kelengkapan_status')
@@ -327,82 +407,6 @@ class AttendanceResource extends Resource
                         'warning' => fn (?Attendance $record): bool =>
                             $record && $record->kelengkapan_absensi['status'] === 'Belum Lengkap',
                     ])
-                    ->toggleable(isToggledHiddenByDefault: true),
-
-                Tables\Columns\TextColumn::make('absensi_requirement')
-                    ->label('Requirement')
-                    ->toggleable(isToggledHiddenByDefault: true)
-                    ->wrap(),
-
-                Tables\Columns\TextColumn::make('attendance_type')
-                    ->label('Tipe')
-                    ->badge()
-                    ->color(fn (string $state): string => match($state) {
-                        'WFO' => 'primary',
-                        'Dinas Luar' => 'warning',
-                        default => 'gray'
-                    }),
-
-                Tables\Columns\ImageColumn::make('picture_absen_masuk_url')
-                    ->label('Foto Masuk')
-                    ->height(40)
-                    ->width(40)
-                    ->circular()
-                    ->toggleable()
-                    ->tooltip('Foto Check In'),
-
-                Tables\Columns\ImageColumn::make('picture_absen_siang_url')
-                    ->label('Foto Siang')
-                    ->height(40)
-                    ->width(40)
-                    ->circular()
-                    ->toggleable()
-                    ->tooltip('Foto Absen Siang')
-                    ->visible(fn (?Attendance $record): bool => $record && $record->attendance_type === 'Dinas Luar'),
-
-                Tables\Columns\ImageColumn::make('picture_absen_pulang_url')
-                    ->label('Foto Pulang')
-                    ->height(40)
-                    ->width(40)
-                    ->circular()
-                    ->toggleable()
-                    ->tooltip('Foto Check Out'),
-
-                Tables\Columns\TextColumn::make('lokasi_info')
-                    ->label('Info Lokasi')
-                    ->getStateUsing(function (?Attendance $record): string {
-                        if (!$record) return '-';
-
-                        if ($record->attendance_type === 'WFO') {
-                            $office = $record->officeSchedule?->office;
-                            if ($office && $record->latitude_absen_masuk && $record->longitude_absen_masuk) {
-                                $distance = self::calculateDistance(
-                                    $office->latitude,
-                                    $office->longitude,
-                                    $record->latitude_absen_masuk,
-                                    $record->longitude_absen_masuk
-                                );
-                                return "Kantor ({$distance}m dari pusat)";
-                            }
-                            return 'Kantor (lokasi tersedia)';
-                        } else {
-                            $locations = [];
-                            if ($record->latitude_absen_masuk) $locations[] = 'Check In';
-                            if ($record->latitude_absen_siang) $locations[] = 'Siang';
-                            if ($record->latitude_absen_pulang) $locations[] = 'Check Out';
-
-                            return 'Dinas Luar (' . implode(', ', $locations) . ')';
-                        }
-                    })
-                    ->color(fn (?Attendance $record): string =>
-                        !$record ? 'gray' : ($record->attendance_type === 'WFO' ? 'primary' : 'warning')
-                    )
-                    ->toggleable(isToggledHiddenByDefault: true),
-
-                Tables\Columns\TextColumn::make('created_at')
-                    ->label('Dibuat Pada')
-                    ->dateTime()
-                    ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([

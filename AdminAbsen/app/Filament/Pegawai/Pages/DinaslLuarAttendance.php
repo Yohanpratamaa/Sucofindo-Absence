@@ -471,7 +471,7 @@ class DinaslLuarAttendance extends Page implements HasForms
         } elseif ($this->canCheckOut) {
             return 'sore';
         }
-        
+
         return null;
     }
 
@@ -481,7 +481,7 @@ class DinaslLuarAttendance extends Page implements HasForms
     public function getActionTitle(): string
     {
         $currentAction = $this->getCurrentAction();
-        
+
         return match($currentAction) {
             'pagi' => 'Absensi Pagi - Dinas Luar',
             'siang' => 'Absensi Siang - Dinas Luar',
@@ -497,7 +497,7 @@ class DinaslLuarAttendance extends Page implements HasForms
     {
         $this->loadTodayAttendance();
         $this->calculateAttendanceStatus();
-        
+
         return [
             'canCheckInPagi' => $this->canCheckInPagi,
             'canCheckInSiang' => $this->canCheckInSiang,

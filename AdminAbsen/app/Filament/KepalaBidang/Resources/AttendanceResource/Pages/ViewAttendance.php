@@ -59,20 +59,20 @@ class ViewAttendance extends ViewRecord
                         Infolists\Components\Grid::make(3)
                             ->schema([
                                 Infolists\Components\TextEntry::make('check_in_formatted')
-                                    ->label('🌅 Check In')
+                                    ->label('Check In')
                                     ->placeholder('Belum absen masuk')
                                     ->badge()
                                     ->color('success'),
 
                                 Infolists\Components\TextEntry::make('absen_siang_formatted')
-                                    ->label('☀️ Absen Siang')
+                                    ->label('Absen Siang')
                                     ->placeholder('Tidak perlu / Belum absen')
                                     ->badge()
                                     ->color('warning')
                                     ->visible(fn ($record) => $record->attendance_type === 'Dinas Luar'),
 
                                 Infolists\Components\TextEntry::make('check_out_formatted')
-                                    ->label('🌇 Check Out')
+                                    ->label('Check Out')
                                     ->placeholder('Belum absen keluar')
                                     ->badge()
                                     ->color('danger'),
@@ -81,13 +81,13 @@ class ViewAttendance extends ViewRecord
                         Infolists\Components\Grid::make(2)
                             ->schema([
                                 Infolists\Components\TextEntry::make('durasi_kerja')
-                                    ->label('⏱️ Durasi Kerja')
+                                    ->label('Durasi Kerja')
                                     ->placeholder('Belum selesai')
                                     ->badge()
                                     ->color('info'),
 
                                 Infolists\Components\TextEntry::make('overtime_formatted')
-                                    ->label('⚡ Lembur')
+                                    ->label('Lembur')
                                     ->placeholder('Tidak ada lembur')
                                     ->badge()
                                     ->color('purple'),
@@ -99,7 +99,7 @@ class ViewAttendance extends ViewRecord
                         Infolists\Components\Grid::make(2)
                             ->schema([
                                 Infolists\Components\TextEntry::make('status_kehadiran')
-                                    ->label('📊 Status Kehadiran')
+                                    ->label('Status Kehadiran')
                                     ->badge()
                                     ->color(fn (string $state): string => match($state) {
                                         'Tepat Waktu' => 'success',
@@ -109,7 +109,7 @@ class ViewAttendance extends ViewRecord
                                     }),
 
                                 Infolists\Components\TextEntry::make('attendance_type')
-                                    ->label('🏢 Tipe Absensi')
+                                    ->label('Tipe Absensi')
                                     ->badge()
                                     ->color(fn (string $state): string => match($state) {
                                         'WFO' => 'primary',
@@ -119,12 +119,12 @@ class ViewAttendance extends ViewRecord
                             ]),
 
                         Infolists\Components\TextEntry::make('keterlambatan_detail')
-                            ->label('📝 Detail Keterlambatan')
+                            ->label('Detail Keterlambatan')
                             ->placeholder('Tidak ada keterlambatan')
                             ->columnSpanFull(),
 
                         Infolists\Components\TextEntry::make('kelengkapan_status')
-                            ->label('✅ Status Kelengkapan Absensi')
+                            ->label('Status Kelengkapan Absensi')
                             ->formatStateUsing(function ($record): string {
                                 $kelengkapan = $record->kelengkapan_absensi;
                                 return "{$kelengkapan['completed']}/{$kelengkapan['total']} - {$kelengkapan['status']}";
@@ -138,68 +138,62 @@ class ViewAttendance extends ViewRecord
                     ]),
 
                 Infolists\Components\Section::make('Foto Absensi')
+                    ->icon('heroicon-m-camera')
                     ->schema([
                         Infolists\Components\Grid::make(3)
                             ->schema([
-                                Infolists\Components\ImageEntry::make('picture_absen_masuk')
-                                    ->label('📸 Foto Check In')
-                                    ->disk('public')
+                                Infolists\Components\ImageEntry::make('picture_absen_masuk_url')
+                                    ->label('Foto Check In')
                                     ->height(200)
                                     ->width(200)
-                                    ->visible(fn ($record) => !empty($record->picture_absen_masuk)),
+                                    ->placeholder('Tidak ada foto'),
 
-                                Infolists\Components\ImageEntry::make('picture_absen_siang')
-                                    ->label('📸 Foto Absen Siang')
-                                    ->disk('public')
+                                Infolists\Components\ImageEntry::make('picture_absen_siang_url')
+                                    ->label('Foto Absen Siang')
                                     ->height(200)
                                     ->width(200)
-                                    ->visible(fn ($record) => !empty($record->picture_absen_siang) && $record->attendance_type === 'Dinas Luar'),
+                                    ->placeholder('Tidak ada foto')
+                                    ->visible(fn ($record) => $record->attendance_type === 'Dinas Luar'),
 
-                                Infolists\Components\ImageEntry::make('picture_absen_pulang')
-                                    ->label('📸 Foto Check Out')
-                                    ->disk('public')
+                                Infolists\Components\ImageEntry::make('picture_absen_pulang_url')
+                                    ->label('Foto Check Out')
                                     ->height(200)
                                     ->width(200)
-                                    ->visible(fn ($record) => !empty($record->picture_absen_pulang)),
+                                    ->placeholder('Tidak ada foto'),
                             ]),
-                    ])
-                    ->visible(fn ($record) =>
-                        !empty($record->picture_absen_masuk) ||
-                        !empty($record->picture_absen_siang) ||
-                        !empty($record->picture_absen_pulang)
-                    ),
+                    ]),
 
                 Infolists\Components\Section::make('Informasi Lokasi')
                     ->schema([
                         Infolists\Components\Grid::make(2)
                             ->schema([
                                 Infolists\Components\TextEntry::make('latitude_absen_masuk')
-                                    ->label('📍 Latitude Check In')
+                                    ->label('Latitude Check In')
                                     ->placeholder('Lokasi tidak tersedia')
                                     ->visible(fn ($record) => !empty($record->latitude_absen_masuk)),
 
                                 Infolists\Components\TextEntry::make('longitude_absen_masuk')
-                                    ->label('📍 Longitude Check In')
+                                    ->label('Longitude Check In')
                                     ->placeholder('Lokasi tidak tersedia')
                                     ->visible(fn ($record) => !empty($record->longitude_absen_masuk)),
 
                                 Infolists\Components\TextEntry::make('latitude_absen_siang')
-                                    ->label('📍 Latitude Absen Siang')
+                                    ->label('Latitude Absen Siang')
                                     ->placeholder('Lokasi tidak tersedia')
                                     ->visible(fn ($record) => !empty($record->latitude_absen_siang) && $record->attendance_type === 'Dinas Luar'),
 
                                 Infolists\Components\TextEntry::make('longitude_absen_siang')
-                                    ->label('📍 Longitude Absen Siang')
+                                    ->label('Longitude Absen Siang')
                                     ->placeholder('Lokasi tidak tersedia')
                                     ->visible(fn ($record) => !empty($record->longitude_absen_siang) && $record->attendance_type === 'Dinas Luar'),
 
                                 Infolists\Components\TextEntry::make('latitude_absen_pulang')
-                                    ->label('📍 Latitude Check Out')
+                                    ->label('Latitude Check Out')
                                     ->placeholder('Lokasi tidak tersedia')
                                     ->visible(fn ($record) => !empty($record->latitude_absen_pulang)),
 
                                 Infolists\Components\TextEntry::make('longitude_absen_pulang')
-                                    ->label('📍 Longitude Check Out')
+                                    ->label('Longitude Check Out')
                                     ->placeholder('Lokasi tidak tersedia')
                                     ->visible(fn ($record) => !empty($record->longitude_absen_pulang)),
                             ]),
@@ -215,20 +209,20 @@ class ViewAttendance extends ViewRecord
                         Infolists\Components\Grid::make(2)
                             ->schema([
                                 Infolists\Components\TextEntry::make('jam_masuk_standar')
-                                    ->label('⏰ Jam Masuk Standar')
+                                    ->label('Jam Masuk Standar')
                                     ->placeholder('Tidak ada jadwal')
                                     ->badge()
                                     ->color('gray'),
 
                                 Infolists\Components\TextEntry::make('jam_keluar_standar')
-                                    ->label('⏰ Jam Keluar Standar')
+                                    ->label('Jam Keluar Standar')
                                     ->placeholder('Tidak ada jadwal')
                                     ->badge()
                                     ->color('gray'),
                             ]),
 
                         Infolists\Components\TextEntry::make('absensi_requirement')
-                            ->label('📋 Requirement Absensi')
+                            ->label('Requirement Absensi')
                             ->placeholder('Tidak ada requirement khusus')
                             ->columnSpanFull(),
                     ]),
@@ -238,11 +232,11 @@ class ViewAttendance extends ViewRecord
                         Infolists\Components\Grid::make(2)
                             ->schema([
                                 Infolists\Components\TextEntry::make('created_at')
-                                    ->label('📅 Dibuat Pada')
+                                    ->label('Dibuat Pada')
                                     ->dateTime('d M Y, H:i:s'),
 
                                 Infolists\Components\TextEntry::make('updated_at')
-                                    ->label('📝 Diupdate Pada')
+                                    ->label('Diupdate Pada')
                                     ->dateTime('d M Y, H:i:s'),
                             ]),
                     ])
