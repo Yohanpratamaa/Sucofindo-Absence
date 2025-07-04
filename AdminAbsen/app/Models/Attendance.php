@@ -454,17 +454,29 @@ class Attendance extends Model
             return asset('images/no-image.png');
         }
 
-        // Check if file exists
-        if (Storage::disk('public')->exists($this->picture_absen_masuk)) {
-            // Use current domain for proper URL generation
-            return url('storage/' . $this->picture_absen_masuk);
+        // First try to check if file exists using Storage facade
+        $fileExists = false;
+        try {
+            $fileExists = Storage::disk('public')->exists($this->picture_absen_masuk);
+        } catch (\Exception $e) {
+            // If Storage check fails, try direct file check
+            $fullPath = storage_path('app/public/' . $this->picture_absen_masuk);
+            $fileExists = file_exists($fullPath);
         }
 
-        // Log missing file
+        if ($fileExists) {
+            // Use asset URL for Railway compatibility
+            $baseUrl = config('app.asset_url') ?: config('app.url');
+            return $baseUrl . '/storage/' . $this->picture_absen_masuk;
+        }
+
+        // Log missing file for debugging
         Log::warning('Attendance image missing', [
             'id' => $this->id,
             'path' => $this->picture_absen_masuk,
-            'field' => 'picture_absen_masuk'
+            'field' => 'picture_absen_masuk',
+            'storage_path' => storage_path('app/public/' . $this->picture_absen_masuk),
+            'symlink_exists' => is_link(public_path('storage'))
         ]);
 
         return asset('images/no-image.png');
@@ -477,17 +489,29 @@ class Attendance extends Model
             return asset('images/no-image.png');
         }
 
-        // Check if file exists
-        if (Storage::disk('public')->exists($this->picture_absen_pulang)) {
-            // Use current domain for proper URL generation
-            return url('storage/' . $this->picture_absen_pulang);
+        // First try to check if file exists using Storage facade
+        $fileExists = false;
+        try {
+            $fileExists = Storage::disk('public')->exists($this->picture_absen_pulang);
+        } catch (\Exception $e) {
+            // If Storage check fails, try direct file check
+            $fullPath = storage_path('app/public/' . $this->picture_absen_pulang);
+            $fileExists = file_exists($fullPath);
         }
 
-        // Log missing file
+        if ($fileExists) {
+            // Use asset URL for Railway compatibility
+            $baseUrl = config('app.asset_url') ?: config('app.url');
+            return $baseUrl . '/storage/' . $this->picture_absen_pulang;
+        }
+
+        // Log missing file for debugging
         Log::warning('Attendance image missing', [
             'id' => $this->id,
             'path' => $this->picture_absen_pulang,
-            'field' => 'picture_absen_pulang'
+            'field' => 'picture_absen_pulang',
+            'storage_path' => storage_path('app/public/' . $this->picture_absen_pulang),
+            'symlink_exists' => is_link(public_path('storage'))
         ]);
 
         return asset('images/no-image.png');
@@ -500,17 +524,29 @@ class Attendance extends Model
             return asset('images/no-image.png');
         }
 
-        // Check if file exists
-        if (Storage::disk('public')->exists($this->picture_absen_siang)) {
-            // Use current domain for proper URL generation
-            return url('storage/' . $this->picture_absen_siang);
+        // First try to check if file exists using Storage facade
+        $fileExists = false;
+        try {
+            $fileExists = Storage::disk('public')->exists($this->picture_absen_siang);
+        } catch (\Exception $e) {
+            // If Storage check fails, try direct file check
+            $fullPath = storage_path('app/public/' . $this->picture_absen_siang);
+            $fileExists = file_exists($fullPath);
         }
 
-        // Log missing file
+        if ($fileExists) {
+            // Use asset URL for Railway compatibility
+            $baseUrl = config('app.asset_url') ?: config('app.url');
+            return $baseUrl . '/storage/' . $this->picture_absen_siang;
+        }
+
+        // Log missing file for debugging
         Log::warning('Attendance image missing', [
             'id' => $this->id,
             'path' => $this->picture_absen_siang,
-            'field' => 'picture_absen_siang'
+            'field' => 'picture_absen_siang',
+            'storage_path' => storage_path('app/public/' . $this->picture_absen_siang),
+            'symlink_exists' => is_link(public_path('storage'))
         ]);
 
         return asset('images/no-image.png');

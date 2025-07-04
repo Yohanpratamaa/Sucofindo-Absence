@@ -51,6 +51,7 @@ mkdir -p storage/app/public/uploads
 mkdir -p storage/app/public/images
 mkdir -p storage/app/public/avatars
 mkdir -p storage/app/public/documents
+mkdir -p storage/app/public/attendance
 chmod -R 775 storage/app/public
 
 # Create storage link - will be recreated in start.sh for Railway
