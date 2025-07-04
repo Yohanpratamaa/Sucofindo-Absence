@@ -46,14 +46,38 @@ class OvertimeApprovalResource extends Resource
         return $form
             ->schema([
                 Forms\Components\Section::make('Detail Penugasan Lembur')
-                    ->description('Assign lembur untuk pegawai di luar jam kerja reguler. Lembur yang di-assign kepala bidang akan langsung disetujui otomatis.')
+                    ->description('Lembur yang di-assign oleh kepala bidang akan langsung disetujui otomatis')
                     ->schema([
                         Forms\Components\Grid::make(2)
                             ->schema([
-                                Forms\Components\TextInput::make('overtime_id')
-                                    ->label('ID Lembur')
+                                Forms\Components\Select::make('user_id')
+                                    ->label('Pegawai')
+                                    ->relationship('user', 'nama')
+                                    ->searchable()
+                                    ->preload()
                                     ->required()
-                                    ->unique(ignoreRecord: true)
+                                    ->options(function () {
+                                        return Pegawai::where('role_user', 'employee')
+                                            ->where('status', 'active')
+                                            ->pluck('nama', 'id');
+                                    }),
+
+                                Forms\Components\Textarea::make('keterangan')
+                                    ->label('Keterangan Lembur')
+                                    ->required()
+                                    ->rows(3)
+                                    ->placeholder('Jelaskan detail pekerjaan yang akan dikerjakan dalam lembur ini')
+                                    ->columnSpanFull(),
+
+                                Forms\Components\DateTimePicker::make('assigned_at')
+                                    ->label('Waktu Penugasan')
+                                    ->default(now())
+                                    ->required(),
+
+                                Forms\Components\Hidden::make('assigned_by')
+                                    ->default(fn () => Auth::id()),
+
+                                Forms\Components\Hidden::make('overtime_id')
                                     ->default(function () {
                                         // Auto-generate overtime ID dengan format: OT-YYYYMMDD-XXXX
                                         $date = now()->format('Ymd');
@@ -63,130 +87,34 @@ class OvertimeApprovalResource extends Resource
 
                                         $sequence = $lastRecord ? (int)substr($lastRecord->overtime_id, -4) + 1 : 1;
                                         return 'OT-' . $date . '-' . str_pad($sequence, 4, '0', STR_PAD_LEFT);
-                                    })
-                                    ->readOnly()
-                                    ->dehydrated()
-                                    ->helperText('ID otomatis dibuat oleh sistem')
-                                    ->columnSpan(1),
-
-                                Forms\Components\Select::make('user_id')
-                                    ->label('Pilih Pegawai')
-                                    ->options(function () {
-                                        return Pegawai::where('role_user', 'employee')
-                                            ->where('status', 'active')
-                                            ->pluck('nama', 'id');
-                                    })
-                                    ->searchable()
-                                    ->preload()
-                                    ->required()
-                                    ->placeholder('Pilih pegawai yang akan ditugaskan lembur')
-                                    ->columnSpan(1),
-
-                                Forms\Components\DatePicker::make('tanggal_lembur')
-                                    ->label('Tanggal Lembur')
-                                    ->required()
-                                    ->default(now())
-                                    ->reactive()
-                                    ->columnSpan(1),
-
-                                Forms\Components\TimePicker::make('jam_mulai')
-                                    ->label('Jam Mulai')
-                                    ->required()
-                                    ->default('17:00')
-                                    ->seconds(false)
-                                    ->reactive()
-                                    ->afterStateUpdated(function ($state, callable $get, callable $set) {
-                                        $jamSelesai = $get('jam_selesai');
-                                        if ($state && $jamSelesai) {
-                                            $totalJam = \App\Models\OvertimeAssignment::calculateTotalJam($state, $jamSelesai);
-                                            $set('total_jam', $totalJam);
-                                        }
-                                    })
-                                    ->columnSpan(1),
-
-                                Forms\Components\TimePicker::make('jam_selesai')
-                                    ->label('Jam Selesai')
-                                    ->required()
-                                    ->default('20:00')
-                                    ->seconds(false)
-                                    ->reactive()
-                                    ->afterStateUpdated(function ($state, callable $get, callable $set) {
-                                        $jamMulai = $get('jam_mulai');
-                                        if ($state && $jamMulai) {
-                                            $totalJam = \App\Models\OvertimeAssignment::calculateTotalJam($jamMulai, $state);
-                                            $set('total_jam', $totalJam);
-                                        }
-                                    })
-                                    ->columnSpan(1),
-
-                                Forms\Components\TextInput::make('total_jam')
-                                    ->label('Total Jam Lembur')
-                                    ->readOnly()
-                                    ->dehydrated()
-                                    ->formatStateUsing(function ($state) {
-                                        if (!$state) return '0 jam 0 menit';
-
-                                        $hours = floor($state / 60);
-                                        $minutes = $state % 60;
-
-                                        if ($hours > 0 && $minutes > 0) {
-                                            return "{$hours} jam {$minutes} menit";
-                                        } elseif ($hours > 0) {
-                                            return "{$hours} jam";
-                                        } else {
-                                            return "{$minutes} menit";
-                                        }
-                                    })
-                                    ->helperText('Dihitung otomatis berdasarkan jam mulai dan selesai')
-                                    ->columnSpanFull(),
-
-                                Forms\Components\DateTimePicker::make('assigned_at')
-                                    ->label('Waktu Penugasan')
-                                    ->required()
-                                    ->default(now())
-                                    ->readOnly()
-                                    ->dehydrated()
-                                    ->helperText('Waktu saat penugasan dibuat')
-                                    ->columnSpan(1),
-
-                                Forms\Components\Textarea::make('keterangan')
-                                    ->label('Keterangan Lembur')
-                                    ->required()
-                                    ->rows(4)
-                                    ->placeholder('Jelaskan alasan dan deskripsi pekerjaan lembur yang akan ditugaskan kepada pegawai...')
-                                    ->columnSpanFull(),
-
-                                Forms\Components\Hidden::make('assigned_by')
-                                    ->default(fn () => Auth::id()),
+                                    }),
 
                                 Forms\Components\Hidden::make('status')
-                                    ->default('Accepted'), // Kepala bidang assign langsung approved
+                                    ->default('Accepted'), // Langsung disetujui karena kepala bidang yang assign
 
                                 Forms\Components\Hidden::make('approved_by')
-                                    ->default(fn () => Auth::id()),
+                                    ->default(fn () => Auth::id()), // Kepala bidang yang assign sekaligus approve
 
                                 Forms\Components\Hidden::make('approved_at')
-                                    ->default(fn () => now()),
+                                    ->default(fn () => now()), // Set waktu approval saat ini
                             ]),
                     ]),
 
                 Forms\Components\Section::make('Status Persetujuan')
-                    ->description('Karena Anda sebagai kepala bidang yang menugaskan, lembur ini akan langsung disetujui otomatis.')
                     ->schema([
                         Forms\Components\Grid::make(2)
                             ->schema([
-                                Forms\Components\Placeholder::make('status_info')
-                                    ->label('Status')
-                                    ->content('Disetujui Otomatis')
-                                    ->columnSpan(1),
-
-                                Forms\Components\Placeholder::make('approved_info')
+                                Forms\Components\Select::make('approved_by')
                                     ->label('Disetujui Oleh')
-                                    ->content(fn () => Auth::user()->nama ?? 'Kepala Bidang')
-                                    ->columnSpan(1),
+                                    ->relationship('approvedBy', 'nama')
+                                    ->disabled(),
+
+                                Forms\Components\DateTimePicker::make('approved_at')
+                                    ->label('Waktu Persetujuan')
+                                    ->disabled(),
                             ]),
                     ])
-                    ->visible(fn ($livewire) => $livewire instanceof \Filament\Resources\Pages\CreateRecord),
+                    ->visible(fn ($record) => $record && !is_null($record->approved_by)),
             ]);
     }
 
@@ -209,6 +137,12 @@ class OvertimeApprovalResource extends Resource
                     ->sortable()
                     ->badge()
                     ->color('primary'),
+
+                Tables\Columns\TextColumn::make('hari_lembur')
+                    ->label('Hari')
+                    ->badge()
+                    ->color('info')
+                    ->toggleable(),
 
                 Tables\Columns\TextColumn::make('tanggal_lembur')
                     ->label('Tanggal')

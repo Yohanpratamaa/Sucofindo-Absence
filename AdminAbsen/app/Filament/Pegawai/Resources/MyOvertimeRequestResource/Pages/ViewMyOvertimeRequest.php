@@ -71,8 +71,13 @@ class ViewMyOvertimeRequest extends ViewRecord
 
                 Infolists\Components\Section::make('Jadwal Lembur')
                     ->schema([
-                        Infolists\Components\Grid::make(2)
+                        Infolists\Components\Grid::make(3)
                             ->schema([
+                                Infolists\Components\TextEntry::make('hari_lembur')
+                                    ->label('Hari')
+                                    ->badge()
+                                    ->color('info'),
+
                                 Infolists\Components\TextEntry::make('tanggal_lembur')
                                     ->label('Tanggal')
                                     ->date('d M Y')

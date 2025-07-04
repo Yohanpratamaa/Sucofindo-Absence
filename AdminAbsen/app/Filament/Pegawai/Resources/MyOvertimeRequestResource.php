@@ -63,15 +63,36 @@ class MyOvertimeRequestResource extends Resource
                                         $sequence = $lastRecord ? (int)substr($lastRecord->overtime_id, -4) + 1 : 1;
                                         return 'OT-' . $date . '-' . str_pad($sequence, 4, '0', STR_PAD_LEFT);
                                     })
-                                    ->readOnly()
-                                    ->dehydrated()
+                                    ->disabled()
                                     ->helperText('ID otomatis dibuat oleh sistem')
+                                    ->columnSpan(1),
+
+                                Forms\Components\Select::make('hari_lembur')
+                                    ->label('Hari Lembur')
+                                    ->options([
+                                        'Senin' => 'Senin',
+                                        'Selasa' => 'Selasa',
+                                        'Rabu' => 'Rabu',
+                                        'Kamis' => 'Kamis',
+                                        'Jumat' => 'Jumat',
+                                        'Sabtu' => 'Sabtu',
+                                        'Minggu' => 'Minggu',
+                                    ])
+                                    ->required()
+                                    ->reactive()
                                     ->columnSpan(1),
 
                                 Forms\Components\DatePicker::make('tanggal_lembur')
                                     ->label('Tanggal Lembur')
                                     ->required()
                                     ->default(now())
+                                    ->reactive()
+                                    ->afterStateUpdated(function ($state, callable $set) {
+                                        if ($state) {
+                                            $dayName = \Carbon\Carbon::parse($state)->locale('id')->dayName;
+                                            $set('hari_lembur', ucfirst($dayName));
+                                        }
+                                    })
                                     ->columnSpan(1),
 
                                 Forms\Components\TimePicker::make('jam_mulai')
@@ -134,22 +155,8 @@ class MyOvertimeRequestResource extends Resource
 
                                 Forms\Components\TextInput::make('total_jam_display')
                                     ->label('Total Jam Lembur')
-                                    ->readOnly()
-                                    ->dehydrated()
-                                    ->formatStateUsing(function ($state) {
-                                        if (!$state) return '0 jam 0 menit';
-
-                                        $hours = floor($state / 60);
-                                        $minutes = $state % 60;
-
-                                        if ($hours > 0 && $minutes > 0) {
-                                            return "{$hours} jam {$minutes} menit";
-                                        } elseif ($hours > 0) {
-                                            return "{$hours} jam";
-                                        } else {
-                                            return "{$minutes} menit";
-                                        }
-                                    })
+                                    ->disabled()
+                                    ->default('0 menit')
                                     ->helperText('Dihitung otomatis berdasarkan jam mulai dan selesai')
                                     ->columnSpan(1),
 
@@ -158,9 +165,13 @@ class MyOvertimeRequestResource extends Resource
                                 Forms\Components\DateTimePicker::make('assigned_at')
                                     ->label('Waktu Pengajuan')
                                     ->required()
-                                    ->default(now())
-                                    ->readOnly()
-                                    ->dehydrated()
+                                    ->default(function () {
+                                        // Get current time in Indonesia timezone (WIB = UTC+7)
+                                        return \Carbon\Carbon::now('Asia/Jakarta');
+                                    })
+                                    ->timezone('Asia/Jakarta')
+                                    ->displayFormat('d/m/Y H:i:s')
+                                    ->disabled()
                                     ->helperText('Waktu saat pengajuan dibuat')
                                     ->columnSpan(1),
 
@@ -194,6 +205,11 @@ class MyOvertimeRequestResource extends Resource
                     ->sortable()
                     ->badge()
                     ->color('primary'),
+
+                Tables\Columns\TextColumn::make('hari_lembur')
+                    ->label('Hari')
+                    ->badge()
+                    ->color('info'),
 
                 Tables\Columns\TextColumn::make('tanggal_lembur')
                     ->label('Tanggal')
@@ -278,6 +294,18 @@ class MyOvertimeRequestResource extends Resource
                         'Assigned' => 'Menunggu Persetujuan',
                         'Accepted' => 'Disetujui',
                         'Rejected' => 'Ditolak',
+                    ]),
+
+                Tables\Filters\SelectFilter::make('hari_lembur')
+                    ->label('Hari Lembur')
+                    ->options([
+                        'Senin' => 'Senin',
+                        'Selasa' => 'Selasa',
+                        'Rabu' => 'Rabu',
+                        'Kamis' => 'Kamis',
+                        'Jumat' => 'Jumat',
+                        'Sabtu' => 'Sabtu',
+                        'Minggu' => 'Minggu',
                     ]),
 
                 Tables\Filters\Filter::make('bulan_ini')

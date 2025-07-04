@@ -21,6 +21,7 @@ class OvertimeAssignment extends Model
         'assign_by',
         'status',
         'keterangan',
+        'hari_lembur',
         'tanggal_lembur',
         'jam_mulai',
         'jam_selesai',
@@ -95,9 +96,7 @@ class OvertimeAssignment extends Model
     // Accessor untuk format total jam lembur
     public function getTotalJamFormattedAttribute()
     {
-        if (!$this->total_jam) {
-            return '0 jam 0 menit';
-        }
+        if (!$this->total_jam) return '-';
 
         $hours = floor($this->total_jam / 60);
         $minutes = $this->total_jam % 60;
@@ -122,7 +121,7 @@ class OvertimeAssignment extends Model
         $jamMulai = $this->jam_mulai->format('H:i');
         $jamSelesai = $this->jam_selesai->format('H:i');
 
-        return "{$tanggal} ({$jamMulai} - {$jamSelesai})";
+        return "{$this->hari_lembur}, {$tanggal} ({$jamMulai} - {$jamSelesai})";
     }
 
     // Method untuk menghitung total jam otomatis
