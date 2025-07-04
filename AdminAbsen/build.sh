@@ -10,7 +10,7 @@ composer install --no-dev --optimize-autoloader --no-interaction
 # Clear any existing caches
 echo "🧹 Clearing existing caches..."
 php artisan config:clear
-php artisan route:clear  
+php artisan route:clear
 php artisan view:clear
 php artisan cache:clear
 

@@ -16,7 +16,7 @@ if (!file_exists('.env.production')) {
     $errors[] = "File .env.production tidak ditemukan";
 } else {
     $env = file_get_contents('.env.production');
-    
+
     // Check critical variables
     $required = [
         'APP_NAME' => 'Application name',
@@ -29,18 +29,18 @@ if (!file_exists('.env.production')) {
         'DB_USERNAME' => 'Database username',
         'DB_PASSWORD' => 'Database password',
     ];
-    
+
     foreach ($required as $key => $desc) {
         if (!str_contains($env, $key . '=')) {
             $errors[] = "Missing required environment variable: $key ($desc)";
         }
     }
-    
+
     // Check Filament specific
     if (!str_contains($env, 'FILAMENT_ENABLED=true')) {
         $warnings[] = "FILAMENT_ENABLED tidak diset ke true";
     }
-    
+
     if (!str_contains($env, 'FILAMENT_HTTPS=true')) {
         $warnings[] = "FILAMENT_HTTPS tidak diset ke true (diperlukan untuk production)";
     }
@@ -66,7 +66,7 @@ if (!file_exists('package.json')) {
     if (!isset($package['scripts']['build'])) {
         $errors[] = "Build script tidak ditemukan di package.json";
     }
-    
+
     if (!isset($package['devDependencies']['vite'])) {
         $warnings[] = "Vite tidak ditemukan di devDependencies";
     }
@@ -103,7 +103,7 @@ foreach ($required_dirs as $dir) {
 if (PHP_OS_FAMILY !== 'Windows') {
     echo "🔐 Checking file permissions...\n";
     $writable_dirs = ['storage', 'bootstrap/cache'];
-    
+
     foreach ($writable_dirs as $dir) {
         if (is_dir($dir) && !is_writable($dir)) {
             $warnings[] = "Directory tidak writable: $dir (akan diset otomatis oleh Railway)";
@@ -158,14 +158,14 @@ if (!empty($warnings)) {
 // Deployment readiness
 if (empty($errors)) {
     echo "🚀 STATUS: READY FOR RAILWAY DEPLOYMENT\n\n";
-    
+
     echo "📋 Next Steps:\n";
     echo "1. Push code ke Railway repository\n";
     echo "2. Set environment variables di Railway dashboard\n";
     echo "3. Deploy dan monitor health check\n";
     echo "4. Test Filament admin panel: /admin\n";
     echo "5. Test analytics dashboard: /admin/kepala-bidang/attendance-analytics\n\n";
-    
+
     echo "🌐 Expected URLs:\n";
     echo "• Main: https://sucofindo-absen-production.up.railway.app\n";
     echo "• Admin: https://sucofindo-absen-production.up.railway.app/admin\n";

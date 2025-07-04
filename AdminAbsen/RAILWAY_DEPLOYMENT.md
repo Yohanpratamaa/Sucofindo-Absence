@@ -3,16 +3,18 @@
 ## 📋 Persiapan Deployment
 
 ### 1. **File Konfigurasi yang Telah Disiapkan:**
-- ✅ `.env.production` - Konfigurasi environment production
-- ✅ `railway.toml` - Konfigurasi Railway deployment
-- ✅ `build.sh` - Script build otomatis
-- ✅ `start.sh` - Script startup aplikasi
-- ✅ `.railwayignore` - File yang diabaikan saat deployment
-- ✅ `Dockerfile` - Container configuration (opsional)
+
+-   ✅ `.env.production` - Konfigurasi environment production
+-   ✅ `railway.toml` - Konfigurasi Railway deployment
+-   ✅ `build.sh` - Script build otomatis
+-   ✅ `start.sh` - Script startup aplikasi
+-   ✅ `.railwayignore` - File yang diabaikan saat deployment
+-   ✅ `Dockerfile` - Container configuration (opsional)
 
 ### 2. **Environment Variables yang Sudah Dikonfigurasi:**
 
 #### **Database:**
+
 ```bash
 DB_CONNECTION=mysql
 DB_HOST=shinkansen.proxy.rlwy.net
@@ -23,6 +25,7 @@ DB_PASSWORD=pubDKkZSPsMqfKtMNHvNpTYYsxxhwPhY
 ```
 
 #### **Filament Configuration:**
+
 ```bash
 FILAMENT_ENABLED=true
 FILAMENT_PATH=admin
@@ -31,6 +34,7 @@ FILAMENT_BRAND_NAME="Sucofindo Absen"
 ```
 
 #### **Railway Optimizations:**
+
 ```bash
 RAILWAY_STATIC_URL=https://sucofindo-absen-production.up.railway.app
 FORCE_HTTPS=true
@@ -40,62 +44,72 @@ ASSET_URL=https://sucofindo-absen-production.up.railway.app
 ## 🚀 Proses Deployment
 
 ### 1. **Auto Build Process:**
+
 Railway akan otomatis menjalankan:
-- Install Composer dependencies
-- Install NPM dependencies  
-- Build frontend assets (Vite)
-- Cache Laravel configurations
-- Cache Filament components
-- Optimize untuk production
+
+-   Install Composer dependencies
+-   Install NPM dependencies
+-   Build frontend assets (Vite)
+-   Cache Laravel configurations
+-   Cache Filament components
+-   Optimize untuk production
 
 ### 2. **Health Check:**
-- **Path**: `/admin`
-- **Timeout**: 300 seconds
-- **Restart Policy**: On failure (max 3 retries)
+
+-   **Path**: `/admin`
+-   **Timeout**: 300 seconds
+-   **Restart Policy**: On failure (max 3 retries)
 
 ## 🔧 Akses Aplikasi
 
 ### **URLs:**
-- **Main App**: `https://sucofindo-absen-production.up.railway.app`
-- **Admin Panel**: `https://sucofindo-absen-production.up.railway.app/admin`
-- **Analisis Absensi**: `https://sucofindo-absen-production.up.railway.app/admin/kepala-bidang/attendance-analytics`
+
+-   **Main App**: `https://sucofindo-absen-production.up.railway.app`
+-   **Admin Panel**: `https://sucofindo-absen-production.up.railway.app/admin`
+-   **Analisis Absensi**: `https://sucofindo-absen-production.up.railway.app/admin/kepala-bidang/attendance-analytics`
 
 ## ✅ Fitur yang Dikonfigurasi
 
 ### **Security:**
-- ✅ HTTPS enforcement
-- ✅ Secure cookies
-- ✅ CSRF protection
-- ✅ Trusted proxies
+
+-   ✅ HTTPS enforcement
+-   ✅ Secure cookies
+-   ✅ CSRF protection
+-   ✅ Trusted proxies
 
 ### **Performance:**
-- ✅ Config caching
-- ✅ Route caching
-- ✅ View caching
-- ✅ Filament component caching
-- ✅ Asset optimization
+
+-   ✅ Config caching
+-   ✅ Route caching
+-   ✅ View caching
+-   ✅ Filament component caching
+-   ✅ Asset optimization
 
 ### **Filament Features:**
-- ✅ Dark mode support
-- ✅ Responsive design
-- ✅ Multi-panel (Admin, Kepala Bidang)
-- ✅ Analytics dashboard
-- ✅ Native components
+
+-   ✅ Dark mode support
+-   ✅ Responsive design
+-   ✅ Multi-panel (Admin, Kepala Bidang)
+-   ✅ Analytics dashboard
+-   ✅ Native components
 
 ## 🐛 Troubleshooting
 
 ### **Jika Filament tidak muncul:**
+
 1. Check healthcheck: `/admin`
 2. Verify environment variables
 3. Check logs: `railway logs`
 4. Restart service: `railway redeploy`
 
 ### **Jika database error:**
+
 1. Verify database credentials
 2. Check database connection
 3. Run migrations: `php artisan migrate --force`
 
 ### **Jika assets tidak load:**
+
 1. Check `ASSET_URL` configuration
 2. Verify Vite build process
 3. Check `public/build` directory
@@ -103,16 +117,18 @@ Railway akan otomatis menjalankan:
 ## 📝 Maintenance
 
 ### **Regular Tasks:**
-- Monitor application logs
-- Check database performance
-- Update dependencies (monthly)
-- Backup database (automated via Railway)
+
+-   Monitor application logs
+-   Check database performance
+-   Update dependencies (monthly)
+-   Backup database (automated via Railway)
 
 ### **Updates:**
-- Push to main branch
-- Railway akan otomatis deploy
-- Monitor health check status
-- Verify functionality
+
+-   Push to main branch
+-   Railway akan otomatis deploy
+-   Monitor health check status
+-   Verify functionality
 
 ## 🎯 Next Steps
 
