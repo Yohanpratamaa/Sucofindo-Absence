@@ -150,17 +150,43 @@ class MyAllAttendanceResource extends Resource
                 Tables\Columns\TextColumn::make('attendance_type')
                     ->label('Tipe')
                     ->badge()
-                    ->color(fn (string $state): string => match ($state) {
-                        'WFO' => 'success',
-                        'Dinas Luar' => 'info',
-                        default => 'gray',
+                    ->formatStateUsing(function (string $state, $record): string {
+                        // Jika status "Tidak Absensi", tampilkan "-"
+                        if ($record->status_kehadiran === 'Tidak Absensi') {
+                            return '-';
+                        }
+                        return $state;
+                    })
+                    ->color(function (string $state, $record): string {
+                        // Jika status "Tidak Absensi", warna gray
+                        if ($record->status_kehadiran === 'Tidak Absensi') {
+                            return 'gray';
+                        }
+                        return match ($state) {
+                            'WFO' => 'success',
+                            'Dinas Luar' => 'info',
+                            default => 'gray',
+                        };
                     }),
 
                 // Durasi Kerja
                 Tables\Columns\TextColumn::make('durasi_kerja')
                     ->label('Durasi')
                     ->badge()
-                    ->color('primary'),
+                    ->formatStateUsing(function (string $state, $record): string {
+                        // Jika status "Tidak Absensi", tampilkan "-"
+                        if ($record->status_kehadiran === 'Tidak Absensi') {
+                            return '-';
+                        }
+                        return $state;
+                    })
+                    ->color(function (string $state, $record): string {
+                        // Jika status "Tidak Absensi", warna gray
+                        if ($record->status_kehadiran === 'Tidak Absensi') {
+                            return 'gray';
+                        }
+                        return 'primary';
+                    }),
 
                 // Status Kehadiran
                 Tables\Columns\TextColumn::make('status_kehadiran')

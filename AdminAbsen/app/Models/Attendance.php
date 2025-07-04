@@ -177,14 +177,21 @@ class Attendance extends Model
         return $hours . ' jam ' . $minutes . ' menit';
     }
 
-    // Accessor untuk status kehadiran berdasarkan jadwal kantor
+    /**
+     * Accessor untuk status kehadiran berdasarkan jadwal kantor
+     *
+     * FITUR UTAMA:
+     * - Jika tidak ada check_in sama sekali: "Tidak Absensi"
+     * - Jika check_in pada jam 17:00 atau lebih: "Tidak Absensi"
+     * - Jika check_in sebelum jam 17:00 tapi setelah jam kerja: "Terlambat"
+     * - Jika check_in tepat waktu atau sebelum jam kerja: "Tepat Waktu"
+     *
+     * Status "Tidak Absensi" akan otomatis diterapkan untuk:
+     * 1. Pegawai yang check-in setelah jam 17:00 (5 PM)
+     * 2. Pegawai yang tidak check-in sama sekali (null)
+     */
     public function getStatusKehadiranAttribute()
     {
-        // Cek jika ada status_kehadiran yang sudah di-set manual (untuk izin)
-        if (isset($this->attributes['status_kehadiran']) && !empty($this->attributes['status_kehadiran'])) {
-            return $this->attributes['status_kehadiran'];
-        }
-
         // Jika tidak ada check_in sama sekali, maka "Tidak Absensi"
         if (!$this->check_in) {
             return 'Tidak Absensi';
@@ -192,14 +199,23 @@ class Attendance extends Model
 
         // Ambil jadwal kantor berdasarkan hari absensi
         $checkInDate = Carbon::parse($this->check_in);
-        $dayOfWeek = strtolower($checkInDate->format('l')); // monday, tuesday, etc.
-
-        // Cek apakah check-in dilakukan pada jam 17:00 atau setelahnya
-        $eveningTime = Carbon::parse($this->check_in)->setTime(17, 0, 0);
+        
+        // PRIORITY 1: Cek apakah check-in dilakukan pada jam 17:00 atau setelahnya
+        $eveningTime = Carbon::createFromFormat('H:i:s', '17:00:00');
+        $eveningTime->setDate($checkInDate->year, $checkInDate->month, $checkInDate->day);
 
         if ($checkInDate->greaterThanOrEqualTo($eveningTime)) {
             return 'Tidak Absensi';
         }
+
+        // PRIORITY 2: Cek jika ada status_kehadiran yang sudah di-set manual (untuk izin)
+        if (isset($this->attributes['status_kehadiran']) && 
+            !empty($this->attributes['status_kehadiran']) && 
+            in_array($this->attributes['status_kehadiran'], ['Izin', 'Sakit', 'Cuti'])) {
+            return $this->attributes['status_kehadiran'];
+        }
+
+        $dayOfWeek = strtolower($checkInDate->format('l')); // monday, tuesday, etc.
 
         // Cari jadwal kantor untuk hari tersebut
         $schedule = null;
