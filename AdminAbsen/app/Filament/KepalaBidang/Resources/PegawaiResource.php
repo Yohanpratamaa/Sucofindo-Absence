@@ -139,198 +139,100 @@ class PegawaiResource extends Resource
                 Tables\Columns\TextColumn::make('npp')
                     ->label('NPP')
                     ->searchable()
-                    ->sortable()
-                    ->copyable()
-                    ->weight('semibold'),
+                    ->sortable(),
 
                 Tables\Columns\TextColumn::make('nama')
-                    ->label('Nama Lengkap')
+                    ->label('Nama')
                     ->searchable()
-                    ->sortable()
-                    ->weight('medium'),
+                    ->sortable(),
 
                 Tables\Columns\TextColumn::make('email')
                     ->label('Email')
                     ->searchable()
-                    ->copyable()
-                    ->toggleable(),
+                    ->sortable(),
 
-                Tables\Columns\TextColumn::make('no_hp')
-                    ->label('No. HP')
-                    ->searchable()
-                    ->copyable()
-                    ->toggleable(),
+                Tables\Columns\TextColumn::make('nik')
+                    ->label('NIK')
+                    ->searchable(),
 
-                Tables\Columns\TextColumn::make('jabatan')
-                    ->label('Jabatan')
-                    ->searchable()
-                    ->toggleable(),
-
-                Tables\Columns\TextColumn::make('divisi')
-                    ->label('Divisi')
-                    ->searchable()
-                    ->toggleable(),
-
-                Tables\Columns\TextColumn::make('tanggal_masuk')
-                    ->label('Tanggal Masuk')
-                    ->date('d M Y')
-                    ->sortable()
-                    ->toggleable(),
+                Tables\Columns\BadgeColumn::make('status_pegawai')
+                    ->label('Status Pegawai')
+                    ->colors([
+                        'primary' => 'PTT',
+                        'success' => 'LS',
+                    ])
+                    ->formatStateUsing(fn (string $state): string => match ($state) {
+                        'PTT' => 'PTT',
+                        'LS' => 'LS',
+                        default => $state,
+                    }),
 
                 Tables\Columns\BadgeColumn::make('status')
                     ->label('Status')
                     ->colors([
                         'success' => 'active',
-                        'warning' => 'inactive',
-                        'danger' => 'resigned',
+                        'danger' => 'non-active',
                     ])
                     ->formatStateUsing(fn (string $state): string => match ($state) {
-                        'active' => 'Aktif',
-                        'inactive' => 'Non-Aktif',
-                        'resigned' => 'Mengundurkan Diri',
+                        'active' => 'active',
+                        'non-active' => 'non-active',
+                        'inactive' => 'non-active',
                         default => $state,
                     }),
 
+                Tables\Columns\TextColumn::make('role_user')
+                    ->label('Role')
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'super admin' => 'danger',
+                        'Kepala Bidang' => 'warning',
+                        'employee' => 'primary',
+                        default => 'gray',
+                    }),
+
+                Tables\Columns\TextColumn::make('jabatan')
+                    ->label('Jabatan')
+                    ->placeholder('Belum diset')
+                    ->searchable()
+                    ->toggleable(),
+
                 Tables\Columns\TextColumn::make('created_at')
-                    ->label('Dibuat')
-                    ->dateTime('d M Y H:i')
+                    ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                Tables\Filters\SelectFilter::make('status')
+                Tables\Filters\SelectFilter::make('status_pegawai')
+                    ->label('Status Pegawai')
                     ->options([
-                        'active' => 'Aktif',
-                        'inactive' => 'Non-Aktif',
-                        'resigned' => 'Mengundurkan Diri',
+                        'PTT' => 'PTT',
+                        'LS' => 'LS',
                     ]),
 
-                Tables\Filters\Filter::make('tanggal_masuk')
-                    ->form([
-                        Forms\Components\DatePicker::make('tanggal_dari')
-                            ->label('Tanggal Masuk Dari'),
-                        Forms\Components\DatePicker::make('tanggal_sampai')
-                            ->label('Tanggal Masuk Sampai'),
-                    ])
-                    ->query(function (Builder $query, array $data): Builder {
-                        return $query
-                            ->when(
-                                $data['tanggal_dari'],
-                                fn (Builder $query, $date): Builder => $query->whereDate('tanggal_masuk', '>=', $date),
-                            )
-                            ->when(
-                                $data['tanggal_sampai'],
-                                fn (Builder $query, $date): Builder => $query->whereDate('tanggal_masuk', '<=', $date),
-                            );
-                    }),
+                Tables\Filters\SelectFilter::make('status')
+                    ->label('Status')
+                    ->options([
+                        'active' => 'Active',
+                        'non-active' => 'Non-Active',
+                    ]),
 
-                Tables\Filters\Filter::make('jenis_kelamin')
-                    ->form([
-                        Forms\Components\Select::make('jenis_kelamin')
-                            ->label('Jenis Kelamin')
-                            ->options([
-                                'L' => 'Laki-laki',
-                                'P' => 'Perempuan',
-                            ]),
-                    ])
-                    ->query(function (Builder $query, array $data): Builder {
-                        return $query->when(
-                            $data['jenis_kelamin'],
-                            fn (Builder $query, $gender): Builder => $query->where('jenis_kelamin', $gender),
-                        );
-                    }),
+                Tables\Filters\SelectFilter::make('role_user')
+                    ->label('Role')
+                    ->options([
+                        'super admin' => 'Super Admin',
+                        'employee' => 'Employee',
+                        'Kepala Bidang' => 'Kepala Bidang',
+                    ]),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make()
-                    ->label('Lihat'),
-
-                Tables\Actions\EditAction::make()
-                    ->label('Edit'),
-
-                Tables\Actions\Action::make('reset_password')
-                    ->label('Reset Password')
-                    ->icon('heroicon-o-key')
-                    ->color('warning')
-                    ->requiresConfirmation()
-                    ->modalHeading('Reset Password Pegawai')
-                    ->modalDescription(fn ($record) => "Apakah Anda yakin ingin mereset password untuk {$record->nama}? Password baru akan sama dengan NPP.")
-                    ->action(function ($record) {
-                        $record->update([
-                            'password' => Hash::make($record->npp)
-                        ]);
-
-                        Notification::make()
-                            ->success()
-                            ->title('Password Berhasil Direset')
-                            ->body("Password {$record->nama} telah direset menjadi NPP: {$record->npp}")
-                            ->send();
-                    }),
-
-                Tables\Actions\Action::make('toggle_status')
-                    ->label(fn ($record) => $record->status === 'active' ? 'Non-Aktifkan' : 'Aktifkan')
-                    ->icon(fn ($record) => $record->status === 'active' ? 'heroicon-o-x-circle' : 'heroicon-o-check-circle')
-                    ->color(fn ($record) => $record->status === 'active' ? 'danger' : 'success')
-                    ->requiresConfirmation()
-                    ->modalHeading(fn ($record) => $record->status === 'active' ? 'Non-Aktifkan Pegawai' : 'Aktifkan Pegawai')
-                    ->modalDescription(fn ($record) => "Apakah Anda yakin ingin " . ($record->status === 'active' ? 'menonaktifkan' : 'mengaktifkan') . " {$record->nama}?")
-                    ->action(function ($record) {
-                        $newStatus = $record->status === 'active' ? 'inactive' : 'active';
-                        $record->update(['status' => $newStatus]);
-
-                        Notification::make()
-                            ->success()
-                            ->title('Status Berhasil Diubah')
-                            ->body("{$record->nama} telah " . ($newStatus === 'active' ? 'diaktifkan' : 'dinonaktifkan'))
-                            ->send();
-                    })
-                    ->visible(fn ($record) => in_array($record->status, ['active', 'inactive'])),
+                Tables\Actions\ViewAction::make(),
+                Tables\Actions\EditAction::make(),
+                Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
-                Tables\Actions\BulkAction::make('bulk_activate')
-                    ->label('Aktifkan yang Dipilih')
-                    ->icon('heroicon-o-check-circle')
-                    ->color('success')
-                    ->requiresConfirmation()
-                    ->modalHeading('Aktifkan Pegawai Terpilih')
-                    ->modalDescription('Apakah Anda yakin ingin mengaktifkan semua pegawai yang dipilih?')
-                    ->action(function ($records) {
-                        $count = 0;
-                        foreach ($records as $record) {
-                            if ($record->status !== 'active') {
-                                $record->update(['status' => 'active']);
-                                $count++;
-                            }
-                        }
-
-                        Notification::make()
-                            ->success()
-                            ->title('Pegawai Berhasil Diaktifkan')
-                            ->body("{$count} pegawai telah diaktifkan.")
-                            ->send();
-                    }),
-
-                Tables\Actions\BulkAction::make('bulk_deactivate')
-                    ->label('Non-Aktifkan yang Dipilih')
-                    ->icon('heroicon-o-x-circle')
-                    ->color('danger')
-                    ->requiresConfirmation()
-                    ->modalHeading('Non-Aktifkan Pegawai Terpilih')
-                    ->modalDescription('Apakah Anda yakin ingin menonaktifkan semua pegawai yang dipilih?')
-                    ->action(function ($records) {
-                        $count = 0;
-                        foreach ($records as $record) {
-                            if ($record->status === 'active') {
-                                $record->update(['status' => 'inactive']);
-                                $count++;
-                            }
-                        }
-
-                        Notification::make()
-                            ->success()
-                            ->title('Pegawai Berhasil Dinonaktifkan')
-                            ->body("{$count} pegawai telah dinonaktifkan.")
-                            ->send();
-                    }),
+                Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\DeleteBulkAction::make(),
+                ]),
             ])
             ->defaultSort('created_at', 'desc')
             ->striped()
@@ -341,10 +243,14 @@ class PegawaiResource extends Resource
     {
         return [
             'index' => Pages\ListPegawais::route('/'),
-            'create' => Pages\CreatePegawai::route('/create'),
             'view' => Pages\ViewPegawai::route('/{record}'),
             'edit' => Pages\EditPegawai::route('/{record}/edit'),
         ];
+    }
+
+    public static function canCreate(): bool
+    {
+        return false;
     }
 
     public static function getNavigationBadge(): ?string

@@ -32,7 +32,7 @@ class CreatePegawai extends CreateRecord
     {
         // Pastikan role_user adalah employee
         $data['role_user'] = 'employee';
-        
+
         return $data;
     }
 }
